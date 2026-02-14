@@ -1,0 +1,47 @@
+const img = (tags, lock) => `https://loremflickr.com/900/600/${tags}?lock=${lock}`;
+
+export const mock = {
+  adsCategories: ["Все", "Авто", "Недвижимость", "Электроника", "Бытовая техника", "Мебель", "Другое", "Мои объявления"],
+  serviceCategories: ["Все", "Кондитерка", "Репетиторы", "Красота", "Автосервис", "Другое"],
+  foodCategories: ["Все", "Кавказская кухня", "Суши и роллы", "Осетинские пироги", "Бургеры", "Другое"],
+  taxiCategories: ["Такси по Цхинвалу", "Цхинвал -> Владикавказ", "Владикавказ -> Цхинвал"],
+  ads: [
+    { id: "ad1", category: "Электроника", title: "iPhone 12, 128GB", price: 32000, date: 2, desc: "Состояние отличное, аккумулятор 86%, комплект полный.", owner: "murat", contacts: { phone: "+7(929)123-45-67" }, photos: [img("iphone,smartphone", 101), img("phone,apple", 102), img("mobile,device", 109)] },
+    { id: "ad2", category: "Недвижимость", title: "1-комн. квартира", price: 18000, date: 5, desc: "Центр, после ремонта, рядом транспорт.", owner: "other", contacts: { tg: "@rentos", wa: "+7(929)111-11-11" }, photos: [img("apartment,interior", 103), img("flat,living-room", 104), img("kitchen,apartment", 110), img("bedroom,home", 111)] },
+    { id: "ad3", category: "Авто", title: "Lada Vesta 2019", price: 790000, date: 1, desc: "Без ДТП, один владелец, торг у капота.", owner: "other", contacts: { phone: "+7(929)777-10-10" }, photos: [img("car,sedan", 105), img("car,interior", 112), img("car,road", 113)] },
+    { id: "ad4", category: "Бытовая техника", title: "Стиральная машина LG", price: 17500, date: 4, desc: "Работает тихо, без протечек, 6 кг загрузка.", owner: "other", contacts: { wa: "+7(929)444-11-99" }, photos: [img("washing-machine,home-appliance", 114), img("laundry,appliance", 115)] },
+    { id: "ad5", category: "Мебель", title: "Диван угловой", price: 25000, date: 3, desc: "Почти новый, ткань антивандальная, есть ниша для белья.", owner: "murat", contacts: { phone: "+7(929)100-88-11" }, photos: [img("sofa,furniture", 106), img("living-room,sofa", 116), img("furniture,interior", 117)] },
+    { id: "ad6", category: "Авто", title: "Комплект зимней резины R16", price: 14000, date: 7, desc: "Nokian, остаток 70%, без грыж и порезов.", owner: "other", contacts: { tg: "@tyres_os" }, photos: [img("tires,car", 107), img("wheel,automotive", 118)] },
+    { id: "ad7", category: "Электроника", title: "PlayStation 5", price: 47000, date: 6, desc: "В комплекте 2 геймпада и зарядная станция.", owner: "other", contacts: { wa: "+7(929)101-33-22" }, photos: [img("gaming,console", 108), img("controller,gaming", 119), img("playstation,setup", 120)] },
+    { id: "ad8", category: "Другое", title: "Горный велосипед", price: 22000, date: 8, desc: "Алюминиевая рама, дисковые тормоза.", owner: "other", contacts: { phone: "+7(929)453-87-90" }, photos: [img("mountain-bike,bicycle", 121), img("bike,cycling", 122), img("bicycle,trail", 123)] },
+  ],
+  services: [
+    { id: "s1", category: "Кондитерка", title: "Торты на заказ", price: 1800, date: 1, desc: "Свадебные и детские торты, доставка.", contacts: { wa: "+7(929)999-10-10" }, photos: [img("cake,bakery", 201), img("dessert,cake", 206), img("wedding-cake,bakery", 207)] },
+    { id: "s2", category: "Репетиторы", title: "Математика 5-11 класс", price: 700, date: 3, desc: "Подготовка к ОГЭ/ЕГЭ, онлайн и офлайн.", contacts: { tg: "@mathcoach" }, photos: [img("teacher,study", 202), img("math,school", 208)] },
+    { id: "s3", category: "Красота", title: "Маникюр и покрытие", price: 1200, date: 2, desc: "Стерильный инструмент, дизайн любой сложности.", contacts: { phone: "+7(929)345-12-77" }, photos: [img("manicure,nails", 203), img("nail-salon,beauty", 209), img("beauty,manicure", 210)] },
+    { id: "s4", category: "Автосервис", title: "Диагностика двигателя", price: 1500, date: 5, desc: "Компьютерная диагностика и рекомендации.", contacts: { phone: "+7(929)288-00-77" }, photos: [img("car-service,mechanic", 211), img("engine,diagnostic", 212)] },
+    { id: "s5", category: "Кондитерка", title: "Осетинские пироги на заказ", price: 450, date: 4, desc: "Горячие, доставка в течение часа.", contacts: { wa: "+7(929)670-90-10" }, photos: [img("pie,bakery", 204), img("pastry,bread", 213)] },
+    { id: "s6", category: "Репетиторы", title: "Английский язык", price: 900, date: 6, desc: "Разговорная практика, школьная программа.", contacts: { tg: "@eng_with_ira" }, photos: [img("english,lesson", 205), img("language,teacher", 214)] },
+    { id: "s7", category: "Другое", title: "Ремонт ноутбуков", price: 2500, date: 7, desc: "Чистка, замена термопасты, апгрейд SSD.", contacts: { phone: "+7(929)555-77-10" }, photos: [img("laptop,repair", 215), img("computer,service", 216)] },
+  ],
+  taxi: [
+    { id: "t1", category: "Такси по Цхинвалу", name: "Володя", price: 200, rating: 4.0, date: 1, seats: null, when: null, desc: "Быстрая подача, аккуратное вождение.", contacts: { phone: "+7(929)906-78-93", wa: "+7(929)906-78-93" }, photos: [img("taxi,car", 301), img("taxi,city", 307), img("driver,vehicle", 308)] },
+    { id: "t2", category: "Такси по Цхинвалу", name: "Руслан", price: 230, rating: 4.6, date: 3, seats: null, when: null, desc: "Детское кресло по запросу.", contacts: { phone: "+7(929)915-11-22" }, photos: [img("car,interior", 309), img("taxi,night", 310)] },
+    { id: "t3", category: "Такси по Цхинвалу", name: "Инал", price: 180, rating: 4.2, date: 5, seats: null, when: null, desc: "Работаю до позднего вечера.", contacts: { tg: "@inal_drive" }, photos: [img("driver,car", 302), img("street,car", 311)] },
+    { id: "t4", category: "Цхинвал -> Владикавказ", name: "Алан", price: 1200, rating: 4.4, date: 0, seats: { total: 4, free: 2 }, when: "Сегодня 15:30", desc: "Еду через КПП, помогу с багажом.", contacts: { phone: "+7(929)800-11-22", tg: "@alanride" }, photos: [img("road,car", 303), img("highway,trip", 312), img("car,mountains", 313)] },
+    { id: "t5", category: "Цхинвал -> Владикавказ", name: "Георгий", price: 1100, rating: 4.7, date: 2, seats: { total: 4, free: 1 }, when: "Завтра 08:00", desc: "Пунктуально, без задержек.", contacts: { wa: "+7(929)401-40-40" }, photos: [img("highway,car", 304), img("road,mountain", 314)] },
+    { id: "t6", category: "Владикавказ -> Цхинвал", name: "Сослан", price: 1300, rating: 4.2, date: 4, seats: { total: 4, free: 1 }, when: "Завтра 09:00", desc: "Выезд по расписанию, кондиционер.", contacts: { phone: "+7(929)333-22-11" }, photos: [img("travel,car", 305), img("trip,car", 315)] },
+    { id: "t7", category: "Владикавказ -> Цхинвал", name: "Тамерлан", price: 1250, rating: 4.5, date: 2, seats: { total: 4, free: 3 }, when: "Сегодня 19:20", desc: "Можно с небольшими животными.", contacts: { tg: "@tam_taxi" }, photos: [img("evening,car", 316), img("road,night", 317)] },
+    { id: "t8", category: "Владикавказ -> Цхинвал", name: "Коста", price: 1400, rating: 4.1, date: 6, seats: { total: 6, free: 4 }, when: "Пн 07:30", desc: "Минивэн, много места для багажа.", contacts: { phone: "+7(929)500-01-00" }, photos: [img("minivan,travel", 306), img("van,road", 318), img("vehicle,trip", 319)] },
+  ],
+  food: [
+    { id: "f1", category: "Осетинские пироги", title: "Пирог с сыром", price: 450, prep: 35, always: false, delivery: true, desc: "Тонкое тесто, свежий сыр, 30см.", contacts: { phone: "+7(929)444-10-10" }, photos: [img("pie,food", 401), img("pie,cheese", 408), img("baked,pie", 409)] },
+    { id: "f2", category: "Бургеры", title: "Чизбургер", price: 350, prep: 20, always: true, delivery: false, desc: "Говяжья котлета, фирменный соус.", contacts: { wa: "+7(929)550-70-70" }, photos: [img("burger,food", 402), img("burger,fries", 410), img("burger,restaurant", 411)] },
+    { id: "f3", category: "Суши и роллы", title: "Филадельфия", price: 620, prep: 30, always: false, delivery: true, desc: "Классический ролл с лососем.", contacts: { phone: "+7(929)333-90-90" }, photos: [img("sushi,roll", 403), img("sushi,salmon", 412)] },
+    { id: "f4", category: "Кавказская кухня", title: "Шашлык из телятины", price: 780, prep: 45, always: false, delivery: true, desc: "Маринад по фирменному рецепту.", contacts: { tg: "@kavkaz_food" }, photos: [img("barbecue,meat", 404), img("grill,kebab", 413), img("meat,bbq", 414)] },
+    { id: "f5", category: "Осетинские пироги", title: "Пирог с картофелем", price: 430, prep: 25, always: true, delivery: true, desc: "Домашний вкус и мягкое тесто.", contacts: { wa: "+7(929)611-11-12" }, photos: [img("pie,baked", 405), img("potato,pie", 415)] },
+    { id: "f6", category: "Бургеры", title: "Двойной бургер", price: 520, prep: 25, always: false, delivery: false, desc: "Двойная котлета и много сыра.", contacts: { phone: "+7(929)789-40-20" }, photos: [img("double-burger,food", 416), img("burger,cheese", 417)] },
+    { id: "f7", category: "Другое", title: "Сырники со сметаной", price: 280, prep: 15, always: true, delivery: false, desc: "Завтрак на каждый день.", contacts: { wa: "+7(929)100-22-33" }, photos: [img("breakfast,pancake", 406), img("syrniki,breakfast", 418)] },
+    { id: "f8", category: "Суши и роллы", title: "Сет Классический", price: 1200, prep: 50, always: false, delivery: true, desc: "24 кусочка, подходит на 2-3 человек.", contacts: { phone: "+7(929)880-80-70" }, photos: [img("sushi,set", 407), img("sushi,platter", 419), img("japanese,food", 420)] },
+  ],
+};
