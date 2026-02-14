@@ -459,7 +459,7 @@ function Media({ photos, emptyText, compact = false, onOpen }) {
   const cover = photos?.[0];
   return (
     <div
-      className={`media ${compact ? "media-compact" : ""} ${cover && onOpen ? "media-clickable" : ""}`}
+      className={`media ${compact ? "media-compact" : ""} ${cover ? "media-has-image" : ""} ${cover && onOpen ? "media-clickable" : ""}`}
       role={cover && onOpen ? "button" : undefined}
       tabIndex={cover && onOpen ? 0 : undefined}
       onClick={cover && onOpen ? onOpen : undefined}
