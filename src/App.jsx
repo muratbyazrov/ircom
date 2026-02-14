@@ -223,11 +223,13 @@ export default function App() {
       <header className="topbar">
         <div>
           <h1>{tab === "profile" ? profile.name : "ircom"}</h1>
-          <p>{isAuth ? "Вы авторизованы" : "Гостевой режим"}</p>
         </div>
-        <button className="ghost-btn" onClick={toggleAuth} type="button">
-          {isAuth ? "Выйти" : "Войти"}
-        </button>
+        <div className="topbar-actions">
+          <span className="topbar-status">{isAuth ? "Онлайн" : "Гость"}</span>
+          <button className="ghost-btn topbar-auth-btn" onClick={toggleAuth} type="button">
+            {isAuth ? "Выйти" : "Войти"}
+          </button>
+        </div>
       </header>
 
       <main className="screen">
@@ -311,6 +313,9 @@ export default function App() {
             </div>
 
             <div className="actions" style={{ marginTop: 10 }}>
+              <button className={isAuth ? "ghost-btn" : "primary-btn"} type="button" onClick={toggleAuth}>
+                {isAuth ? "Выйти из аккаунта" : "Войти в аккаунт"}
+              </button>
               <button className="primary-btn" type="button" onClick={openEditProfile}>Редактировать профиль</button>
               <button className="ghost-btn" type="button" onClick={() => setTab("ads")}>К объявлениям</button>
               <button className="ghost-btn" type="button" onClick={() => setTab("food")}>К еде</button>
