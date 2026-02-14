@@ -100,6 +100,39 @@ export default function App() {
     tg.expand();
   }, []);
 
+  useEffect(() => {
+    let lastTouchEnd = 0;
+
+    const preventGesture = (e) => {
+      if (e.target?.closest?.(".viewer-content")) return;
+      e.preventDefault();
+    };
+
+    const preventMultiTouchZoom = (e) => {
+      if (e.target?.closest?.(".viewer-content")) return;
+      if (e.touches && e.touches.length > 1) e.preventDefault();
+    };
+
+    const preventDoubleTapZoom = (e) => {
+      if (e.target?.closest?.(".viewer-content")) return;
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    };
+
+    document.addEventListener("gesturestart", preventGesture, { passive: false });
+    document.addEventListener("gesturechange", preventGesture, { passive: false });
+    document.addEventListener("touchmove", preventMultiTouchZoom, { passive: false });
+    document.addEventListener("touchend", preventDoubleTapZoom, { passive: false });
+
+    return () => {
+      document.removeEventListener("gesturestart", preventGesture);
+      document.removeEventListener("gesturechange", preventGesture);
+      document.removeEventListener("touchmove", preventMultiTouchZoom);
+      document.removeEventListener("touchend", preventDoubleTapZoom);
+    };
+  }, []);
+
   const toggleAuth = () => {
     if (isAuth) {
       setIsAuth(false);
@@ -533,11 +566,14 @@ function DetailModalContent({ data, onFav, isFav }) {
       <Media photos={photos} emptyText="Нет фотографий" onOpen={() => (photos.length ? setViewerIndex(0) : null)} />
       {photos.length > 1 ? (
         <div className="gallery" style={{ marginTop: 8 }}>
-          {photos.map((photo, index) => (
+          {photos.slice(1).map((photo, thumbIndex) => {
+            const index = thumbIndex + 1;
+            return (
             <button key={photo} className="gallery-btn" type="button" onClick={() => setViewerIndex(index)}>
               <img className="gallery-img" src={photo} alt="gallery" loading="lazy" />
             </button>
-          ))}
+          );
+          })}
         </div>
       ) : null}
       <p><b>Цена:</b> {fmtRub.format(item.price)}</p>
