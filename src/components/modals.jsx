@@ -3,6 +3,7 @@ import { mock } from "../data/mock";
 import { clamp, contactLabel, fmtRub, getTouchDistance } from "../utils/helpers";
 import { FormActions, Icon, Field } from "./ui";
 import { Media } from "./cards";
+import restaurantHero from "../assets/restaurant-hero.svg";
 
 export function DetailModalContent({ data, onFav, isFav }) {
   const { item, type } = data;
@@ -401,30 +402,26 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
       <>
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
+            display: "grid",
+            gap: 8,
             marginBottom: 10,
-            padding: "10px 12px",
+            padding: 10,
             borderRadius: 14,
             background: "var(--primary-soft)",
             border: "1px solid var(--line)",
           }}
         >
-          <div
+          <img
+            src={restaurantHero}
+            alt="Здание заведения"
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 10,
-              display: "grid",
-              placeItems: "center",
-              color: "var(--primary)",
-              background: "#fff",
+              width: "100%",
+              height: 150,
+              objectFit: "cover",
+              borderRadius: 12,
             }}
-          >
-            <Icon name="pie" />
-          </div>
-          <p className="small" style={{ margin: 0, color: "var(--text)" }}>Расскажите о вашем заведении и добавьте лучшие фото</p>
+          />
+          <p className="small" style={{ margin: 0, color: "var(--text)" }}>Расскажите о заведении и добавьте лучшие фото</p>
         </div>
         <h3 style={{ marginBottom: 8 }}>Создать заведение</h3>
         <form className="list" onSubmit={(e) => onSubmit(e, "restaurant")}>
