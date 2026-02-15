@@ -13,6 +13,18 @@ export function ItemCard({ item, onOpen, onFav, activeFav }) {
       }}
     >
       <div className="card-body">
+        <button
+          className={`fav-corner-btn ${activeFav ? "active" : ""}`}
+          type="button"
+          aria-label={activeFav ? "Убрать из избранного" : "Добавить в избранное"}
+          onClick={(e) => {
+            e.stopPropagation();
+            onFav();
+          }}
+        >
+          <Icon name={activeFav ? "heart-fill" : "heart"} />
+          <span>{activeFav ? "В избранном" : "В избранное"}</span>
+        </button>
         <Media photos={item.photos} emptyText="Нет фотографий" />
         <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
@@ -22,10 +34,6 @@ export function ItemCard({ item, onOpen, onFav, activeFav }) {
           <div className="price">{fmtRub.format(item.price)}</div>
         </div>
         <p className="small">{short(item.desc)}</p>
-        <div className="actions">
-          <button className="soft-btn" type="button" onClick={(e) => { e.stopPropagation(); onOpen(); }}><Icon name="open" /> Открыть</button>
-          <button className="ghost-btn" type="button" onClick={(e) => { e.stopPropagation(); onFav(); }}>{activeFav ? <><Icon name="heart-fill" /> В избранном</> : <><Icon name="heart" /> В избранное</>}</button>
-        </div>
       </div>
     </article>
   );
@@ -43,6 +51,18 @@ export function TaxiCard({ item, onOpen, onFav, activeFav }) {
       }}
     >
       <div className="card-body">
+        <button
+          className={`fav-corner-btn ${activeFav ? "active" : ""}`}
+          type="button"
+          aria-label={activeFav ? "Убрать из избранного" : "Добавить в избранное"}
+          onClick={(e) => {
+            e.stopPropagation();
+            onFav();
+          }}
+        >
+          <Icon name={activeFav ? "heart-fill" : "heart"} />
+          <span>{activeFav ? "В избранном" : "В избранное"}</span>
+        </button>
         <div className="grid-2" style={{ gridTemplateColumns: "94px 1fr", alignItems: "center" }}>
           <Media photos={item.photos} emptyText="Нет фото" compact />
           <div>
@@ -57,10 +77,6 @@ export function TaxiCard({ item, onOpen, onFav, activeFav }) {
           {item.seats ? <span className="badge">Места: {item.seats.free}/{item.seats.total}</span> : null}
         </div>
         <p className="small">{short(item.desc)}</p>
-        <div className="actions">
-          <button className="soft-btn" type="button" onClick={(e) => { e.stopPropagation(); onOpen(); }}><Icon name="open" /> Открыть</button>
-          <button className="ghost-btn" type="button" onClick={(e) => { e.stopPropagation(); onFav(); }}>{activeFav ? <><Icon name="heart-fill" /> В избранном</> : <><Icon name="heart" /> В избранное</>}</button>
-        </div>
       </div>
     </article>
   );
@@ -78,6 +94,18 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
       }}
     >
       <div className="card-body">
+        <button
+          className={`fav-corner-btn ${activeFav ? "active" : ""}`}
+          type="button"
+          aria-label={activeFav ? "Убрать из избранного" : "Добавить в избранное"}
+          onClick={(e) => {
+            e.stopPropagation();
+            onFav();
+          }}
+        >
+          <Icon name={activeFav ? "heart-fill" : "heart"} />
+          <span>{activeFav ? "В избранном" : "В избранное"}</span>
+        </button>
         <Media photos={item.photos} emptyText="Нет фотографий" />
         <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
@@ -91,10 +119,6 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
           <span className="badge">{item.delivery ? "Есть доставка" : "Самовывоз"}</span>
         </div>
         <p className="small">{short(item.desc)}</p>
-        <div className="actions">
-          <button className="soft-btn" type="button" onClick={(e) => { e.stopPropagation(); onOpen(); }}><Icon name="open" /> Открыть</button>
-          <button className="ghost-btn" type="button" onClick={(e) => { e.stopPropagation(); onFav(); }}>{activeFav ? <><Icon name="heart-fill" /> В избранном</> : <><Icon name="heart" /> В избранное</>}</button>
-        </div>
       </div>
     </article>
   );

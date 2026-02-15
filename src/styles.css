@@ -173,9 +173,41 @@ body {
 }
 
 .card-body {
+  position: relative;
   padding: 10px;
   display: grid;
   gap: 8px;
+}
+
+.fav-corner-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.96);
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 2;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.fav-corner-btn.active {
+  color: var(--primary);
+  border-color: #f7a7ad;
+  background: #fff5f5;
+}
+
+.fav-corner-btn .icon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
 }
 
 .media {

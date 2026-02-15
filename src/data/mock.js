@@ -1,4 +1,4 @@
-const img = (tags, lock) => `https://loremflickr.com/900/600/${tags}?lock=${lock}`;
+const img = (tags, lock) => `https://picsum.photos/seed/${encodeURIComponent(`${tags}-${lock}`)}/900/600`;
 
 export const mock = {
   adsCategories: ["Все", "Авто", "Недвижимость", "Электроника", "Бытовая техника", "Мебель", "Другое", "Мои объявления"],
