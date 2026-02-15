@@ -152,7 +152,12 @@ export default function App() {
         payload[key].push(value.name);
         continue;
       }
-      payload[key] = value;
+      if (key in payload) {
+        if (Array.isArray(payload[key])) payload[key].push(value);
+        else payload[key] = [payload[key], value];
+      } else {
+        payload[key] = value;
+      }
     }
 
     if (type === "restaurant") setHasRestaurant(true);

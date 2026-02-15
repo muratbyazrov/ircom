@@ -343,8 +343,10 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   const [isPreparingPhotos, setIsPreparingPhotos] = useState(false);
   const [selectedPhotoCount, setSelectedPhotoCount] = useState(0);
   const [photosLimitError, setPhotosLimitError] = useState("");
+  const [selectedTaxiCategories, setSelectedTaxiCategories] = useState(() => (type === "taxi" ? [taxiCategories?.[0]].filter(Boolean) : []));
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
+  const maxPhotos = type === "taxi" ? 3 : 10;
 
   useEffect(() => {
     return () => {
@@ -355,7 +357,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   const handleImagesChange = (e) => {
     const count = e.target.files?.length || 0;
     setSelectedPhotoCount(count);
-    setPhotosLimitError(count > 10 ? "Можно загрузить не более 10 фото" : "");
+    setPhotosLimitError(count > maxPhotos ? `Можно загрузить не более ${maxPhotos} фото` : "");
 
     if (!count) {
       setIsPreparingPhotos(false);
@@ -398,6 +400,22 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   const handlePhoneInput = (e, options = {}) => {
     e.currentTarget.value = formatPhoneValue(e.currentTarget.value, options);
   };
+
+  const toggleTaxiCategory = (category) => {
+    const isCity = category === cityCategory;
+    setSelectedTaxiCategories((prev) => {
+      if (isCity) {
+        if (prev.includes(cityCategory)) return prev.filter((x) => x !== cityCategory);
+        return [cityCategory];
+      }
+
+      const withoutCity = prev.filter((x) => x !== cityCategory);
+      if (withoutCity.includes(category)) return withoutCity.filter((x) => x !== category);
+      return [...withoutCity, category];
+    });
+  };
+  const cityCategory = "Такси по Цхинвалу";
+  const isIntercitySelected = selectedTaxiCategories.some((x) => x !== cityCategory);
 
   if (type === "restaurant") {
     return (
@@ -532,15 +550,36 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
         </div>
         <h3 style={{ marginBottom: 8 }}>Создание предложения такси</h3>
         <form className="list" onSubmit={(e) => onSubmit(e, "taxi")}>
-          <Field label="Направление">
-            <select name="category" className="select">{taxiCategories.map((x) => <option key={x}>{x}</option>)}</select>
+          <Field label="Направления">
+            <div className="multi-select-buttons">
+              {taxiCategories.map((x) => {
+                return (
+                  <button
+                    key={x}
+                    type="button"
+                    className={`multi-select-btn ${selectedTaxiCategories.includes(x) ? "active" : ""}`}
+                    onClick={() => toggleTaxiCategory(x)}
+                    aria-pressed={selectedTaxiCategories.includes(x)}
+                  >
+                    {x}
+                  </button>
+                );
+              })}
+            </div>
+            {selectedTaxiCategories.map((x) => (
+              <input key={x} type="hidden" name="category" value={x} />
+            ))}
+            <p className="small" style={{ marginTop: 6, color: "var(--muted)" }}>
+              Нельзя совмещать город и межгород в одном предложении.
+            </p>
+            {!selectedTaxiCategories.length ? <p className="small" style={{ color: "var(--danger)", marginTop: 6 }}>Выберите хотя бы одно направление</p> : null}
           </Field>
           <Field label="Имя/ник"><input required name="name" className="input" minLength={2} maxLength={60} /></Field>
-          <div className="grid-2">
+          <div className={isIntercitySelected ? "grid-2" : undefined}>
             <Field label="Стоимость"><input required name="price" type="number" min={1} inputMode="numeric" pattern="[0-9]*" className="input" /></Field>
-            <Field label="Свободных мест"><input name="seats" type="number" min={1} className="input" /></Field>
+            {isIntercitySelected ? <Field label="Свободных мест"><input name="seats" type="number" min={1} className="input" /></Field> : null}
           </div>
-          <Field label="Дата и время"><input name="when" className="input" placeholder="Например, Сегодня 15:30" /></Field>
+          {isIntercitySelected ? <Field label="Дата и время"><input name="when" className="input" placeholder="Например, Сегодня 15:30" /></Field> : null}
           <Field label="Телефон">
             <input
               required
@@ -570,8 +609,45 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
           </Field>
           <Field label="Telegram"><input name="tg" className="input" /></Field>
           <Field label="Описание"><textarea name="desc" className="textarea" maxLength={2000} /></Field>
-          <Field label="Фото автомобиля"><input name="photo" className="input" placeholder="https://..." /></Field>
-          <FormActions onClose={onClose} />
+          <Field label="Фото авто или водителя (до 3)">
+            <div className="input-with-clear">
+              <input
+                type="file"
+                name="images"
+                className={`input ${selectedPhotoCount > 0 ? "input-has-clear" : ""}`}
+                multiple
+                accept="image/*"
+                ref={imagesInputRef}
+                onChange={handleImagesChange}
+                onClick={(e) => {
+                  e.currentTarget.value = "";
+                }}
+              />
+              {selectedPhotoCount > 0 ? (
+                <button className="clear-photos-btn clear-photos-inside" type="button" onClick={clearSelectedImages} aria-label="Убрать выбранные фото">
+                  ×
+                </button>
+              ) : null}
+            </div>
+            {selectedPhotoCount > 0 ? (
+              <div className="upload-status" aria-live="polite">
+                {isPreparingPhotos ? (
+                  <>
+                    <span className="loader-spinner" aria-hidden="true" />
+                    Подготавливаем {selectedPhotoCount} фото...
+                  </>
+                ) : (
+                  <>Выбрано фото: {selectedPhotoCount}</>
+                )}
+              </div>
+            ) : null}
+            {photosLimitError ? <p className="small" style={{ color: "var(--danger)" }}>{photosLimitError}</p> : null}
+          </Field>
+          <FormActions
+            onClose={onClose}
+            submitDisabled={!selectedTaxiCategories.length || isPreparingPhotos || Boolean(photosLimitError)}
+            submitLabel={isPreparingPhotos ? "Подготовка фото..." : "Сохранить"}
+          />
         </form>
       </>
     );
@@ -616,7 +692,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
         <Field label="Категория"><select className="select" name="category">{categories.map((x) => <option key={x}>{x}</option>)}</select></Field>
         <Field label="Цена, ₽"><input required name="price" type="number" min={1} inputMode="numeric" pattern="[0-9]*" className="input" /></Field>
         <Field label="Описание"><textarea required name="desc" className="textarea" minLength={10} maxLength={2000} /></Field>
-        <Field label="Фото (до 10)">
+        <Field label={`Фото (до ${maxPhotos})`}>
           <div className="input-with-clear">
             <input
               type="file"
