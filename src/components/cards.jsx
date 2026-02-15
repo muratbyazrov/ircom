@@ -131,6 +131,7 @@ export function Media({ photos, emptyText, compact = false, onOpen }) {
   const [index, setIndex] = useState(0);
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
+  const suppressClickRef = useRef(false);
 
   useEffect(() => {
     setIndex(0);
@@ -157,6 +158,10 @@ export function Media({ photos, emptyText, compact = false, onOpen }) {
 
     const next = deltaX < 0 ? index + 1 : index - 1;
     setIndex(clamp(next, 0, items.length - 1));
+    suppressClickRef.current = true;
+    window.setTimeout(() => {
+      suppressClickRef.current = false;
+    }, 220);
   };
 
   return (
@@ -164,16 +169,24 @@ export function Media({ photos, emptyText, compact = false, onOpen }) {
       className={`media ${compact ? "media-compact" : ""} ${hasPhotos ? "media-has-image" : ""} ${hasPhotos && onOpen ? "media-clickable" : ""}`}
       role={hasPhotos && onOpen ? "button" : undefined}
       tabIndex={hasPhotos && onOpen ? 0 : undefined}
-      onClick={hasPhotos && onOpen ? onOpen : undefined}
+      onClick={
+        hasPhotos && onOpen
+          ? (e) => {
+              if (suppressClickRef.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+              }
+              onOpen();
+            }
+          : undefined
+      }
       onKeyDown={(e) => {
         if (hasPhotos && onOpen && (e.key === "Enter" || e.key === " ")) onOpen();
       }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
       onTouchMove={(e) => {
-        if (items.length > 1) e.stopPropagation();
-      }}
-      onClickCapture={(e) => {
         if (items.length > 1) e.stopPropagation();
       }}
     >

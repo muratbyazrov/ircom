@@ -624,6 +624,7 @@ button {
   border-radius: 0;
   touch-action: none;
   user-select: none;
+  will-change: transform;
 }
 
 .viewer-close {
