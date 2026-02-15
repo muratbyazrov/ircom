@@ -137,13 +137,23 @@ export default function App() {
   const openCreate = (type) => ensureAuth(() => setModal({ type: "create", payload: { type } }));
   const openEditProfile = () => ensureAuth(() => setModal({ type: "profileEdit", payload: profile }));
   const createType = modal?.type === "create" ? modal.payload?.type : null;
-  const fullScreenCreate = createType === "ad" || createType === "service" || createType === "taxi";
+  const fullScreenCreate = createType === "ad" || createType === "service" || createType === "taxi" || createType === "restaurant";
   const fullScreenModal = modal?.type === "detail" || modal?.type === "profileEdit" || fullScreenCreate;
 
   const submitMock = (event, type) => {
     event.preventDefault();
     const fd = new FormData(event.currentTarget);
-    const payload = Object.fromEntries(fd.entries());
+    const payload = {};
+
+    for (const [key, value] of fd.entries()) {
+      if (value instanceof File) {
+        if (!value.name) continue;
+        if (!payload[key]) payload[key] = [];
+        payload[key].push(value.name);
+        continue;
+      }
+      payload[key] = value;
+    }
 
     if (type === "restaurant") setHasRestaurant(true);
     if (type === "profile") {

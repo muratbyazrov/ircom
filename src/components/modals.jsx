@@ -339,6 +339,7 @@ export function DetailModalContent({ data, onFav, isFav }) {
 export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   const [isPreparingPhotos, setIsPreparingPhotos] = useState(false);
   const [selectedPhotoCount, setSelectedPhotoCount] = useState(0);
+  const [photosLimitError, setPhotosLimitError] = useState("");
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
 
@@ -351,6 +352,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   const handleImagesChange = (e) => {
     const count = e.target.files?.length || 0;
     setSelectedPhotoCount(count);
+    setPhotosLimitError(count > 10 ? "Можно загрузить не более 10 фото" : "");
 
     if (!count) {
       setIsPreparingPhotos(false);
@@ -368,6 +370,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
     if (imagesInputRef.current) imagesInputRef.current.value = "";
     setIsPreparingPhotos(false);
     setSelectedPhotoCount(0);
+    setPhotosLimitError("");
   };
 
   if (type === "restaurant") {
@@ -377,8 +380,51 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
         <form className="list" onSubmit={(e) => onSubmit(e, "restaurant")}>
           <Field label="Название"><input required name="title" className="input" minLength={2} maxLength={100} /></Field>
           <Field label="Описание"><textarea required name="desc" className="textarea" maxLength={2000} /></Field>
-          <Field label="Логотип"><input name="logo" className="input" placeholder="https://..." /></Field>
-          <FormActions onClose={onClose} />
+          <Field label="Адрес"><input required name="address" className="input" minLength={5} maxLength={200} /></Field>
+          <div className="grid-2">
+            <Field label="Телефон"><input required name="phone" className="input" /></Field>
+            <Field label="Telegram"><input name="telegram" className="input" placeholder="@username" /></Field>
+          </div>
+          <Field label="WhatsApp"><input name="whatsapp" className="input" /></Field>
+          <Field label="Фото (до 10)">
+            <div className="input-with-clear">
+              <input
+                type="file"
+                name="images"
+                className={`input ${selectedPhotoCount > 0 ? "input-has-clear" : ""}`}
+                multiple
+                accept="image/*"
+                ref={imagesInputRef}
+                onChange={handleImagesChange}
+                onClick={(e) => {
+                  e.currentTarget.value = "";
+                }}
+              />
+              {selectedPhotoCount > 0 ? (
+                <button className="clear-photos-btn clear-photos-inside" type="button" onClick={clearSelectedImages} aria-label="Убрать выбранные фото">
+                  ×
+                </button>
+              ) : null}
+            </div>
+            {selectedPhotoCount > 0 ? (
+              <div className="upload-status" aria-live="polite">
+                {isPreparingPhotos ? (
+                  <>
+                    <span className="loader-spinner" aria-hidden="true" />
+                    Подготавливаем {selectedPhotoCount} фото...
+                  </>
+                ) : (
+                  <>Выбрано фото: {selectedPhotoCount}</>
+                )}
+              </div>
+            ) : null}
+            {photosLimitError ? <p className="small" style={{ color: "var(--danger)" }}>{photosLimitError}</p> : null}
+          </Field>
+          <FormActions
+            onClose={onClose}
+            submitDisabled={isPreparingPhotos || Boolean(photosLimitError)}
+            submitLabel={isPreparingPhotos ? "Подготовка фото..." : "Сохранить"}
+          />
         </form>
       </>
     );
@@ -456,7 +502,12 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
             </div>
           ) : null}
         </Field>
-        <FormActions onClose={onClose} submitDisabled={isPreparingPhotos} submitLabel={isPreparingPhotos ? "Подготовка фото..." : "Сохранить"} />
+        {photosLimitError ? <p className="small" style={{ color: "var(--danger)" }}>{photosLimitError}</p> : null}
+        <FormActions
+          onClose={onClose}
+          submitDisabled={isPreparingPhotos || Boolean(photosLimitError)}
+          submitLabel={isPreparingPhotos ? "Подготовка фото..." : "Сохранить"}
+        />
       </form>
     </>
   );

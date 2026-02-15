@@ -49,13 +49,15 @@ export function TaxiTab({ taxiCategory, setTaxiCategory, taxiSort, setTaxiSort, 
 export function FoodTab({ foodCategory, setFoodCategory, foodSort, setFoodSort, foodItems, foodCategories, hasRestaurant, openCreate, openDetail, toggleFavorite, favorites }) {
   return (
     <>
-      <SectionHeader title="Еда" actionLabel="Добавить блюдо" onAction={() => openCreate("dish")} />
+      <SectionHeader
+        title="Еда"
+        actionLabel={hasRestaurant ? "Управлять заведением" : "Создать заведение"}
+        onAction={() => openCreate("restaurant")}
+      />
       <Section>
         <CategoryTabs list={foodCategories} value={foodCategory} onChange={setFoodCategory} />
         <div className="actions" style={{ marginTop: 10 }}>
-          <button className="ghost-btn" onClick={() => openCreate("restaurant")} type="button">
-            {hasRestaurant ? "Управлять заведением" : "Создать заведение"}
-          </button>
+          <button className="ghost-btn" onClick={() => openCreate("dish")} type="button">Добавить блюдо</button>
         </div>
         <SortSelect value={foodSort} onChange={setFoodSort} />
       </Section>
