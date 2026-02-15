@@ -26,7 +26,7 @@ export function ItemCard({ item, onOpen, onFav, activeFav }) {
           <Icon name={activeFav ? "heart-fill" : "heart"} />
           <span>{activeFav ? "В избранном" : "В избранное"}</span>
         </button>
-        <Media photos={item.photos} emptyText="Нет фотографий" />
+        <Media photos={item.photos} emptyText="Нет фотографий" bleed />
         <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <div className="card-title">{item.title}</div>
@@ -107,7 +107,7 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
           <Icon name={activeFav ? "heart-fill" : "heart"} />
           <span>{activeFav ? "В избранном" : "В избранное"}</span>
         </button>
-        <Media photos={item.photos} emptyText="Нет фотографий" />
+        <Media photos={item.photos} emptyText="Нет фотографий" bleed />
         <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <div className="card-title">{item.title}</div>
@@ -125,7 +125,7 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
   );
 }
 
-export function Media({ photos, emptyText, compact = false, onOpen }) {
+export function Media({ photos, emptyText, compact = false, onOpen, bleed = false }) {
   const items = Array.isArray(photos) ? photos.filter(Boolean) : [];
   const hasPhotos = items.length > 0;
   const [index, setIndex] = useState(0);
@@ -166,7 +166,7 @@ export function Media({ photos, emptyText, compact = false, onOpen }) {
 
   return (
     <div
-      className={`media ${compact ? "media-compact" : ""} ${hasPhotos ? "media-has-image" : ""} ${hasPhotos && onOpen ? "media-clickable" : ""}`}
+      className={`media ${compact ? "media-compact" : ""} ${bleed ? "media-bleed" : ""} ${hasPhotos ? "media-has-image" : ""} ${hasPhotos && onOpen ? "media-clickable" : ""}`}
       role={hasPhotos && onOpen ? "button" : undefined}
       tabIndex={hasPhotos && onOpen ? 0 : undefined}
       onClick={
