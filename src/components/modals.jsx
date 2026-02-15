@@ -13,8 +13,11 @@ export function DetailModalContent({ data, onFav, isFav }) {
   const [isImageInteracting, setIsImageInteracting] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [dismissY, setDismissY] = useState(0);
+  const [dismissAnimating, setDismissAnimating] = useState(false);
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
+  const touchStartAt = useRef(0);
   const panStartX = useRef(0);
   const panStartY = useRef(0);
   const pinchStartDist = useRef(null);
@@ -24,6 +27,7 @@ export function DetailModalContent({ data, onFav, isFav }) {
   const gestureMode = useRef("idle");
   const lastTapAt = useRef(0);
   const activeImageRef = useRef(null);
+  const closeTimerRef = useRef(null);
 
   const contactButtons = Object.entries(item.contacts || {}).map(([k, v]) => (
     <button className="ghost-btn" key={`${k}-${v}`} type="button" onClick={() => alert(`Откроем контакт: ${v}`)}>
@@ -59,7 +63,15 @@ export function DetailModalContent({ data, onFav, isFav }) {
     setIsImageInteracting(false);
     setZoom(1);
     setPan({ x: 0, y: 0 });
+    setDismissY(0);
+    setDismissAnimating(false);
   }, [viewerIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+  }, []);
 
   const getFocalFromTouches = (t1, t2) => {
     const stableNode = activeImageRef.current?.parentElement || activeImageRef.current;
@@ -85,6 +97,15 @@ export function DetailModalContent({ data, onFav, isFav }) {
       x: clamp(nextPan.x, -limits.x, limits.x),
       y: clamp(nextPan.y, -limits.y, limits.y),
     };
+  };
+
+  const closeViewerWithSwipe = () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    setDismissAnimating(true);
+    setDismissY(window.innerHeight * 0.35);
+    closeTimerRef.current = setTimeout(() => {
+      setViewerIndex(null);
+    }, 180);
   };
 
   return (
@@ -126,11 +147,13 @@ export function DetailModalContent({ data, onFav, isFav }) {
                 gestureMode.current = "pinch";
                 setIsTrackDragging(false);
                 setIsImageInteracting(true);
+                setDismissAnimating(false);
                 return;
               }
               if (e.touches.length !== 1) return;
               touchStartX.current = e.changedTouches[0]?.clientX ?? null;
               touchStartY.current = e.changedTouches[0]?.clientY ?? null;
+              touchStartAt.current = Date.now();
               panStartX.current = pan.x;
               panStartY.current = pan.y;
               if (zoom > 1.01) {
@@ -141,6 +164,7 @@ export function DetailModalContent({ data, onFav, isFav }) {
                 gestureMode.current = "swipe";
                 setIsTrackDragging(true);
               }
+              setDismissAnimating(false);
             }}
             onTouchMove={(e) => {
               if (e.touches.length === 2) {
@@ -163,15 +187,23 @@ export function DetailModalContent({ data, onFav, isFav }) {
               if (e.touches.length !== 1 || touchStartX.current === null || touchStartY.current === null) return;
               const currentX = e.touches[0]?.clientX ?? touchStartX.current;
               const currentY = e.touches[0]?.clientY ?? touchStartY.current;
+              const deltaX = currentX - touchStartX.current;
+              const deltaY = currentY - touchStartY.current;
 
               if (gestureMode.current === "pan" || zoom > 1.01) {
-                const deltaX = currentX - touchStartX.current;
-                const deltaY = currentY - touchStartY.current;
                 setPan(clampPan({ x: panStartX.current + deltaX, y: panStartY.current + deltaY }));
                 return;
               }
 
-              if (gestureMode.current === "swipe") setDragX(currentX - touchStartX.current);
+              if (gestureMode.current === "swipe") {
+                if (deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX) + 8) {
+                  setDismissY(deltaY * 0.9);
+                  setDragX(0);
+                  return;
+                }
+                setDismissY(0);
+                setDragX(deltaX);
+              }
             }}
             onTouchEnd={(e) => {
               if (gestureMode.current === "pinch") {
@@ -195,17 +227,36 @@ export function DetailModalContent({ data, onFav, isFav }) {
               const endY = e.changedTouches[0]?.clientY ?? touchStartY.current;
               const deltaX = endX - touchStartX.current;
               const deltaY = endY - touchStartY.current;
+              const elapsed = Date.now() - (touchStartAt.current || Date.now());
               touchStartX.current = null;
               touchStartY.current = null;
+              touchStartAt.current = 0;
               setIsTrackDragging(false);
               setIsImageInteracting(false);
               const absX = Math.abs(deltaX);
               const absY = Math.abs(deltaY);
 
+              if (deltaY > 90 && absY > absX && elapsed < 320) {
+                closeViewerWithSwipe();
+                setDragX(0);
+                gestureMode.current = "idle";
+                return;
+              }
+
+              if (zoom > 1.01 && absX > absY && absX >= 80 && elapsed < 320 && photos.length > 1) {
+                if (deltaX < 0) showNext();
+                else showPrev();
+                setDragX(0);
+                setDismissY(0);
+                gestureMode.current = "idle";
+                return;
+              }
+
               if (zoom <= 1.01 && gestureMode.current === "swipe" && absX > absY && absX >= 40 && photos.length > 1) {
                 if (deltaX < 0) showNext();
                 else showPrev();
                 setDragX(0);
+                setDismissY(0);
                 gestureMode.current = "idle";
                 return;
               }
@@ -226,17 +277,29 @@ export function DetailModalContent({ data, onFav, isFav }) {
                 setPan({ x: 0, y: 0 });
               }
               setDragX(0);
+              if (dismissY > 0) {
+                setDismissAnimating(true);
+                setDismissY(0);
+              }
               gestureMode.current = "idle";
             }}
             onTouchCancel={() => {
               touchStartX.current = null;
               touchStartY.current = null;
+              touchStartAt.current = 0;
               pinchStartDist.current = null;
               pinchStartScale.current = zoom;
               setDragX(0);
+              setDismissAnimating(true);
+              setDismissY(0);
               setIsTrackDragging(false);
               setIsImageInteracting(false);
               gestureMode.current = "idle";
+            }}
+            style={{
+              transform: `translate3d(0, ${dismissY}px, 0)`,
+              opacity: `${Math.max(0.45, 1 - dismissY / Math.max(400, window.innerHeight * 0.9))}`,
+              transition: dismissAnimating ? "transform 180ms ease, opacity 180ms ease" : "none",
             }}
           >
             <div
