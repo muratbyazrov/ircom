@@ -373,19 +373,94 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
     setPhotosLimitError("");
   };
 
+  const phonePattern = "\\+7 \\(\\d{3}\\) \\d{3}-\\d{2}-\\d{2}";
+  const phonePlaceholder = "+7 (___) ___-__-__";
+
+  const formatPhoneValue = (raw, { allowEmpty = true } = {}) => {
+    const digits = String(raw || "").replace(/\D/g, "");
+    if (!digits) return allowEmpty ? "" : "+7";
+
+    const national = (digits[0] === "7" || digits[0] === "8") ? digits.slice(1, 11) : digits.slice(0, 10);
+    let result = "+7";
+
+    if (national.length > 0) result += ` (${national.slice(0, 3)}`;
+    if (national.length >= 3) result += ")";
+    if (national.length > 3) result += ` ${national.slice(3, 6)}`;
+    if (national.length > 6) result += `-${national.slice(6, 8)}`;
+    if (national.length > 8) result += `-${national.slice(8, 10)}`;
+
+    return result;
+  };
+
+  const handlePhoneInput = (e, options = {}) => {
+    e.currentTarget.value = formatPhoneValue(e.currentTarget.value, options);
+  };
+
   if (type === "restaurant") {
     return (
       <>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 10,
+            padding: "10px 12px",
+            borderRadius: 14,
+            background: "var(--primary-soft)",
+            border: "1px solid var(--line)",
+          }}
+        >
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 10,
+              display: "grid",
+              placeItems: "center",
+              color: "var(--primary)",
+              background: "#fff",
+            }}
+          >
+            <Icon name="pie" />
+          </div>
+          <p className="small" style={{ margin: 0, color: "var(--text)" }}>Расскажите о вашем заведении и добавьте лучшие фото</p>
+        </div>
         <h3 style={{ marginBottom: 8 }}>Создать заведение</h3>
         <form className="list" onSubmit={(e) => onSubmit(e, "restaurant")}>
           <Field label="Название"><input required name="title" className="input" minLength={2} maxLength={100} /></Field>
           <Field label="Описание"><textarea required name="desc" className="textarea" maxLength={2000} /></Field>
           <Field label="Адрес"><input required name="address" className="input" minLength={5} maxLength={200} /></Field>
           <div className="grid-2">
-            <Field label="Телефон"><input required name="phone" className="input" /></Field>
+            <Field label="Телефон">
+              <input
+                required
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                className="input"
+                placeholder={phonePlaceholder}
+                maxLength={18}
+                pattern={phonePattern}
+                title="Введите номер в формате +7 (999) 999-99-99"
+                onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+              />
+            </Field>
             <Field label="Telegram"><input name="telegram" className="input" placeholder="@username" /></Field>
           </div>
-          <Field label="WhatsApp"><input name="whatsapp" className="input" /></Field>
+          <Field label="WhatsApp">
+            <input
+              name="whatsapp"
+              type="tel"
+              inputMode="tel"
+              className="input"
+              placeholder={phonePlaceholder}
+              maxLength={18}
+              pattern={phonePattern}
+              title="Введите номер в формате +7 (999) 999-99-99"
+              onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+            />
+          </Field>
           <Field label="Фото (до 10)">
             <div className="input-with-clear">
               <input
@@ -444,8 +519,33 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
             <Field label="Свободных мест"><input name="seats" type="number" min={1} className="input" /></Field>
           </div>
           <Field label="Дата и время"><input name="when" className="input" placeholder="Например, Сегодня 15:30" /></Field>
-          <Field label="Телефон"><input required name="phone" className="input" /></Field>
-          <Field label="WhatsApp"><input name="wa" className="input" /></Field>
+          <Field label="Телефон">
+            <input
+              required
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              className="input"
+              placeholder={phonePlaceholder}
+              maxLength={18}
+              pattern={phonePattern}
+              title="Введите номер в формате +7 (999) 999-99-99"
+              onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+            />
+          </Field>
+          <Field label="WhatsApp">
+            <input
+              name="wa"
+              type="tel"
+              inputMode="tel"
+              className="input"
+              placeholder={phonePlaceholder}
+              maxLength={18}
+              pattern={phonePattern}
+              title="Введите номер в формате +7 (999) 999-99-99"
+              onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+            />
+          </Field>
           <Field label="Telegram"><input name="tg" className="input" /></Field>
           <Field label="Описание"><textarea name="desc" className="textarea" maxLength={2000} /></Field>
           <Field label="Фото автомобиля"><input name="photo" className="input" placeholder="https://..." /></Field>
@@ -514,14 +614,64 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
 }
 
 export function ProfileEditForm({ profile, onSubmit, onClose }) {
+  const phonePattern = "\\+7 \\(\\d{3}\\) \\d{3}-\\d{2}-\\d{2}";
+  const phonePlaceholder = "+7 (___) ___-__-__";
+
+  const formatPhoneValue = (raw, { allowEmpty = true } = {}) => {
+    const digits = String(raw || "").replace(/\D/g, "");
+    if (!digits) return allowEmpty ? "" : "+7";
+
+    const national = (digits[0] === "7" || digits[0] === "8") ? digits.slice(1, 11) : digits.slice(0, 10);
+    let result = "+7";
+
+    if (national.length > 0) result += ` (${national.slice(0, 3)}`;
+    if (national.length >= 3) result += ")";
+    if (national.length > 3) result += ` ${national.slice(3, 6)}`;
+    if (national.length > 6) result += `-${national.slice(6, 8)}`;
+    if (national.length > 8) result += `-${national.slice(8, 10)}`;
+
+    return result;
+  };
+
+  const handlePhoneInput = (e, options = {}) => {
+    e.currentTarget.value = formatPhoneValue(e.currentTarget.value, options);
+  };
+
   return (
     <>
       <h3 style={{ marginBottom: 8 }}>Редактирование профиля</h3>
       <form className="list" onSubmit={(e) => onSubmit(e, "profile")}>
         <Field label="Имя"><input required name="name" defaultValue={profile.name} className="input" minLength={2} maxLength={80} /></Field>
-        <Field label="Телефон"><input required name="phone" defaultValue={profile.phone} className="input" /></Field>
+        <Field label="Телефон">
+          <input
+            required
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            defaultValue={formatPhoneValue(profile.phone, { allowEmpty: true })}
+            className="input"
+            placeholder={phonePlaceholder}
+            maxLength={18}
+            pattern={phonePattern}
+            title="Введите номер в формате +7 (999) 999-99-99"
+            onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+          />
+        </Field>
         <Field label="Telegram"><input name="telegram" defaultValue={profile.telegram} className="input" /></Field>
-        <Field label="WhatsApp"><input name="whatsapp" defaultValue={profile.whatsapp} className="input" /></Field>
+        <Field label="WhatsApp">
+          <input
+            name="whatsapp"
+            type="tel"
+            inputMode="tel"
+            defaultValue={formatPhoneValue(profile.whatsapp, { allowEmpty: true })}
+            className="input"
+            placeholder={phonePlaceholder}
+            maxLength={18}
+            pattern={phonePattern}
+            title="Введите номер в формате +7 (999) 999-99-99"
+            onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+          />
+        </Field>
         <Field label="О себе"><textarea name="about" defaultValue={profile.about} className="textarea" maxLength={500} /></Field>
         <FormActions onClose={onClose} />
       </form>
