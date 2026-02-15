@@ -1,4 +1,4 @@
-import { CategoryTabs, Empty, Section, SectionHeader, SortSelect, StatCard } from "../components/ui";
+import { CategoryTabs, Empty, Icon, Section, SectionHeader, SortSelect, StatCard } from "../components/ui";
 import { FoodCard, ItemCard, TaxiCard } from "../components/cards";
 
 export function AdsTab({ adsCategoriesVisible, adsCategory, setAdsCategory, adsSort, setAdsSort, adsItems, openCreate, openDetail, toggleFavorite, favorites }) {
@@ -70,7 +70,22 @@ export function FoodTab({ foodCategory, setFoodCategory, foodSort, setFoodSort, 
   );
 }
 
-export function ProfileTab({ isAuth, profile, myAdsCount, myServicesCount, openEditProfile, toggleAuth }) {
+export function ProfileTab({
+  isAuth,
+  profile,
+  myAdsCount,
+  myServicesCount,
+  hasRestaurant,
+  isTaxiDriver,
+  taxiTemplates,
+  onPauseTemplate,
+  onResumeTemplate,
+  onDeleteTemplate,
+  onEditTemplate,
+  openCreate,
+  openEditProfile,
+  toggleAuth,
+}) {
   return (
     <Section>
       <h2>Профиль</h2>
@@ -93,6 +108,53 @@ export function ProfileTab({ isAuth, profile, myAdsCount, myServicesCount, openE
           <StatCard title={String(myAdsCount)} caption="Мои объявления" />
           <StatCard title={String(myServicesCount)} caption="Мои услуги" />
         </div>
+
+        <Section>
+          <h4>Быстрые действия</h4>
+          <div className="quick-actions" style={{ marginTop: 8 }}>
+            <button className="ghost-btn quick-action-btn" type="button" onClick={() => openCreate("restaurant")}>
+              <Icon name="food" />
+              {hasRestaurant ? "Управлять заведением" : "Добавить заведение"}
+            </button>
+            <button className="ghost-btn quick-action-btn" type="button" onClick={() => openCreate("taxi")}>
+              <Icon name="taxi" />
+              Стать водителем такси
+            </button>
+            <button className="ghost-btn quick-action-btn" type="button" onClick={() => openCreate("service")}>
+              <Icon name="services" />
+              Добавить услугу
+            </button>
+          </div>
+        </Section>
+
+        {isAuth && isTaxiDriver ? (
+          <Section>
+            <h4>Мои регулярные поездки</h4>
+            <p className="small">{taxiTemplates.length ? "Управляйте расписанием без повторного создания объявлений." : "Пока нет регулярных поездок."}</p>
+            <div className="list" style={{ marginTop: 8 }}>
+              {taxiTemplates.map((template) => (
+                <article className="card" key={template.id}>
+                  <div className="card-body">
+                    <div className="card-title">{template.category}</div>
+                    <div className="small">{template.weekdays.join(", ")} · {template.time}</div>
+                    <div className="row wrap">
+                      <span className="badge">{template.status === "paused" ? "На паузе" : "Активна"}</span>
+                    </div>
+                    <div className="actions">
+                      {template.status === "paused" ? (
+                        <button className="ghost-btn" type="button" onClick={() => onResumeTemplate(template.id)}>Возобновить</button>
+                      ) : (
+                        <button className="ghost-btn" type="button" onClick={() => onPauseTemplate(template.id)}>Пауза</button>
+                      )}
+                      <button className="ghost-btn" type="button" onClick={() => onEditTemplate(template.id)}>Изменить</button>
+                      <button className="danger-btn" type="button" onClick={() => onDeleteTemplate(template.id)}>Удалить</button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </Section>
+        ) : null}
 
         <div className="actions profile-actions">
           <button className={isAuth ? "ghost-btn" : "primary-btn"} type="button" onClick={toggleAuth}>

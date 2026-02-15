@@ -485,6 +485,31 @@ button {
   min-width: 0;
 }
 
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.quick-action-btn {
+  width: 100%;
+  min-height: 86px;
+  justify-content: center;
+  text-align: center;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.quick-action-btn .icon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
 .stat-card {
   min-height: 84px;
   display: grid;
@@ -664,6 +689,10 @@ button {
 @media (max-width: 340px) {
   .profile-grid,
   .profile-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-actions {
     grid-template-columns: 1fr;
   }
 }

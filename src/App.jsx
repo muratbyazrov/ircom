@@ -14,12 +14,17 @@ const dayStart = (date) => new Date(date.getFullYear(), date.getMonth(), date.ge
 const formatDateRu = (date) => new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }).format(date);
 const buildUserPhoto = (name, idx) => `https://picsum.photos/seed/${encodeURIComponent(`user-taxi-${name}-${idx}`)}/900/600`;
 const randomSuffix = () => Math.random().toString(36).slice(2, 8);
+const normalizeWeekdays = (value) => {
+  const source = Array.isArray(value) ? value : String(value || "").split(",");
+  return source.map((x) => String(x).trim()).filter((x) => x in WEEKDAY_TO_INDEX);
+};
 
 function buildRecurringTaxiOccurrences(templates, horizonDays = 14) {
   const today = dayStart(new Date());
   const result = [];
 
   for (const template of templates) {
+    if (template.status === "paused") continue;
     const weekdays = Array.isArray(template.weekdays) ? template.weekdays : [];
     for (let offset = 0; offset <= horizonDays; offset += 1) {
       const date = new Date(today);
@@ -61,6 +66,7 @@ export default function App() {
   const [taxiSort, setTaxiSort] = useState("rating");
   const [customTaxiItems, setCustomTaxiItems] = useState([]);
   const [taxiTemplates, setTaxiTemplates] = useState([]);
+  const [isTaxiDriver, setIsTaxiDriver] = useState(false);
   const [modal, setModal] = useState(null);
 
   const adsCategoriesVisible = isAuth ? mock.adsCategories : mock.adsCategories.filter((x) => x !== "Мои объявления");
@@ -110,6 +116,7 @@ export default function App() {
       setIsAuth(false);
       setProfile({ name: "Гость", phone: "-", telegram: "-", whatsapp: "-", about: "Авторизуйтесь, чтобы управлять профилем." });
       setHasRestaurant(false);
+      setIsTaxiDriver(false);
       return;
     }
 
@@ -210,7 +217,7 @@ export default function App() {
     if (type === "taxi") {
       const categories = toArray(payload.category).filter(Boolean);
       const mode = payload.mode === "recurring" ? "recurring" : "one-time";
-      const scheduleDays = toArray(payload.scheduleDay).filter((x) => x in WEEKDAY_TO_INDEX);
+      const scheduleDays = normalizeWeekdays(payload.scheduleDay);
       const scheduleHour = typeof payload.scheduleHour === "string" ? payload.scheduleHour : "08:00";
       const seatsValue = Number(payload.seats);
       const seats = Number.isFinite(seatsValue) && seatsValue > 0 ? { total: seatsValue, free: seatsValue } : null;
@@ -234,8 +241,10 @@ export default function App() {
           photos,
           weekdays: scheduleDays,
           time: scheduleHour,
+          status: "active",
         }));
         setTaxiTemplates((prev) => [...templates, ...prev]);
+        setIsTaxiDriver(true);
       } else if (categories.length) {
         const items = categories.map((category) => ({
           id: `taxi-custom-${Date.now()}-${randomSuffix()}`,
@@ -251,11 +260,38 @@ export default function App() {
           photos,
         }));
         setCustomTaxiItems((prev) => [...items, ...prev]);
+        setIsTaxiDriver(true);
       }
     }
 
     alert(`Мок-отправка (${type})\n${JSON.stringify(payload, null, 2)}`);
     setModal(null);
+  };
+
+  const setTemplateStatus = (id, status) => {
+    setTaxiTemplates((prev) => prev.map((x) => (x.id === id ? { ...x, status } : x)));
+  };
+
+  const removeTemplate = (id) => {
+    setTaxiTemplates((prev) => prev.filter((x) => x.id !== id));
+  };
+
+  const editTemplate = (id) => {
+    setTaxiTemplates((prev) => prev.map((template) => {
+      if (template.id !== id) return template;
+
+      const daysInput = window.prompt("Дни недели через запятую (например: Пн,Ср,Пт)", template.weekdays.join(","));
+      if (daysInput === null) return template;
+      const nextDays = normalizeWeekdays(daysInput);
+      if (!nextDays.length) return template;
+
+      const timeInput = window.prompt("Время выезда в формате HH:00 (например: 08:00)", template.time);
+      if (timeInput === null) return template;
+      const nextTime = String(timeInput).trim();
+      if (!/^(0[4-9]|1\d|2[0-4]):00$/.test(nextTime)) return template;
+
+      return { ...template, weekdays: nextDays, time: nextTime };
+    }));
   };
 
   return (
@@ -340,6 +376,14 @@ export default function App() {
             profile={profile}
             myAdsCount={mock.ads.filter((x) => x.owner === "murat").length}
             myServicesCount={2}
+            hasRestaurant={hasRestaurant}
+            isTaxiDriver={isTaxiDriver}
+            taxiTemplates={taxiTemplates}
+            onPauseTemplate={(id) => setTemplateStatus(id, "paused")}
+            onResumeTemplate={(id) => setTemplateStatus(id, "active")}
+            onDeleteTemplate={removeTemplate}
+            onEditTemplate={editTemplate}
+            openCreate={openCreate}
             openEditProfile={openEditProfile}
             toggleAuth={toggleAuth}
           />

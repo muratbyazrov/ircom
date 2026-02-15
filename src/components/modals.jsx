@@ -406,6 +406,9 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
     e.currentTarget.value = formatPhoneValue(e.currentTarget.value, options);
   };
 
+  const cityCategory = "Такси по Цхинвалу";
+  const isRecurring = taxiOfferMode === "recurring";
+
   const toggleTaxiCategory = (category) => {
     const isCity = category === cityCategory;
     setSelectedTaxiCategories((prev) => {
@@ -414,14 +417,11 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
         return [cityCategory];
       }
 
-      const withoutCity = prev.filter((x) => x !== cityCategory);
-      if (withoutCity.includes(category)) return withoutCity.filter((x) => x !== category);
-      return [...withoutCity, category];
+      if (prev.includes(category)) return prev.filter((x) => x !== category);
+      return [category];
     });
   };
-  const cityCategory = "Такси по Цхинвалу";
   const isIntercitySelected = selectedTaxiCategories.some((x) => x !== cityCategory);
-  const isRecurring = taxiOfferMode === "recurring";
   const taxiDayPresets = ["Сегодня", "Завтра", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
   const recurringWeekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
   const formatTaxiHour = (hour) => `${hour % 24}`.padStart(2, "0") + ":00";
@@ -619,7 +619,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
               <input key={x} type="hidden" name="category" value={x} />
             ))}
             <p className="small" style={{ marginTop: 6, color: "var(--muted)" }}>
-              Нельзя совмещать город и межгород в одном предложении.
+              Можно выбрать только одно направление.
             </p>
             {!selectedTaxiCategories.length ? <p className="small" style={{ color: "var(--danger)", marginTop: 6 }}>Выберите хотя бы одно направление</p> : null}
           </Field>
