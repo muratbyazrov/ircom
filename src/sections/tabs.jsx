@@ -66,36 +66,36 @@ export function FoodTab({ foodCategory, setFoodCategory, foodSort, setFoodSort, 
   );
 }
 
-export function ProfileTab({ isAuth, profile, myAdsCount, myServicesCount, openEditProfile, setTab, toggleAuth }) {
+export function ProfileTab({ isAuth, profile, myAdsCount, myServicesCount, openEditProfile, toggleAuth }) {
   return (
     <Section>
       <h2>Профиль</h2>
       <p className="small">{isAuth ? "Аккаунт активен" : "Войдите для публикации, лайков и редактирования"}</p>
 
-      <div className="grid-2" style={{ marginTop: 10 }}>
-        <StatCard title={profile.name} caption="Имя" />
-        <StatCard title={profile.phone} caption="Телефон" />
-        <StatCard title={profile.telegram} caption="Telegram" />
-        <StatCard title={profile.whatsapp} caption="WhatsApp" />
-      </div>
+      <div className="profile-stack">
+        <div className="grid-2 profile-grid">
+          <StatCard title={profile.name} caption="Имя" />
+          <StatCard title={profile.phone} caption="Телефон" />
+          <StatCard title={profile.telegram} caption="Telegram" />
+          <StatCard title={profile.whatsapp} caption="WhatsApp" />
+        </div>
 
-      <Section>
-        <h4>О себе</h4>
-        <p className="small">{profile.about}</p>
-      </Section>
+        <Section>
+          <h4>О себе</h4>
+          <p className="small">{profile.about}</p>
+        </Section>
 
-      <div className="grid-2" style={{ marginTop: 10 }}>
-        <StatCard title={String(myAdsCount)} caption="Мои объявления" />
-        <StatCard title={String(myServicesCount)} caption="Мои услуги" />
-      </div>
+        <div className="grid-2 profile-grid">
+          <StatCard title={String(myAdsCount)} caption="Мои объявления" />
+          <StatCard title={String(myServicesCount)} caption="Мои услуги" />
+        </div>
 
-      <div className="actions" style={{ marginTop: 10 }}>
-        <button className={isAuth ? "ghost-btn" : "primary-btn"} type="button" onClick={toggleAuth}>
-          {isAuth ? "Выйти из аккаунта" : "Войти в аккаунт"}
-        </button>
-        <button className="primary-btn" type="button" onClick={openEditProfile}>Редактировать профиль</button>
-        <button className="ghost-btn" type="button" onClick={() => setTab("ads")}>К объявлениям</button>
-        <button className="ghost-btn" type="button" onClick={() => setTab("food")}>К еде</button>
+        <div className="actions profile-actions">
+          <button className={isAuth ? "ghost-btn" : "primary-btn"} type="button" onClick={toggleAuth}>
+            {isAuth ? "Выйти из аккаунта" : "Войти в аккаунт"}
+          </button>
+          {isAuth ? <button className="primary-btn" type="button" onClick={openEditProfile}>Редактировать профиль</button> : null}
+        </div>
       </div>
     </Section>
   );

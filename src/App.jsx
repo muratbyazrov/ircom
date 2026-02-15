@@ -138,6 +138,7 @@ export default function App() {
   const openEditProfile = () => ensureAuth(() => setModal({ type: "profileEdit", payload: profile }));
   const createType = modal?.type === "create" ? modal.payload?.type : null;
   const fullScreenCreate = createType === "ad" || createType === "service" || createType === "taxi";
+  const fullScreenModal = modal?.type === "detail" || modal?.type === "profileEdit" || fullScreenCreate;
 
   const submitMock = (event, type) => {
     event.preventDefault();
@@ -242,7 +243,6 @@ export default function App() {
             myAdsCount={mock.ads.filter((x) => x.owner === "murat").length}
             myServicesCount={2}
             openEditProfile={openEditProfile}
-            setTab={setTab}
             toggleAuth={toggleAuth}
           />
         )}
@@ -260,7 +260,7 @@ export default function App() {
       <Modal
         open={Boolean(modal)}
         onClose={() => setModal(null)}
-        variant={modal?.type === "detail" || fullScreenCreate ? "full" : "sheet"}
+        variant={fullScreenModal ? "full" : "sheet"}
       >
         {modal?.type === "auth" && (
           <>

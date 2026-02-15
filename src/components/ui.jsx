@@ -99,7 +99,7 @@ export function Modal({ open, onClose, children, variant = "sheet" }) {
 
 export function Field({ label, children }) {
   return (
-    <div>
+    <div className="field">
       <div className="label">{label}</div>
       {children}
     </div>
@@ -117,7 +117,7 @@ export function FormActions({ onClose, submitDisabled = false, submitLabel = "С
 
 export function StatCard({ title, caption }) {
   return (
-    <div className="section" style={{ padding: 10 }}>
+    <div className="section stat-card" style={{ padding: 10 }}>
       <h4>{title}</h4>
       <p className="small">{caption}</p>
     </div>
