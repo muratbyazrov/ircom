@@ -1,8 +1,8 @@
 export const tabConfig = [
   ["ads", "ads", "Объявления"],
   ["services", "services", "Услуги"],
-  ["taxi", "taxi", "Такси"],
   ["food", "food", "Еда"],
+  ["taxi", "taxi", "Такси"],
   ["profile", "profile", "Профиль"],
 ];
 
