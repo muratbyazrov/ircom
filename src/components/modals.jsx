@@ -344,6 +344,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   const [selectedPhotoCount, setSelectedPhotoCount] = useState(0);
   const [photosLimitError, setPhotosLimitError] = useState("");
   const [selectedTaxiCategories, setSelectedTaxiCategories] = useState(() => (type === "taxi" ? [taxiCategories?.[0]].filter(Boolean) : []));
+  const [taxiDayPreset, setTaxiDayPreset] = useState("");
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
   const maxPhotos = type === "taxi" ? 3 : 10;
@@ -416,6 +417,34 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   };
   const cityCategory = "Такси по Цхинвалу";
   const isIntercitySelected = selectedTaxiCategories.some((x) => x !== cityCategory);
+  const taxiDayPresets = ["Сегодня", "Завтра", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+  const getTaxiDateByPreset = (preset) => {
+    if (!preset) return "";
+
+    const now = new Date();
+    const date = new Date(now);
+    const weekdays = { Вс: 0, Пн: 1, Вт: 2, Ср: 3, Чт: 4, Пт: 5, Сб: 6 };
+
+    if (preset === "Сегодня") {
+      // keep current date
+    } else if (preset === "Завтра") {
+      date.setDate(now.getDate() + 1);
+    } else {
+      const target = weekdays[preset];
+      if (typeof target === "number") {
+        const diff = (target - now.getDay() + 7) % 7;
+        date.setDate(now.getDate() + diff);
+      }
+    }
+
+    return new Intl.DateTimeFormat("ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(date);
+  };
+  const taxiDateValue = getTaxiDateByPreset(taxiDayPreset);
+  const taxiWhenValue = taxiDayPreset && taxiDateValue ? `${taxiDayPreset} (${taxiDateValue})` : "";
 
   if (type === "restaurant") {
     return (
@@ -579,7 +608,31 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
             <Field label="Стоимость"><input required name="price" type="number" min={1} inputMode="numeric" pattern="[0-9]*" className="input" /></Field>
             {isIntercitySelected ? <Field label="Свободных мест"><input name="seats" type="number" min={1} className="input" /></Field> : null}
           </div>
-          {isIntercitySelected ? <Field label="Дата и время"><input name="when" className="input" placeholder="Например, Сегодня 15:30" /></Field> : null}
+          {isIntercitySelected ? (
+            <Field label="Дата и время">
+              <div className="multi-select-buttons">
+                {taxiDayPresets.map((x) => (
+                  <button
+                    key={x}
+                    type="button"
+                    className={`multi-select-btn ${taxiDayPreset === x ? "active" : ""}`}
+                    onClick={() => setTaxiDayPreset((prev) => (prev === x ? "" : x))}
+                    aria-pressed={taxiDayPreset === x}
+                  >
+                    {x}
+                  </button>
+                ))}
+              </div>
+              {taxiDateValue ? (
+                <p className="small" style={{ marginTop: 8 }}>
+                  Дата поездки: <b>{taxiDateValue}</b>
+                </p>
+              ) : (
+                <p className="small" style={{ marginTop: 8 }}>Выберите день поездки</p>
+              )}
+              <input type="hidden" name="when" value={taxiWhenValue} />
+            </Field>
+          ) : null}
           <Field label="Телефон">
             <input
               required

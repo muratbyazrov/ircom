@@ -28,6 +28,7 @@ body {
   font-family: "Manrope", sans-serif;
   background: radial-gradient(circle at top left, #ffe7ea 0%, var(--bg) 55%, #fff4f4 100%);
   color: var(--text);
+  overflow-x: hidden;
 }
 
 body {
@@ -160,6 +161,8 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
 }
 
 .multi-select-btn {
@@ -171,6 +174,11 @@ body {
   font-size: 14px;
   font-weight: 700;
   line-height: 1;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 
 .multi-select-btn.active {
@@ -598,6 +606,7 @@ button {
   bottom: 8px;
   max-height: 82vh;
   overflow: auto;
+  overflow-x: hidden;
   background: #fff;
   border-radius: 16px;
   border: 1px solid var(--line);
