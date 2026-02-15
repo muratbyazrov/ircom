@@ -404,16 +404,12 @@ button {
   gap: 8px;
 }
 
-.upload-status-wrap {
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+.input-with-clear {
+  position: relative;
 }
 
-.upload-status-wrap .upload-status {
-  margin-top: 0;
+.input-has-clear {
+  padding-right: 40px;
 }
 
 .loader-spinner {
@@ -443,6 +439,13 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.clear-photos-inside {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
 }
 
 .modal {

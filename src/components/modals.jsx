@@ -233,7 +233,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
           </Field>
           <Field label="Имя/ник"><input required name="name" className="input" minLength={2} maxLength={60} /></Field>
           <div className="grid-2">
-            <Field label="Стоимость"><input required name="price" type="number" min={1} className="input" /></Field>
+            <Field label="Стоимость"><input required name="price" type="number" min={1} inputMode="numeric" pattern="[0-9]*" className="input" /></Field>
             <Field label="Свободных мест"><input name="seats" type="number" min={1} className="input" /></Field>
           </div>
           <Field label="Дата и время"><input name="when" className="input" placeholder="Например, Сегодня 15:30" /></Field>
@@ -260,36 +260,38 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
       <form className="list" onSubmit={(e) => onSubmit(e, type)}>
         <Field label="Название"><input required name="title" className="input" minLength={3} maxLength={80} /></Field>
         <Field label="Категория"><select className="select" name="category">{categories.map((x) => <option key={x}>{x}</option>)}</select></Field>
-        <Field label="Цена, ₽"><input required name="price" type="number" min={1} className="input" /></Field>
+        <Field label="Цена, ₽"><input required name="price" type="number" min={1} inputMode="numeric" pattern="[0-9]*" className="input" /></Field>
         <Field label="Описание"><textarea required name="desc" className="textarea" minLength={10} maxLength={2000} /></Field>
         <Field label="Фото (до 10)">
-          <input
-            type="file"
-            name="images"
-            className="input"
-            multiple
-            accept="image/*"
-            ref={imagesInputRef}
-            onChange={handleImagesChange}
-            onClick={(e) => {
-              e.currentTarget.value = "";
-            }}
-          />
-          {selectedPhotoCount > 0 ? (
-            <div className="upload-status-wrap">
-              <div className="upload-status" aria-live="polite">
-                {isPreparingPhotos ? (
-                  <>
-                    <span className="loader-spinner" aria-hidden="true" />
-                    Подготавливаем {selectedPhotoCount} фото...
-                  </>
-                ) : (
-                  <>Выбрано фото: {selectedPhotoCount}</>
-                )}
-              </div>
-              <button className="clear-photos-btn" type="button" onClick={clearSelectedImages} aria-label="Убрать выбранные фото">
+          <div className="input-with-clear">
+            <input
+              type="file"
+              name="images"
+              className={`input ${selectedPhotoCount > 0 ? "input-has-clear" : ""}`}
+              multiple
+              accept="image/*"
+              ref={imagesInputRef}
+              onChange={handleImagesChange}
+              onClick={(e) => {
+                e.currentTarget.value = "";
+              }}
+            />
+            {selectedPhotoCount > 0 ? (
+              <button className="clear-photos-btn clear-photos-inside" type="button" onClick={clearSelectedImages} aria-label="Убрать выбранные фото">
                 ×
               </button>
+            ) : null}
+          </div>
+          {selectedPhotoCount > 0 ? (
+            <div className="upload-status" aria-live="polite">
+              {isPreparingPhotos ? (
+                <>
+                  <span className="loader-spinner" aria-hidden="true" />
+                  Подготавливаем {selectedPhotoCount} фото...
+                </>
+              ) : (
+                <>Выбрано фото: {selectedPhotoCount}</>
+              )}
             </div>
           ) : null}
         </Field>
