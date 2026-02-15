@@ -11,6 +11,10 @@
   --success: #16a34a;
   --radius: 18px;
   --shadow: 0 12px 30px rgba(2, 20, 41, 0.08);
+  --z-topbar: 20;
+  --z-bottom-nav: 40;
+  --z-modal: 70;
+  --z-viewer: 90;
 }
 
 * {
@@ -43,7 +47,7 @@ body {
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: var(--z-topbar);
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -320,6 +324,7 @@ button {
 .bottom-nav {
   position: fixed;
   bottom: 0;
+  z-index: var(--z-bottom-nav);
   width: min(100vw, 560px);
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   display: grid;
@@ -388,7 +393,7 @@ button {
 .modal {
   position: fixed;
   inset: 0;
-  z-index: 20;
+  z-index: var(--z-modal);
 }
 
 .modal.hidden {
@@ -403,6 +408,7 @@ button {
 
 .modal-card {
   position: absolute;
+  z-index: 1;
   left: 8px;
   right: 8px;
   bottom: 8px;
@@ -485,7 +491,7 @@ button {
 .viewer {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: var(--z-viewer);
   background: #000;
   overscroll-behavior: contain;
 }
