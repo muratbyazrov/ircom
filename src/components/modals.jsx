@@ -326,10 +326,10 @@ export function DetailModalContent({ data, onFav, isFav }) {
                 </div>
               ))}
             </div>
-            <button className="viewer-close" type="button" onClick={() => setViewerIndex(null)}>
-              ×
-            </button>
           </div>
+          <button className="viewer-close" type="button" onClick={() => setViewerIndex(null)}>
+            ×
+          </button>
         </section>
       ) : null}
     </>
