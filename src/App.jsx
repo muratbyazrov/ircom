@@ -6,6 +6,39 @@ import { AdsTab, FoodTab, ProfileTab, ServicesTab, TaxiTab } from "./sections/ta
 import { tabConfig } from "./utils/constants";
 import { sortItems } from "./utils/helpers";
 
+const WEEKDAY_TO_INDEX = { Вс: 0, Пн: 1, Вт: 2, Ср: 3, Чт: 4, Пт: 5, Сб: 6 };
+const INDEX_TO_WEEKDAY = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+
+const toArray = (value) => (Array.isArray(value) ? value : value ? [value] : []);
+const dayStart = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+const formatDateRu = (date) => new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }).format(date);
+const buildUserPhoto = (name, idx) => `https://picsum.photos/seed/${encodeURIComponent(`user-taxi-${name}-${idx}`)}/900/600`;
+const randomSuffix = () => Math.random().toString(36).slice(2, 8);
+
+function buildRecurringTaxiOccurrences(templates, horizonDays = 14) {
+  const today = dayStart(new Date());
+  const result = [];
+
+  for (const template of templates) {
+    const weekdays = Array.isArray(template.weekdays) ? template.weekdays : [];
+    for (let offset = 0; offset <= horizonDays; offset += 1) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + offset);
+      const weekday = INDEX_TO_WEEKDAY[date.getDay()];
+      if (!weekdays.includes(weekday)) continue;
+
+      result.push({
+        ...template,
+        id: `${template.id}-${date.toISOString().slice(0, 10)}`,
+        when: `${weekday} (${formatDateRu(date)}) ${template.time}`,
+        date: offset,
+      });
+    }
+  }
+
+  return result;
+}
+
 export default function App() {
   const [tab, setTab] = useState("ads");
   const [isAuth, setIsAuth] = useState(false);
@@ -26,6 +59,8 @@ export default function App() {
   const [servicesSort, setServicesSort] = useState("date");
   const [foodSort, setFoodSort] = useState("price");
   const [taxiSort, setTaxiSort] = useState("rating");
+  const [customTaxiItems, setCustomTaxiItems] = useState([]);
+  const [taxiTemplates, setTaxiTemplates] = useState([]);
   const [modal, setModal] = useState(null);
 
   const adsCategoriesVisible = isAuth ? mock.adsCategories : mock.adsCategories.filter((x) => x !== "Мои объявления");
@@ -122,13 +157,15 @@ export default function App() {
     [foodCategory, foodSort, favorites]
   );
 
+  const recurringTaxiItems = useMemo(() => buildRecurringTaxiOccurrences(taxiTemplates, 14), [taxiTemplates]);
+  const allTaxiItems = useMemo(() => [...customTaxiItems, ...recurringTaxiItems, ...mock.taxi], [customTaxiItems, recurringTaxiItems]);
   const taxiItems = useMemo(
-    () => sortItems(mock.taxi.filter((x) => x.category === taxiCategory), taxiSort, favorites),
-    [taxiCategory, taxiSort, favorites]
+    () => sortItems(allTaxiItems.filter((x) => x.category === taxiCategory), taxiSort, favorites),
+    [allTaxiItems, taxiCategory, taxiSort, favorites]
   );
 
   const openDetail = (type, id) => {
-    const source = type === "ads" ? mock.ads : type === "services" ? mock.services : type === "food" ? mock.food : mock.taxi;
+    const source = type === "ads" ? mock.ads : type === "services" ? mock.services : type === "food" ? mock.food : allTaxiItems;
     const item = source.find((x) => x.id === id);
     if (!item) return;
     setModal({ type: "detail", payload: { type, item } });
@@ -169,6 +206,52 @@ export default function App() {
         whatsapp: payload.whatsapp || "-",
         about: payload.about || "-",
       });
+    }
+    if (type === "taxi") {
+      const categories = toArray(payload.category).filter(Boolean);
+      const mode = payload.mode === "recurring" ? "recurring" : "one-time";
+      const scheduleDays = toArray(payload.scheduleDay).filter((x) => x in WEEKDAY_TO_INDEX);
+      const scheduleHour = typeof payload.scheduleHour === "string" ? payload.scheduleHour : "08:00";
+      const seatsValue = Number(payload.seats);
+      const seats = Number.isFinite(seatsValue) && seatsValue > 0 ? { total: seatsValue, free: seatsValue } : null;
+      const photos = toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx));
+      const contacts = {
+        ...(payload.phone ? { phone: payload.phone } : {}),
+        ...(payload.wa ? { wa: payload.wa } : {}),
+        ...(payload.tg ? { tg: payload.tg } : {}),
+      };
+
+      if (mode === "recurring" && scheduleDays.length && categories.length) {
+        const templates = categories.map((category) => ({
+          id: `taxi-template-${Date.now()}-${randomSuffix()}`,
+          category,
+          name: payload.name || "Водитель",
+          price: Number(payload.price) || 0,
+          rating: 5,
+          seats,
+          desc: payload.desc || "Регулярные поездки по расписанию.",
+          contacts,
+          photos,
+          weekdays: scheduleDays,
+          time: scheduleHour,
+        }));
+        setTaxiTemplates((prev) => [...templates, ...prev]);
+      } else if (categories.length) {
+        const items = categories.map((category) => ({
+          id: `taxi-custom-${Date.now()}-${randomSuffix()}`,
+          category,
+          name: payload.name || "Водитель",
+          price: Number(payload.price) || 0,
+          rating: 5,
+          date: 0,
+          seats,
+          when: payload.when || null,
+          desc: payload.desc || "Новое предложение",
+          contacts,
+          photos,
+        }));
+        setCustomTaxiItems((prev) => [...items, ...prev]);
+      }
     }
 
     alert(`Мок-отправка (${type})\n${JSON.stringify(payload, null, 2)}`);

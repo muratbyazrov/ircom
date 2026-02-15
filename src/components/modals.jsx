@@ -344,8 +344,11 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   const [selectedPhotoCount, setSelectedPhotoCount] = useState(0);
   const [photosLimitError, setPhotosLimitError] = useState("");
   const [selectedTaxiCategories, setSelectedTaxiCategories] = useState(() => (type === "taxi" ? [taxiCategories?.[0]].filter(Boolean) : []));
+  const [taxiOfferMode, setTaxiOfferMode] = useState("one-time");
   const [taxiDayPreset, setTaxiDayPreset] = useState("");
   const [taxiHourPreset, setTaxiHourPreset] = useState(12);
+  const [recurringDays, setRecurringDays] = useState(["Пн", "Ср", "Пт"]);
+  const [recurringHourPreset, setRecurringHourPreset] = useState(8);
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
   const maxPhotos = type === "taxi" ? 3 : 10;
@@ -418,9 +421,12 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   };
   const cityCategory = "Такси по Цхинвалу";
   const isIntercitySelected = selectedTaxiCategories.some((x) => x !== cityCategory);
+  const isRecurring = taxiOfferMode === "recurring";
   const taxiDayPresets = ["Сегодня", "Завтра", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+  const recurringWeekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
   const formatTaxiHour = (hour) => `${hour % 24}`.padStart(2, "0") + ":00";
   const taxiTimePreset = formatTaxiHour(taxiHourPreset);
+  const recurringTimePreset = formatTaxiHour(recurringHourPreset);
   const getTaxiDateByPreset = (preset) => {
     if (!preset) return "";
 
@@ -450,6 +456,15 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   const taxiWhenValue = taxiDayPreset && taxiDateValue
     ? `${taxiDayPreset} (${taxiDateValue})${taxiTimePreset ? ` ${taxiTimePreset}` : ""}`
     : "";
+  const toggleRecurringDay = (day) => {
+    setRecurringDays((prev) => (
+      prev.includes(day) ? prev.filter((x) => x !== day) : [...prev, day]
+    ));
+  };
+
+  useEffect(() => {
+    if (!isIntercitySelected && taxiOfferMode !== "one-time") setTaxiOfferMode("one-time");
+  }, [isIntercitySelected, taxiOfferMode]);
 
   if (type === "restaurant") {
     return (
@@ -614,37 +629,95 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
             {isIntercitySelected ? <Field label="Свободных мест"><input name="seats" type="number" min={1} className="input" /></Field> : null}
           </div>
           {isIntercitySelected ? (
-            <Field label={taxiDateValue ? `Дата и время (${taxiDateValue} ${taxiTimePreset})` : "Дата и время"}>
-              <div className="multi-select-buttons">
-                {taxiDayPresets.map((x) => (
+            <>
+              <Field label="Формат поездок">
+                <div className="multi-select-buttons">
                   <button
-                    key={x}
                     type="button"
-                    className={`multi-select-btn ${taxiDayPreset === x ? "active" : ""}`}
-                    onClick={() => setTaxiDayPreset((prev) => (prev === x ? "" : x))}
-                    aria-pressed={taxiDayPreset === x}
+                    className={`multi-select-btn ${taxiOfferMode === "one-time" ? "active" : ""}`}
+                    onClick={() => setTaxiOfferMode("one-time")}
+                    aria-pressed={taxiOfferMode === "one-time"}
                   >
-                    {x}
+                    Разовая
                   </button>
-                ))}
-              </div>
-              <p className="small" style={{ marginTop: 8, marginBottom: 6 }}>Время выезда</p>
-              <div className="time-slider-meta">
-                <span>04:00</span>
-                <b>{taxiTimePreset}</b>
-                <span>00:00</span>
-              </div>
-              <input
-                type="range"
-                className="time-slider"
-                min={4}
-                max={24}
-                step={1}
-                value={taxiHourPreset}
-                onChange={(e) => setTaxiHourPreset(Number(e.currentTarget.value))}
-              />
-              <input type="hidden" name="when" value={taxiWhenValue} />
-            </Field>
+                  <button
+                    type="button"
+                    className={`multi-select-btn ${taxiOfferMode === "recurring" ? "active" : ""}`}
+                    onClick={() => setTaxiOfferMode("recurring")}
+                    aria-pressed={taxiOfferMode === "recurring"}
+                  >
+                    Регулярная
+                  </button>
+                </div>
+              </Field>
+              {isRecurring ? (
+                <Field label={`Регулярные выезды (${recurringDays.join(", ") || "выберите дни"} · ${recurringTimePreset})`}>
+                  <div className="multi-select-buttons">
+                    {recurringWeekdays.map((x) => (
+                      <button
+                        key={x}
+                        type="button"
+                        className={`multi-select-btn ${recurringDays.includes(x) ? "active" : ""}`}
+                        onClick={() => toggleRecurringDay(x)}
+                        aria-pressed={recurringDays.includes(x)}
+                      >
+                        {x}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="small" style={{ marginTop: 8, marginBottom: 6 }}>Время выезда</p>
+                  <div className="time-slider-meta">
+                    <span>04:00</span>
+                    <b>{recurringTimePreset}</b>
+                    <span>00:00</span>
+                  </div>
+                  <input
+                    type="range"
+                    className="time-slider"
+                    min={4}
+                    max={24}
+                    step={1}
+                    value={recurringHourPreset}
+                    onChange={(e) => setRecurringHourPreset(Number(e.currentTarget.value))}
+                  />
+                  {recurringDays.map((x) => <input key={x} type="hidden" name="scheduleDay" value={x} />)}
+                  <input type="hidden" name="scheduleHour" value={recurringTimePreset} />
+                </Field>
+              ) : (
+                <Field label={taxiDateValue ? `Дата и время (${taxiDateValue} ${taxiTimePreset})` : "Дата и время"}>
+                  <div className="multi-select-buttons">
+                    {taxiDayPresets.map((x) => (
+                      <button
+                        key={x}
+                        type="button"
+                        className={`multi-select-btn ${taxiDayPreset === x ? "active" : ""}`}
+                        onClick={() => setTaxiDayPreset((prev) => (prev === x ? "" : x))}
+                        aria-pressed={taxiDayPreset === x}
+                      >
+                        {x}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="small" style={{ marginTop: 8, marginBottom: 6 }}>Время выезда</p>
+                  <div className="time-slider-meta">
+                    <span>04:00</span>
+                    <b>{taxiTimePreset}</b>
+                    <span>00:00</span>
+                  </div>
+                  <input
+                    type="range"
+                    className="time-slider"
+                    min={4}
+                    max={24}
+                    step={1}
+                    value={taxiHourPreset}
+                    onChange={(e) => setTaxiHourPreset(Number(e.currentTarget.value))}
+                  />
+                  <input type="hidden" name="when" value={taxiWhenValue} />
+                </Field>
+              )}
+              <input type="hidden" name="mode" value={taxiOfferMode} />
+            </>
           ) : null}
           <Field label="Телефон">
             <input
@@ -711,7 +784,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
           </Field>
           <FormActions
             onClose={onClose}
-            submitDisabled={!selectedTaxiCategories.length || isPreparingPhotos || Boolean(photosLimitError)}
+            submitDisabled={!selectedTaxiCategories.length || isPreparingPhotos || Boolean(photosLimitError) || (isIntercitySelected && isRecurring && !recurringDays.length)}
             submitLabel={isPreparingPhotos ? "Подготовка фото..." : "Сохранить"}
           />
         </form>
