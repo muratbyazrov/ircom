@@ -136,6 +136,8 @@ export default function App() {
 
   const openCreate = (type) => ensureAuth(() => setModal({ type: "create", payload: { type } }));
   const openEditProfile = () => ensureAuth(() => setModal({ type: "profileEdit", payload: profile }));
+  const createType = modal?.type === "create" ? modal.payload?.type : null;
+  const fullScreenCreate = createType === "ad" || createType === "service" || createType === "taxi";
 
   const submitMock = (event, type) => {
     event.preventDefault();
@@ -255,7 +257,11 @@ export default function App() {
         ))}
       </nav>
 
-      <Modal open={Boolean(modal)} onClose={() => setModal(null)} variant={modal?.type === "detail" ? "full" : "sheet"}>
+      <Modal
+        open={Boolean(modal)}
+        onClose={() => setModal(null)}
+        variant={modal?.type === "detail" || fullScreenCreate ? "full" : "sheet"}
+      >
         {modal?.type === "auth" && (
           <>
             <h3>Требуется авторизация</h3>

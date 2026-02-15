@@ -78,10 +78,10 @@ export function Field({ label, children }) {
   );
 }
 
-export function FormActions({ onClose }) {
+export function FormActions({ onClose, submitDisabled = false, submitLabel = "Сохранить" }) {
   return (
     <div className="actions">
-      <button className="primary-btn" type="submit">Сохранить</button>
+      <button className="primary-btn" type="submit" disabled={submitDisabled}>{submitLabel}</button>
       <button className="ghost-btn" type="button" onClick={onClose}>Отмена</button>
     </div>
   );

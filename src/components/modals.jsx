@@ -176,6 +176,39 @@ export function DetailModalContent({ data, onFav, isFav }) {
 }
 
 export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
+  const [isPreparingPhotos, setIsPreparingPhotos] = useState(false);
+  const [selectedPhotoCount, setSelectedPhotoCount] = useState(0);
+  const prepTimerRef = useRef(null);
+  const imagesInputRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (prepTimerRef.current) clearTimeout(prepTimerRef.current);
+    };
+  }, []);
+
+  const handleImagesChange = (e) => {
+    const count = e.target.files?.length || 0;
+    setSelectedPhotoCount(count);
+
+    if (!count) {
+      setIsPreparingPhotos(false);
+      return;
+    }
+
+    setIsPreparingPhotos(true);
+    if (prepTimerRef.current) clearTimeout(prepTimerRef.current);
+    const delayMs = Math.min(1500, Math.max(350, count * 120));
+    prepTimerRef.current = setTimeout(() => setIsPreparingPhotos(false), delayMs);
+  };
+
+  const clearSelectedImages = () => {
+    if (prepTimerRef.current) clearTimeout(prepTimerRef.current);
+    if (imagesInputRef.current) imagesInputRef.current.value = "";
+    setIsPreparingPhotos(false);
+    setSelectedPhotoCount(0);
+  };
+
   if (type === "restaurant") {
     return (
       <>
@@ -236,12 +269,31 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
             className="input"
             multiple
             accept="image/*"
+            ref={imagesInputRef}
+            onChange={handleImagesChange}
             onClick={(e) => {
               e.currentTarget.value = "";
             }}
           />
+          {selectedPhotoCount > 0 ? (
+            <div className="upload-status-wrap">
+              <div className="upload-status" aria-live="polite">
+                {isPreparingPhotos ? (
+                  <>
+                    <span className="loader-spinner" aria-hidden="true" />
+                    Подготавливаем {selectedPhotoCount} фото...
+                  </>
+                ) : (
+                  <>Выбрано фото: {selectedPhotoCount}</>
+                )}
+              </div>
+              <button className="clear-photos-btn" type="button" onClick={clearSelectedImages} aria-label="Убрать выбранные фото">
+                ×
+              </button>
+            </div>
+          ) : null}
         </Field>
-        <FormActions onClose={onClose} />
+        <FormActions onClose={onClose} submitDisabled={isPreparingPhotos} submitLabel={isPreparingPhotos ? "Подготовка фото..." : "Сохранить"} />
       </form>
     </>
   );
