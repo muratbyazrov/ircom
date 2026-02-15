@@ -4,6 +4,8 @@ import { clamp, contactLabel, fmtRub, getTouchDistance } from "../utils/helpers"
 import { FormActions, Icon, Field } from "./ui";
 import { Media } from "./cards";
 import restaurantHero from "../assets/restaurant-hero.svg";
+import taxiHero from "../assets/taxi-hero.svg";
+import serviceHero from "../assets/service-hero.svg";
 
 export function DetailModalContent({ data, onFav, isFav }) {
   const { item, type } = data;
@@ -505,6 +507,29 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   if (type === "taxi") {
     return (
       <>
+        <div
+          style={{
+            display: "grid",
+            gap: 8,
+            marginBottom: 10,
+            padding: 10,
+            borderRadius: 14,
+            background: "var(--primary-soft)",
+            border: "1px solid var(--line)",
+          }}
+        >
+          <img
+            src={taxiHero}
+            alt="Иллюстрация такси"
+            style={{
+              width: "100%",
+              height: 150,
+              objectFit: "cover",
+              borderRadius: 12,
+            }}
+          />
+          <p className="small" style={{ margin: 0, color: "var(--text)" }}>Укажите маршрут, время и контакты для пассажиров</p>
+        </div>
         <h3 style={{ marginBottom: 8 }}>Создание предложения такси</h3>
         <form className="list" onSubmit={(e) => onSubmit(e, "taxi")}>
           <Field label="Направление">
@@ -560,6 +585,31 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
 
   return (
     <>
+      {type === "service" ? (
+        <div
+          style={{
+            display: "grid",
+            gap: 8,
+            marginBottom: 10,
+            padding: 10,
+            borderRadius: 14,
+            background: "var(--primary-soft)",
+            border: "1px solid var(--line)",
+          }}
+        >
+          <img
+            src={serviceHero}
+            alt="Иллюстрация услуги"
+            style={{
+              width: "100%",
+              height: 150,
+              objectFit: "cover",
+              borderRadius: 12,
+            }}
+          />
+          <p className="small" style={{ margin: 0, color: "var(--text)" }}>Опишите услугу, стоимость и приложите примеры работ</p>
+        </div>
+      ) : null}
       <h3 style={{ marginBottom: 8 }}>{type === "ad" ? "Создание объявления" : type === "service" ? "Создание услуги" : "Добавление блюда"}</h3>
       <form className="list" onSubmit={(e) => onSubmit(e, type)}>
         <Field label="Название"><input required name="title" className="input" minLength={3} maxLength={80} /></Field>
