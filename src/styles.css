@@ -524,7 +524,7 @@ button {
 }
 
 .time-slider-meta {
-  margin-top: 4px;
+  margin-bottom: 4px;
   display: flex;
   justify-content: space-between;
   align-items: center;

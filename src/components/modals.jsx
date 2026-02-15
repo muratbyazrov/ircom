@@ -614,7 +614,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
             {isIntercitySelected ? <Field label="Свободных мест"><input name="seats" type="number" min={1} className="input" /></Field> : null}
           </div>
           {isIntercitySelected ? (
-            <Field label="Дата и время">
+            <Field label={taxiDateValue ? `Дата и время (${taxiDateValue} ${taxiTimePreset})` : "Дата и время"}>
               <div className="multi-select-buttons">
                 {taxiDayPresets.map((x) => (
                   <button
@@ -628,14 +628,12 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
                   </button>
                 ))}
               </div>
-              {taxiDateValue ? (
-                <p className="small" style={{ marginTop: 8 }}>
-                  Дата поездки: <b>{taxiDateValue}</b>
-                </p>
-              ) : (
-                <p className="small" style={{ marginTop: 8 }}>Выберите день поездки</p>
-              )}
               <p className="small" style={{ marginTop: 8, marginBottom: 6 }}>Время выезда</p>
+              <div className="time-slider-meta">
+                <span>04:00</span>
+                <b>{taxiTimePreset}</b>
+                <span>00:00</span>
+              </div>
               <input
                 type="range"
                 className="time-slider"
@@ -645,11 +643,6 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
                 value={taxiHourPreset}
                 onChange={(e) => setTaxiHourPreset(Number(e.currentTarget.value))}
               />
-              <div className="time-slider-meta">
-                <span>04:00</span>
-                <b>{taxiTimePreset}</b>
-                <span>00:00</span>
-              </div>
               <input type="hidden" name="when" value={taxiWhenValue} />
             </Field>
           ) : null}
