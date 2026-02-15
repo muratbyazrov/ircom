@@ -45,8 +45,22 @@ export function SortSelect({ value, onChange }) {
   );
 }
 
-export function Modal({ open, onClose, children }) {
+export function Modal({ open, onClose, children, variant = "sheet" }) {
   if (!open) return null;
+
+  if (variant === "full") {
+    return (
+      <section className="modal" aria-hidden="false">
+        <article className="modal-card modal-card-full">
+          <button className="modal-close-inline" type="button" onClick={onClose}>
+            Закрыть
+          </button>
+          {children}
+        </article>
+      </section>
+    );
+  }
+
   return (
     <section className="modal" aria-hidden="false">
       <div className="modal-backdrop" onClick={onClose} />

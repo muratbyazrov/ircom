@@ -255,7 +255,7 @@ export default function App() {
         ))}
       </nav>
 
-      <Modal open={Boolean(modal)} onClose={() => setModal(null)}>
+      <Modal open={Boolean(modal)} onClose={() => setModal(null)} variant={modal?.type === "detail" ? "full" : "sheet"}>
         {modal?.type === "auth" && (
           <>
             <h3>Требуется авторизация</h3>
