@@ -518,6 +518,20 @@ button {
   min-height: 42px;
 }
 
+.time-slider {
+  width: 100%;
+  accent-color: var(--primary);
+}
+
+.time-slider-meta {
+  margin-top: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .textarea {
   min-height: 88px;
   resize: vertical;

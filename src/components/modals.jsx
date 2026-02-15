@@ -345,6 +345,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   const [photosLimitError, setPhotosLimitError] = useState("");
   const [selectedTaxiCategories, setSelectedTaxiCategories] = useState(() => (type === "taxi" ? [taxiCategories?.[0]].filter(Boolean) : []));
   const [taxiDayPreset, setTaxiDayPreset] = useState("");
+  const [taxiHourPreset, setTaxiHourPreset] = useState(12);
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
   const maxPhotos = type === "taxi" ? 3 : 10;
@@ -418,6 +419,8 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   const cityCategory = "Такси по Цхинвалу";
   const isIntercitySelected = selectedTaxiCategories.some((x) => x !== cityCategory);
   const taxiDayPresets = ["Сегодня", "Завтра", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+  const formatTaxiHour = (hour) => `${hour % 24}`.padStart(2, "0") + ":00";
+  const taxiTimePreset = formatTaxiHour(taxiHourPreset);
   const getTaxiDateByPreset = (preset) => {
     if (!preset) return "";
 
@@ -444,7 +447,9 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
     }).format(date);
   };
   const taxiDateValue = getTaxiDateByPreset(taxiDayPreset);
-  const taxiWhenValue = taxiDayPreset && taxiDateValue ? `${taxiDayPreset} (${taxiDateValue})` : "";
+  const taxiWhenValue = taxiDayPreset && taxiDateValue
+    ? `${taxiDayPreset} (${taxiDateValue})${taxiTimePreset ? ` ${taxiTimePreset}` : ""}`
+    : "";
 
   if (type === "restaurant") {
     return (
@@ -630,6 +635,21 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
               ) : (
                 <p className="small" style={{ marginTop: 8 }}>Выберите день поездки</p>
               )}
+              <p className="small" style={{ marginTop: 8, marginBottom: 6 }}>Время выезда</p>
+              <input
+                type="range"
+                className="time-slider"
+                min={4}
+                max={24}
+                step={1}
+                value={taxiHourPreset}
+                onChange={(e) => setTaxiHourPreset(Number(e.currentTarget.value))}
+              />
+              <div className="time-slider-meta">
+                <span>04:00</span>
+                <b>{taxiTimePreset}</b>
+                <span>00:00</span>
+              </div>
               <input type="hidden" name="when" value={taxiWhenValue} />
             </Field>
           ) : null}
