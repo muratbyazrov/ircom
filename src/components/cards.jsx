@@ -1,4 +1,5 @@
-import { fmtRub, short } from "../utils/helpers";
+import { useEffect, useRef, useState } from "react";
+import { clamp, fmtRub, short } from "../utils/helpers";
 import { Icon } from "./ui";
 
 export function ItemCard({ item, onOpen, onFav, activeFav }) {
@@ -125,18 +126,77 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
 }
 
 export function Media({ photos, emptyText, compact = false, onOpen }) {
-  const cover = photos?.[0];
+  const items = Array.isArray(photos) ? photos.filter(Boolean) : [];
+  const hasPhotos = items.length > 0;
+  const [index, setIndex] = useState(0);
+  const touchStartX = useRef(null);
+  const touchStartY = useRef(null);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [items.length, items[0]]);
+
+  const onTouchStart = (e) => {
+    if (items.length < 2) return;
+    touchStartX.current = e.changedTouches[0]?.clientX ?? null;
+    touchStartY.current = e.changedTouches[0]?.clientY ?? null;
+  };
+
+  const onTouchEnd = (e) => {
+    if (items.length < 2 || touchStartX.current === null || touchStartY.current === null) return;
+    const endX = e.changedTouches[0]?.clientX ?? touchStartX.current;
+    const endY = e.changedTouches[0]?.clientY ?? touchStartY.current;
+    const deltaX = endX - touchStartX.current;
+    const deltaY = endY - touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+    if (absX < 36 || absX <= absY) return;
+
+    const next = deltaX < 0 ? index + 1 : index - 1;
+    setIndex(clamp(next, 0, items.length - 1));
+  };
+
   return (
     <div
-      className={`media ${compact ? "media-compact" : ""} ${cover ? "media-has-image" : ""} ${cover && onOpen ? "media-clickable" : ""}`}
-      role={cover && onOpen ? "button" : undefined}
-      tabIndex={cover && onOpen ? 0 : undefined}
-      onClick={cover && onOpen ? onOpen : undefined}
+      className={`media ${compact ? "media-compact" : ""} ${hasPhotos ? "media-has-image" : ""} ${hasPhotos && onOpen ? "media-clickable" : ""}`}
+      role={hasPhotos && onOpen ? "button" : undefined}
+      tabIndex={hasPhotos && onOpen ? 0 : undefined}
+      onClick={hasPhotos && onOpen ? onOpen : undefined}
       onKeyDown={(e) => {
-        if (cover && onOpen && (e.key === "Enter" || e.key === " ")) onOpen();
+        if (hasPhotos && onOpen && (e.key === "Enter" || e.key === " ")) onOpen();
+      }}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onTouchMove={(e) => {
+        if (items.length > 1) e.stopPropagation();
+      }}
+      onClickCapture={(e) => {
+        if (items.length > 1) e.stopPropagation();
       }}
     >
-      {cover ? <img className="media-img" src={cover} alt="preview" loading="lazy" /> : <div className="media-empty">{emptyText}</div>}
+      {hasPhotos ? (
+        <>
+          <div className="media-slider" style={{ transform: `translate3d(-${index * 100}%, 0, 0)` }}>
+            {items.map((photo) => (
+              <div className="media-slide" key={photo}>
+                <img className="media-img" src={photo} alt="preview" loading="lazy" draggable={false} />
+              </div>
+            ))}
+          </div>
+          {items.length > 1 ? (
+            <div className="media-dots" aria-hidden="true">
+              {items.map((_, dotIndex) => (
+                <span className={`media-dot ${dotIndex === index ? "active" : ""}`} key={`dot-${dotIndex}`} />
+              ))}
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <div className="media-empty">{emptyText}</div>
+      )}
     </div>
   );
 }
