@@ -193,7 +193,7 @@ export function ProfileTab({
                 onClick={() => openCreate("restaurant")}
               >
                 <Icon name="food" />
-                Добавить заведение
+                Создать заведение
               </button>
             ) : null}
             <button className="ghost-btn quick-action-btn" type="button" onClick={() => openCreate("taxi")}>
@@ -207,7 +207,7 @@ export function ProfileTab({
                 onClick={() => openCreate("service")}
               >
                 <Icon name="services" />
-                Добавить услугу
+                Добавить свою услугу
               </button>
             ) : null}
           </div>
