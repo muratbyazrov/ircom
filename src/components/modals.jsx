@@ -148,7 +148,12 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
   return (
     <>
       <h3 style={{ marginBottom: 8 }}>{item.title || item.name}</h3>
-      <Media photos={photos} emptyText="Нет фотографий" section={type} onOpen={() => (photos.length ? setViewerIndex(0) : null)} />
+      <Media
+        photos={photos}
+        emptyText="Нет фотографий"
+        section={type}
+        onOpen={(startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)}
+      />
       {photos.length > 1 ? (
         <div className="gallery" style={{ marginTop: 8 }}>
           {photos.slice(1).map((photo, thumbIndex) => {

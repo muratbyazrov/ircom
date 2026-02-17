@@ -190,12 +190,12 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
                 e.stopPropagation();
                 return;
               }
-              onOpen();
+              onOpen(index);
             }
           : undefined
       }
       onKeyDown={(e) => {
-        if (hasPhotos && onOpen && (e.key === "Enter" || e.key === " ")) onOpen();
+        if (hasPhotos && onOpen && (e.key === "Enter" || e.key === " ")) onOpen(index);
       }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
