@@ -557,6 +557,16 @@ button {
   color: var(--muted);
 }
 
+.time-slider-meta b {
+  font-size: 16px;
+  color: var(--text);
+  transition: font-size 0.12s ease;
+}
+
+.time-slider-meta.is-dragging b {
+  font-size: 20px;
+}
+
 .textarea {
   min-height: 88px;
   resize: vertical;

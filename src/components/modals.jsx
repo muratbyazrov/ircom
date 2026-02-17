@@ -349,6 +349,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   const [taxiHourPreset, setTaxiHourPreset] = useState(12);
   const [recurringDays, setRecurringDays] = useState(["Пн", "Ср", "Пт"]);
   const [recurringHourPreset, setRecurringHourPreset] = useState(8);
+  const [isTimeDragging, setIsTimeDragging] = useState(false);
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
   const maxPhotos = type === "taxi" ? 3 : 10;
@@ -386,25 +387,53 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
   const phonePattern = "\\+7 \\(\\d{3}\\) \\d{3}-\\d{2}-\\d{2}";
   const phonePlaceholder = "+7 (___) ___-__-__";
 
-  const formatPhoneValue = (raw, { allowEmpty = true } = {}) => {
-    const digits = String(raw || "").replace(/\D/g, "");
+  const normalizePhoneDigits = (raw) => {
+    const rawValue = String(raw || "");
+    let digits = rawValue.replace(/\D/g, "");
+    if (rawValue.trim().startsWith("+7")) digits = digits.slice(1);
+    if (digits.length > 10 && (digits[0] === "7" || digits[0] === "8")) digits = digits.slice(1);
+    return digits.slice(0, 10);
+  };
+
+  const formatPhoneDigits = (digits, { allowEmpty = true } = {}) => {
     if (!digits) return allowEmpty ? "" : "+7";
 
-    const national = (digits[0] === "7" || digits[0] === "8") ? digits.slice(1, 11) : digits.slice(0, 10);
     let result = "+7";
+    if (digits.length < 3) return `${result} ${digits}`;
 
-    if (national.length > 0) result += ` (${national.slice(0, 3)}`;
-    if (national.length >= 3) result += ")";
-    if (national.length > 3) result += ` ${national.slice(3, 6)}`;
-    if (national.length > 6) result += `-${national.slice(6, 8)}`;
-    if (national.length > 8) result += `-${national.slice(8, 10)}`;
+    result += ` (${digits.slice(0, 3)})`;
+    if (digits.length < 6) return `${result} ${digits.slice(3)}`;
 
-    return result;
+    result += ` ${digits.slice(3, 6)}`;
+    if (digits.length < 8) return `${result}-${digits.slice(6)}`;
+
+    result += `-${digits.slice(6, 8)}`;
+    return `${result}-${digits.slice(8, 10)}`;
   };
+
+  const formatPhoneValue = (raw, options = {}) => formatPhoneDigits(normalizePhoneDigits(raw), options);
 
   const handlePhoneInput = (e, options = {}) => {
-    e.currentTarget.value = formatPhoneValue(e.currentTarget.value, options);
+    const input = e.currentTarget;
+    const prev = input.dataset.prevValue || "";
+    const raw = input.value;
+    let digits = normalizePhoneDigits(raw);
+    const isDelete = raw.length < prev.length;
+
+    if (isDelete && raw && !/\d$/.test(raw)) {
+      digits = digits.slice(0, -1);
+    }
+
+    const next = formatPhoneDigits(digits, options);
+    input.value = next;
+    input.dataset.prevValue = next;
   };
+
+  const syncPhonePrev = (e) => {
+    e.currentTarget.dataset.prevValue = e.currentTarget.value;
+  };
+  const startTimeDrag = () => setIsTimeDragging(true);
+  const endTimeDrag = () => setIsTimeDragging(false);
 
   const cityCategory = "Такси по Цхинвалу";
   const isRecurring = taxiOfferMode === "recurring";
@@ -510,6 +539,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
                 pattern={phonePattern}
                 title="Введите номер в формате +7 (999) 999-99-99"
                 onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+                onFocus={syncPhonePrev}
               />
             </Field>
             <Field label="Telegram"><input name="telegram" className="input" placeholder="@username" /></Field>
@@ -525,6 +555,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
               pattern={phonePattern}
               title="Введите номер в формате +7 (999) 999-99-99"
               onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+              onFocus={syncPhonePrev}
             />
           </Field>
           <Field label="Фото (до 10)">
@@ -666,7 +697,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
                     ))}
                   </div>
                   <p className="small" style={{ marginTop: 8, marginBottom: 6 }}>Время выезда</p>
-                  <div className="time-slider-meta">
+                  <div className={`time-slider-meta${isTimeDragging ? " is-dragging" : ""}`}>
                     <span>04:00</span>
                     <b>{recurringTimePreset}</b>
                     <span>00:00</span>
@@ -679,6 +710,10 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
                     step={1}
                     value={recurringHourPreset}
                     onChange={(e) => setRecurringHourPreset(Number(e.currentTarget.value))}
+                    onPointerDown={startTimeDrag}
+                    onPointerUp={endTimeDrag}
+                    onPointerCancel={endTimeDrag}
+                    onPointerLeave={endTimeDrag}
                   />
                   {recurringDays.map((x) => <input key={x} type="hidden" name="scheduleDay" value={x} />)}
                   <input type="hidden" name="scheduleHour" value={recurringTimePreset} />
@@ -699,7 +734,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
                     ))}
                   </div>
                   <p className="small" style={{ marginTop: 8, marginBottom: 6 }}>Время выезда</p>
-                  <div className="time-slider-meta">
+                  <div className={`time-slider-meta${isTimeDragging ? " is-dragging" : ""}`}>
                     <span>04:00</span>
                     <b>{taxiTimePreset}</b>
                     <span>00:00</span>
@@ -712,6 +747,10 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
                     step={1}
                     value={taxiHourPreset}
                     onChange={(e) => setTaxiHourPreset(Number(e.currentTarget.value))}
+                    onPointerDown={startTimeDrag}
+                    onPointerUp={endTimeDrag}
+                    onPointerCancel={endTimeDrag}
+                    onPointerLeave={endTimeDrag}
                   />
                   <input type="hidden" name="when" value={taxiWhenValue} />
                 </Field>
@@ -731,6 +770,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
               pattern={phonePattern}
               title="Введите номер в формате +7 (999) 999-99-99"
               onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+              onFocus={syncPhonePrev}
             />
           </Field>
           <Field label="WhatsApp">
@@ -744,6 +784,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
               pattern={phonePattern}
               title="Введите номер в формате +7 (999) 999-99-99"
               onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+              onFocus={syncPhonePrev}
             />
           </Field>
           <Field label="Telegram"><input name="tg" className="input" /></Field>
@@ -879,24 +920,50 @@ export function ProfileEditForm({ profile, onSubmit, onClose }) {
   const phonePattern = "\\+7 \\(\\d{3}\\) \\d{3}-\\d{2}-\\d{2}";
   const phonePlaceholder = "+7 (___) ___-__-__";
 
-  const formatPhoneValue = (raw, { allowEmpty = true } = {}) => {
-    const digits = String(raw || "").replace(/\D/g, "");
-    if (!digits) return allowEmpty ? "" : "+7";
-
-    const national = (digits[0] === "7" || digits[0] === "8") ? digits.slice(1, 11) : digits.slice(0, 10);
-    let result = "+7";
-
-    if (national.length > 0) result += ` (${national.slice(0, 3)}`;
-    if (national.length >= 3) result += ")";
-    if (national.length > 3) result += ` ${national.slice(3, 6)}`;
-    if (national.length > 6) result += `-${national.slice(6, 8)}`;
-    if (national.length > 8) result += `-${national.slice(8, 10)}`;
-
-    return result;
+  const normalizePhoneDigits = (raw) => {
+    const rawValue = String(raw || "");
+    let digits = rawValue.replace(/\D/g, "");
+    if (rawValue.trim().startsWith("+7")) digits = digits.slice(1);
+    if (digits.length > 10 && (digits[0] === "7" || digits[0] === "8")) digits = digits.slice(1);
+    return digits.slice(0, 10);
   };
 
+  const formatPhoneDigits = (digits, { allowEmpty = true } = {}) => {
+    if (!digits) return allowEmpty ? "" : "+7";
+
+    let result = "+7";
+    if (digits.length < 3) return `${result} ${digits}`;
+
+    result += ` (${digits.slice(0, 3)})`;
+    if (digits.length < 6) return `${result} ${digits.slice(3)}`;
+
+    result += ` ${digits.slice(3, 6)}`;
+    if (digits.length < 8) return `${result}-${digits.slice(6)}`;
+
+    result += `-${digits.slice(6, 8)}`;
+    return `${result}-${digits.slice(8, 10)}`;
+  };
+
+  const formatPhoneValue = (raw, options = {}) => formatPhoneDigits(normalizePhoneDigits(raw), options);
+
   const handlePhoneInput = (e, options = {}) => {
-    e.currentTarget.value = formatPhoneValue(e.currentTarget.value, options);
+    const input = e.currentTarget;
+    const prev = input.dataset.prevValue || "";
+    const raw = input.value;
+    let digits = normalizePhoneDigits(raw);
+    const isDelete = raw.length < prev.length;
+
+    if (isDelete && raw && !/\d$/.test(raw)) {
+      digits = digits.slice(0, -1);
+    }
+
+    const next = formatPhoneDigits(digits, options);
+    input.value = next;
+    input.dataset.prevValue = next;
+  };
+
+  const syncPhonePrev = (e) => {
+    e.currentTarget.dataset.prevValue = e.currentTarget.value;
   };
 
   return (
@@ -917,6 +984,7 @@ export function ProfileEditForm({ profile, onSubmit, onClose }) {
             pattern={phonePattern}
             title="Введите номер в формате +7 (999) 999-99-99"
             onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+            onFocus={syncPhonePrev}
           />
         </Field>
         <Field label="Telegram"><input name="telegram" defaultValue={profile.telegram} className="input" /></Field>
@@ -932,6 +1000,7 @@ export function ProfileEditForm({ profile, onSubmit, onClose }) {
             pattern={phonePattern}
             title="Введите номер в формате +7 (999) 999-99-99"
             onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+            onFocus={syncPhonePrev}
           />
         </Field>
         <Field label="О себе"><textarea name="about" defaultValue={profile.about} className="textarea" maxLength={500} /></Field>
