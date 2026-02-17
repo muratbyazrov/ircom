@@ -140,8 +140,20 @@ export function ProfileTab({
         <div className="grid-2 profile-grid">
           <StatCard title={profile.name} caption="Имя" />
           <StatCard title={profile.phone} caption="Телефон" />
-          <StatCard title={profile.telegram} caption="Telegram" />
-          <StatCard title={profile.whatsapp} caption="WhatsApp" />
+          <div className="section stat-card" style={{ padding: 10 }}>
+            <div className="profile-contact-head">
+              <Icon name="telegram" />
+              <p className="small">Telegram</p>
+            </div>
+            <h4>{profile.telegram}</h4>
+          </div>
+          <div className="section stat-card" style={{ padding: 10 }}>
+            <div className="profile-contact-head">
+              <Icon name="whatsapp" />
+              <p className="small">WhatsApp</p>
+            </div>
+            <h4>{profile.whatsapp}</h4>
+          </div>
         </div>
 
         <Section>

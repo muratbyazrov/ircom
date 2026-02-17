@@ -777,6 +777,18 @@ button {
   word-break: break-word;
 }
 
+.profile-contact-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.profile-contact-head .small {
+  color: inherit;
+}
+
 .field {
   display: grid;
   gap: 6px;

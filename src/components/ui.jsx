@@ -19,12 +19,14 @@ import {
   Pizza,
   Plus,
   Route,
+  Send,
   Sofa,
   Smartphone,
   Sparkles,
   User,
   UtensilsCrossed,
   WashingMachine,
+  MessageCircle,
   Wrench,
 } from "lucide-react";
 
@@ -163,6 +165,8 @@ export function Icon({ name }) {
     open: ExternalLink,
     heart: Heart,
     "heart-fill": Heart,
+    telegram: Send,
+    whatsapp: MessageCircle,
   };
 
   const LucideIcon = iconByKey[name] || Circle;
