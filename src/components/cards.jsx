@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { clamp, fmtRub, short } from "../utils/helpers";
 import { Icon } from "./ui";
 
-export function ItemCard({ item, onOpen, onFav, activeFav }) {
+export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false }) {
+  const hasRating = typeof item.ratingValue === "number";
   return (
     <article
       className="card card-clickable"
@@ -34,6 +35,14 @@ export function ItemCard({ item, onOpen, onFav, activeFav }) {
           </div>
           <div className="price">{fmtRub.format(item.price)}</div>
         </div>
+        {showRating ? (
+          <div className="rating-line">
+            <span className={`badge ${hasRating ? "" : "badge-muted"}`}>
+              {hasRating ? `Оценка ${item.ratingValue.toFixed(1)}/5` : "Нет оценок"}
+            </span>
+            <span className="small">{item.reviewsCount || 0} отзыв(ов)</span>
+          </div>
+        ) : null}
         <p className="small">{short(item.desc)}</p>
       </div>
     </article>
@@ -41,9 +50,10 @@ export function ItemCard({ item, onOpen, onFav, activeFav }) {
 }
 
 export function TaxiCard({ item, onOpen, onFav, activeFav }) {
+  const hasRating = typeof item.ratingValue === "number";
   return (
     <article
-      className="card card-clickable"
+      className="card card-clickable card-taxi"
       role="button"
       tabIndex={0}
       onClick={onOpen}
@@ -70,7 +80,8 @@ export function TaxiCard({ item, onOpen, onFav, activeFav }) {
             <div className="card-title">{item.name}</div>
             <div className="meta">{item.category}</div>
             <div className="price">{fmtRub.format(item.price)}</div>
-            <div className="small">Оценка {item.rating.toFixed(1)}</div>
+            <div className="small">{hasRating ? `Оценка ${item.ratingValue.toFixed(1)}` : "Нет оценок"}</div>
+            <div className="small">{item.reviewsCount || 0} отзыв(ов)</div>
           </div>
         </div>
         <div className="row wrap">

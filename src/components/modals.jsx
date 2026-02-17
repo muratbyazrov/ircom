@@ -7,9 +7,14 @@ import restaurantHero from "../assets/restaurant-hero.svg";
 import taxiHero from "../assets/taxi-hero.svg";
 import serviceHero from "../assets/service-hero.svg";
 
-export function DetailModalContent({ data, onFav, isFav }) {
+export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, onRequireAuth }) {
   const { item, type } = data;
   const photos = item.photos || [];
+  const feedbackEnabled = type === "taxi" || type === "services";
+  const reviews = Array.isArray(item.reviews) ? item.reviews : [];
+  const ratingValue = typeof item.ratingValue === "number" ? item.ratingValue : null;
+  const [reviewRating, setReviewRating] = useState("5");
+  const [reviewText, setReviewText] = useState("");
   const [viewerIndex, setViewerIndex] = useState(null);
   const [dragX, setDragX] = useState(0);
   const [isTrackDragging, setIsTrackDragging] = useState(false);
@@ -40,6 +45,24 @@ export function DetailModalContent({ data, onFav, isFav }) {
 
   const showPrev = () => setViewerIndex((prev) => Math.max(0, prev - 1));
   const showNext = () => setViewerIndex((prev) => Math.min(photos.length - 1, prev + 1));
+  const formatReviewDate = (value) => {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }).format(date);
+  };
+
+  const submitFeedback = (e) => {
+    e.preventDefault();
+    const added = onAddFeedback?.({
+      itemId: item.id,
+      rating: Number(reviewRating),
+      text: reviewText,
+    });
+    if (!added) return;
+    setReviewText("");
+    setReviewRating("5");
+  };
 
   useEffect(() => {
     if (viewerIndex === null) return;
@@ -132,6 +155,62 @@ export function DetailModalContent({ data, onFav, isFav }) {
       {type === "taxi" && item.when ? <p><b>Дата и время:</b> {item.when}</p> : null}
       {type === "taxi" && item.seats ? <p><b>Места:</b> {item.seats.free}/{item.seats.total}</p> : null}
       <p><b>Описание:</b> {item.desc || "Нет описания"}</p>
+      {feedbackEnabled ? (
+        <section className="reviews-block">
+          <div className="reviews-header">
+            <b>Оценка и отзывы</b>
+            <span className="small">
+              {ratingValue !== null ? `Средняя: ${ratingValue.toFixed(1)}/5` : "Пока нет оценок"} · {reviews.length} отзыв(ов)
+            </span>
+          </div>
+          {reviews.length ? (
+            <div className="reviews-list">
+              {reviews.map((review) => (
+                <article className="review-item" key={review.id}>
+                  <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
+                    <b>{review.author || "Пользователь"}</b>
+                    <span className="small">{review.rating}/5</span>
+                  </div>
+                  <p style={{ margin: "4px 0 0" }}>{review.text}</p>
+                  {review.createdAt ? <p className="small" style={{ marginTop: 4 }}>{formatReviewDate(review.createdAt)}</p> : null}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="small" style={{ marginTop: 6 }}>Отзывов пока нет.</p>
+          )}
+          {isAuth ? (
+            <form className="reviews-form" onSubmit={submitFeedback}>
+              <Field label="Ваша оценка">
+                <select className="select" value={reviewRating} onChange={(e) => setReviewRating(e.currentTarget.value)}>
+                  <option value="5">5</option>
+                  <option value="4">4</option>
+                  <option value="3">3</option>
+                  <option value="2">2</option>
+                  <option value="1">1</option>
+                </select>
+              </Field>
+              <Field label="Ваш отзыв">
+                <textarea
+                  className="textarea"
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.currentTarget.value)}
+                  minLength={5}
+                  maxLength={500}
+                  required
+                  placeholder="Напишите коротко о вашем опыте"
+                />
+              </Field>
+              <button className="primary-btn" type="submit">Оставить отзыв</button>
+            </form>
+          ) : (
+            <div className="reviews-guest-actions">
+              <p className="small" style={{ margin: 0 }}>Войдите в аккаунт, чтобы оставить оценку и отзыв.</p>
+              <button className="primary-btn" type="button" onClick={onRequireAuth}>Оставить отзыв</button>
+            </div>
+          )}
+        </section>
+      ) : null}
       <div className="actions" style={{ marginTop: 8 }}>{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
       <div className="actions" style={{ marginTop: 8 }}>
         <button className="primary-btn" type="button" onClick={() => onFav(item.id)}>{isFav(item.id) ? <><Icon name="heart-fill" /> Убрать из избранного</> : <><Icon name="heart" /> В избранное</>}</button>

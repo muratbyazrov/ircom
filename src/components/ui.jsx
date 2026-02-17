@@ -73,7 +73,7 @@ export function SortSelect({ value, onChange }) {
   );
 }
 
-export function Modal({ open, onClose, children, variant = "sheet" }) {
+export function Modal({ open, onClose, children, variant = "sheet", closeOnBackdrop = true }) {
   if (!open) return null;
 
   if (variant === "full") {
@@ -91,7 +91,7 @@ export function Modal({ open, onClose, children, variant = "sheet" }) {
 
   return (
     <section className="modal" aria-hidden="false">
-      <div className="modal-backdrop" onClick={onClose} />
+      <div className="modal-backdrop" onClick={closeOnBackdrop ? onClose : undefined} />
       <article className="modal-card">{children}</article>
     </section>
   );

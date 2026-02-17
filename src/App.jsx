@@ -8,12 +8,34 @@ import { sortItems } from "./utils/helpers";
 
 const WEEKDAY_TO_INDEX = { Вс: 0, Пн: 1, Вт: 2, Ср: 3, Чт: 4, Пт: 5, Сб: 6 };
 const INDEX_TO_WEEKDAY = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+const FEEDBACK_SEED = {
+  t1: [
+    { id: "r-t1-1", author: "Ацамаз", rating: 5, text: "Доехали быстро, водитель вежливый.", createdAt: "2026-02-01T10:20:00.000Z" },
+    { id: "r-t1-2", author: "Лана", rating: 4, text: "Аккуратно вёл, всё по времени.", createdAt: "2026-02-04T16:05:00.000Z" },
+  ],
+  s1: [
+    { id: "r-s1-1", author: "Диана", rating: 5, text: "Очень вкусный торт и аккуратная подача.", createdAt: "2026-02-03T08:40:00.000Z" },
+  ],
+};
 
 const toArray = (value) => (Array.isArray(value) ? value : value ? [value] : []);
 const dayStart = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 const formatDateRu = (date) => new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }).format(date);
 const buildUserPhoto = (name, idx) => `https://picsum.photos/seed/${encodeURIComponent(`user-taxi-${name}-${idx}`)}/900/600`;
 const randomSuffix = () => Math.random().toString(36).slice(2, 8);
+const normalizeRating = (value) => Math.max(1, Math.min(5, Number(value) || 1));
+const buildInitialFeedback = () => {
+  const source = [...mock.services, ...mock.taxi];
+  return source.reduce((acc, item) => {
+    acc[item.id] = Array.isArray(FEEDBACK_SEED[item.id]) ? [...FEEDBACK_SEED[item.id]] : [];
+    return acc;
+  }, {});
+};
+const getFeedbackRating = (reviews) => {
+  if (!Array.isArray(reviews) || !reviews.length) return null;
+  const sum = reviews.reduce((acc, review) => acc + (Number(review.rating) || 0), 0);
+  return Number((sum / reviews.length).toFixed(1));
+};
 const normalizeWeekdays = (value) => {
   const source = Array.isArray(value) ? value : String(value || "").split(",");
   return source.map((x) => String(x).trim()).filter((x) => x in WEEKDAY_TO_INDEX);
@@ -66,6 +88,7 @@ export default function App() {
   const [taxiSort, setTaxiSort] = useState("rating");
   const [customTaxiItems, setCustomTaxiItems] = useState([]);
   const [taxiTemplates, setTaxiTemplates] = useState([]);
+  const [feedbackByItem, setFeedbackByItem] = useState(() => buildInitialFeedback());
   const [isTaxiDriver, setIsTaxiDriver] = useState(false);
   const [modal, setModal] = useState(null);
 
@@ -130,9 +153,10 @@ export default function App() {
     });
   };
 
-  const ensureAuth = (fn) => {
+  const ensureAuth = (fn, options = {}) => {
     if (isAuth) return fn();
-    setModal({ type: "auth" });
+    const returnTo = options.returnTo || null;
+    setModal({ type: "auth", payload: returnTo ? { returnTo, fromDetail: Boolean(options.fromDetail) } : {} });
   };
 
   const toggleFavorite = (id) => {
@@ -154,9 +178,27 @@ export default function App() {
     return sortItems(filtered, adsSort, favorites);
   }, [adsCategoriesVisible, adsCategory, adsSort, favorites]);
 
+  const decorateWithFeedback = (item) => {
+    const reviews = Array.isArray(feedbackByItem[item.id]) ? feedbackByItem[item.id] : [];
+    const reviewsCount = reviews.length;
+    const reviewsRating = getFeedbackRating(reviews);
+    const baseRating = typeof item.rating === "number" ? Number(item.rating.toFixed(1)) : null;
+    const ratingValue = reviewsRating ?? baseRating;
+
+    return {
+      ...item,
+      rating: ratingValue ?? 0,
+      ratingValue,
+      reviewsCount,
+      reviews,
+    };
+  };
+
+  const servicesCatalog = useMemo(() => mock.services.map((item) => decorateWithFeedback(item)), [feedbackByItem]);
+
   const servicesItems = useMemo(
-    () => sortItems(mock.services.filter((x) => serviceCategory === "Все" || x.category === serviceCategory), servicesSort, favorites),
-    [serviceCategory, servicesSort, favorites]
+    () => sortItems(servicesCatalog.filter((x) => serviceCategory === "Все" || x.category === serviceCategory), servicesSort, favorites),
+    [serviceCategory, servicesSort, favorites, servicesCatalog]
   );
 
   const foodItems = useMemo(
@@ -166,16 +208,17 @@ export default function App() {
 
   const recurringTaxiItems = useMemo(() => buildRecurringTaxiOccurrences(taxiTemplates, 14), [taxiTemplates]);
   const allTaxiItems = useMemo(() => [...customTaxiItems, ...recurringTaxiItems, ...mock.taxi], [customTaxiItems, recurringTaxiItems]);
+  const taxiCatalog = useMemo(() => allTaxiItems.map((item) => decorateWithFeedback(item)), [allTaxiItems, feedbackByItem]);
   const taxiItems = useMemo(
-    () => sortItems(allTaxiItems.filter((x) => x.category === taxiCategory), taxiSort, favorites),
-    [allTaxiItems, taxiCategory, taxiSort, favorites]
+    () => sortItems(taxiCatalog.filter((x) => x.category === taxiCategory), taxiSort, favorites),
+    [taxiCatalog, taxiCategory, taxiSort, favorites]
   );
 
   const openDetail = (type, id) => {
-    const source = type === "ads" ? mock.ads : type === "services" ? mock.services : type === "food" ? mock.food : allTaxiItems;
+    const source = type === "ads" ? mock.ads : type === "services" ? servicesCatalog : type === "food" ? mock.food : taxiCatalog;
     const item = source.find((x) => x.id === id);
     if (!item) return;
-    setModal({ type: "detail", payload: { type, item } });
+    setModal({ type: "detail", payload: { type, id } });
   };
 
   const openCreate = (type) => ensureAuth(() => setModal({ type: "create", payload: { type } }));
@@ -183,6 +226,7 @@ export default function App() {
   const createType = modal?.type === "create" ? modal.payload?.type : null;
   const fullScreenCreate = createType === "ad" || createType === "service" || createType === "taxi" || createType === "restaurant";
   const fullScreenModal = modal?.type === "detail" || modal?.type === "profileEdit" || fullScreenCreate;
+  const blockAuthBackdropClose = modal?.type === "auth" && Boolean(modal?.payload?.returnTo);
 
   const submitMock = (event, type) => {
     event.preventDefault();
@@ -294,6 +338,62 @@ export default function App() {
     }));
   };
 
+  const addFeedback = ({ itemId, rating, text }) => {
+    let added = false;
+
+    ensureAuth(() => {
+      const message = String(text || "").trim();
+      if (!message) return;
+
+      const nextReview = {
+        id: `review-${Date.now()}-${randomSuffix()}`,
+        author: profile.name || "Пользователь",
+        rating: normalizeRating(rating),
+        text: message,
+        createdAt: new Date().toISOString(),
+      };
+
+      setFeedbackByItem((prev) => ({
+        ...prev,
+        [itemId]: [nextReview, ...(Array.isArray(prev[itemId]) ? prev[itemId] : [])],
+      }));
+      added = true;
+    });
+
+    return added;
+  };
+
+  const requireAuthForFeedback = () => {
+    ensureAuth(() => {}, {
+      returnTo: modal?.type === "detail" ? modal.payload : null,
+      fromDetail: true,
+    });
+  };
+
+  const closeModal = () => {
+    if (modal?.type === "auth" && modal?.payload?.returnTo) {
+      setModal({ type: "detail", payload: modal.payload.returnTo });
+      return;
+    }
+    setModal(null);
+  };
+
+  const detailData = useMemo(() => {
+    if (modal?.type !== "detail") return null;
+    const detailType = modal.payload?.type;
+    const detailId = modal.payload?.id;
+    const source = detailType === "ads"
+      ? mock.ads
+      : detailType === "services"
+        ? servicesCatalog
+        : detailType === "food"
+          ? mock.food
+          : taxiCatalog;
+    const item = source.find((x) => x.id === detailId);
+    if (!item) return null;
+    return { type: detailType, item };
+  }, [modal, servicesCatalog, taxiCatalog]);
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -401,8 +501,9 @@ export default function App() {
 
       <Modal
         open={Boolean(modal)}
-        onClose={() => setModal(null)}
+        onClose={closeModal}
         variant={fullScreenModal ? "full" : "sheet"}
+        closeOnBackdrop={!blockAuthBackdropClose}
       >
         {modal?.type === "auth" && (
           <>
@@ -421,17 +522,30 @@ export default function App() {
                     whatsapp: "+7(929)000-00-00",
                     about: "Продаю технику и размещаю междугородние поездки.",
                   });
-                  setModal(null);
+                  if (modal?.payload?.returnTo) {
+                    setModal({ type: "detail", payload: modal.payload.returnTo });
+                  } else {
+                    setModal(null);
+                  }
                 }}
               >
                 Войти
               </button>
-              <button className="ghost-btn" type="button" onClick={() => setModal(null)}>Отмена</button>
+              <button className="ghost-btn" type="button" onClick={closeModal}>Отмена</button>
             </div>
           </>
         )}
 
-        {modal?.type === "detail" && <DetailModalContent data={modal.payload} onFav={toggleFavorite} isFav={(id) => favorites.has(id)} />}
+        {modal?.type === "detail" && detailData && (
+          <DetailModalContent
+            data={detailData}
+            onFav={toggleFavorite}
+            isFav={(id) => favorites.has(id)}
+            isAuth={isAuth}
+            onAddFeedback={addFeedback}
+            onRequireAuth={requireAuthForFeedback}
+          />
+        )}
 
         {modal?.type === "create" && (
           <CreateForm type={modal.payload.type} onSubmit={submitMock} onClose={() => setModal(null)} taxiCategories={mock.taxiCategories} />

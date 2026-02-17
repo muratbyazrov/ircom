@@ -25,7 +25,7 @@ export function ServicesTab({ serviceCategory, setServiceCategory, servicesSort,
         <SortSelect value={servicesSort} onChange={setServicesSort} />
       </Section>
       <section className="list">
-        {servicesItems.length ? servicesItems.map((x) => <ItemCard key={x.id} item={x} onOpen={() => openDetail("services", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} />) : <Empty text="Пока нет услуг" />}
+        {servicesItems.length ? servicesItems.map((x) => <ItemCard key={x.id} item={x} onOpen={() => openDetail("services", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} showRating />) : <Empty text="Пока нет услуг" />}
       </section>
     </>
   );
