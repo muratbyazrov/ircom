@@ -16,9 +16,11 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
   const alreadyLeftReview = Boolean(
     normalizedUserName && reviews.some((review) => String(review.author || "").trim().toLowerCase() === normalizedUserName)
   );
+  const REVIEWS_STEP = 8;
   const ratingValue = typeof item.ratingValue === "number" ? item.ratingValue : null;
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
+  const [visibleReviewsCount, setVisibleReviewsCount] = useState(REVIEWS_STEP);
   const [viewerIndex, setViewerIndex] = useState(null);
   const [dragX, setDragX] = useState(0);
   const [isTrackDragging, setIsTrackDragging] = useState(false);
@@ -85,6 +87,10 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
       if (modalCard) modalCard.style.overflow = prevCardOverflow || "";
     };
   }, [viewerIndex]);
+
+  useEffect(() => {
+    setVisibleReviewsCount(REVIEWS_STEP);
+  }, [item.id]);
 
   useEffect(() => {
     if (viewerIndex === null) return;
@@ -167,22 +173,6 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
               {ratingValue !== null ? `Средняя: ${ratingValue.toFixed(1)}/5` : "Пока нет оценок"} · {reviews.length} отзыв(ов)
             </span>
           </div>
-          {reviews.length ? (
-            <div className="reviews-list">
-              {reviews.map((review) => (
-                <article className="review-item" key={review.id}>
-                  <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
-                    <b>{review.author || "Пользователь"}</b>
-                    <span className="small">{review.rating}/5</span>
-                  </div>
-                  <p style={{ margin: "4px 0 0" }}>{review.text}</p>
-                  {review.createdAt ? <p className="small" style={{ marginTop: 4 }}>{formatReviewDate(review.createdAt)}</p> : null}
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="small" style={{ marginTop: 6 }}>Отзывов пока нет.</p>
-          )}
           {isAuth && !alreadyLeftReview ? (
             <form className="reviews-form" onSubmit={submitFeedback}>
               <Field label="Ваша оценка">
@@ -228,6 +218,33 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
                 <button className="primary-btn" type="button" onClick={onRequireAuth}>Оставить отзыв</button>
               </div>
             ) : null
+          )}
+          {reviews.length ? (
+            <>
+              <div className="reviews-list">
+                {reviews.slice(0, visibleReviewsCount).map((review) => (
+                  <article className="review-item" key={review.id}>
+                    <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
+                      <b>{review.author || "Пользователь"}</b>
+                      <span className="small">{review.rating}/5</span>
+                    </div>
+                    <p style={{ margin: "4px 0 0" }}>{review.text}</p>
+                    {review.createdAt ? <p className="small" style={{ marginTop: 4 }}>{formatReviewDate(review.createdAt)}</p> : null}
+                  </article>
+                ))}
+              </div>
+              {visibleReviewsCount < reviews.length ? (
+                <button
+                  className="ghost-btn reviews-more-btn"
+                  type="button"
+                  onClick={() => setVisibleReviewsCount((prev) => Math.min(reviews.length, prev + REVIEWS_STEP))}
+                >
+                  Показать ещё
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <p className="small" style={{ marginTop: 6 }}>Отзывов пока нет.</p>
           )}
         </section>
       ) : null}

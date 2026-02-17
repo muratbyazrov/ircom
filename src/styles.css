@@ -792,6 +792,10 @@ button {
   margin-top: 2px;
 }
 
+.reviews-more-btn {
+  justify-self: center;
+}
+
 .rating-stars-shell {
   display: flex;
   align-items: center;
