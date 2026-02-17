@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { mock } from "../data/mock";
 import { clamp, contactLabel, fmtRub, getTouchDistance } from "../utils/helpers";
+import { applyImageFallback } from "../utils/images";
 import { FormActions, Icon, Field } from "./ui";
 import { Media } from "./cards";
 import restaurantHero from "../assets/restaurant-hero.svg";
@@ -147,14 +148,14 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
   return (
     <>
       <h3 style={{ marginBottom: 8 }}>{item.title || item.name}</h3>
-      <Media photos={photos} emptyText="Нет фотографий" onOpen={() => (photos.length ? setViewerIndex(0) : null)} />
+      <Media photos={photos} emptyText="Нет фотографий" section={type} onOpen={() => (photos.length ? setViewerIndex(0) : null)} />
       {photos.length > 1 ? (
         <div className="gallery" style={{ marginTop: 8 }}>
           {photos.slice(1).map((photo, thumbIndex) => {
             const index = thumbIndex + 1;
             return (
               <button key={photo} className="gallery-btn" type="button" onClick={() => setViewerIndex(index)}>
-                <img className="gallery-img" src={photo} alt="gallery" loading="lazy" />
+                <img className="gallery-img" src={photo} alt="gallery" loading="lazy" onError={(e) => applyImageFallback(e, type)} />
               </button>
             );
           })}
@@ -436,6 +437,7 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
                     alt="fullscreen"
                     draggable={false}
                     ref={idx === viewerIndex ? activeImageRef : null}
+                    onError={(e) => applyImageFallback(e, type)}
                     style={{
                       transform: idx === viewerIndex ? `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})` : "translate3d(0, 0, 0) scale(1)",
                       transformOrigin: "50% 50%",
@@ -628,6 +630,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
           <img
             src={restaurantHero}
             alt="Здание заведения"
+            onError={(e) => applyImageFallback(e, "food")}
             style={{
               width: "100%",
               height: 150,
@@ -735,6 +738,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
           <img
             src={taxiHero}
             alt="Иллюстрация такси"
+            onError={(e) => applyImageFallback(e, "taxi")}
             style={{
               width: "100%",
               height: 150,
@@ -972,6 +976,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories }) {
           <img
             src={serviceHero}
             alt="Иллюстрация услуги"
+            onError={(e) => applyImageFallback(e, "services")}
             style={{
               width: "100%",
               height: 150,

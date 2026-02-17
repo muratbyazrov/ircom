@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { clamp, fmtRub, short } from "../utils/helpers";
+import { applyImageFallback } from "../utils/images";
 import { Icon } from "./ui";
 
-export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false }) {
+export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, section = "ads" }) {
   const hasRating = typeof item.ratingValue === "number";
   return (
     <article
@@ -27,7 +28,7 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false })
           <Icon name={activeFav ? "heart-fill" : "heart"} />
           <span>{activeFav ? "В избранном" : "В избранное"}</span>
         </button>
-        <Media photos={item.photos} emptyText="Нет фотографий" bleed />
+        <Media photos={item.photos} emptyText="Нет фотографий" bleed section={section} />
         <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <div className="card-title">{item.title}</div>
@@ -75,7 +76,7 @@ export function TaxiCard({ item, onOpen, onFav, activeFav }) {
           <span>{activeFav ? "В избранном" : "В избранное"}</span>
         </button>
         <div className="grid-2" style={{ gridTemplateColumns: "94px 1fr", alignItems: "center" }}>
-          <Media photos={item.photos} emptyText="Нет фото" compact />
+          <Media photos={item.photos} emptyText="Нет фото" compact section="taxi" />
           <div>
             <div className="card-title">{item.name}</div>
             <div className="meta">{item.category}</div>
@@ -119,7 +120,7 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
           <Icon name={activeFav ? "heart-fill" : "heart"} />
           <span>{activeFav ? "В избранном" : "В избранное"}</span>
         </button>
-        <Media photos={item.photos} emptyText="Нет фотографий" bleed />
+        <Media photos={item.photos} emptyText="Нет фотографий" bleed section="food" />
         <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <div className="card-title">{item.title}</div>
@@ -137,7 +138,7 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
   );
 }
 
-export function Media({ photos, emptyText, compact = false, onOpen, bleed = false }) {
+export function Media({ photos, emptyText, compact = false, onOpen, bleed = false, section = "ads" }) {
   const items = Array.isArray(photos) ? photos.filter(Boolean) : [];
   const hasPhotos = items.length > 0;
   const [index, setIndex] = useState(0);
@@ -207,7 +208,14 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
           <div className="media-slider" style={{ transform: `translate3d(-${index * 100}%, 0, 0)` }}>
             {items.map((photo) => (
               <div className="media-slide" key={photo}>
-                <img className="media-img" src={photo} alt="preview" loading="lazy" draggable={false} />
+                <img
+                  className="media-img"
+                  src={photo}
+                  alt="preview"
+                  loading="lazy"
+                  draggable={false}
+                  onError={(e) => applyImageFallback(e, section)}
+                />
               </div>
             ))}
           </div>

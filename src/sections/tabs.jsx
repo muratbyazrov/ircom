@@ -10,7 +10,7 @@ export function AdsTab({ adsCategoriesVisible, adsCategory, setAdsCategory, adsS
         <SortSelect value={adsSort} onChange={setAdsSort} />
       </Section>
       <section className="list">
-        {adsItems.length ? adsItems.map((x) => <ItemCard key={x.id} item={x} onOpen={() => openDetail("ads", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} />) : <Empty text="Пока нет объявлений" />}
+        {adsItems.length ? adsItems.map((x) => <ItemCard key={x.id} item={x} section="ads" onOpen={() => openDetail("ads", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} />) : <Empty text="Пока нет объявлений" />}
       </section>
     </>
   );
@@ -25,7 +25,7 @@ export function ServicesTab({ serviceCategory, setServiceCategory, servicesSort,
         <SortSelect value={servicesSort} onChange={setServicesSort} />
       </Section>
       <section className="list">
-        {servicesItems.length ? servicesItems.map((x) => <ItemCard key={x.id} item={x} onOpen={() => openDetail("services", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} showRating />) : <Empty text="Пока нет услуг" />}
+        {servicesItems.length ? servicesItems.map((x) => <ItemCard key={x.id} item={x} section="services" onOpen={() => openDetail("services", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} showRating />) : <Empty text="Пока нет услуг" />}
       </section>
     </>
   );
