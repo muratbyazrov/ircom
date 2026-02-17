@@ -160,7 +160,7 @@ export function ProfileTab({
                       <Icon name={entry.icon} />
                     </div>
                     <div className="entity-compact-title">{entry.label}</div>
-                    <div className="entity-compact-count">{entry.count}</div>
+                    <span className="entity-compact-count-badge">{entry.count}</span>
                   </div>
                   <button
                     className="ghost-btn"
