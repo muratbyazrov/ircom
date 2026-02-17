@@ -149,11 +149,6 @@ export function ProfileTab({
           <p className="small">{profile.about}</p>
         </Section>
 
-        <div className="grid-2 profile-grid">
-          <StatCard title={String(myAdsCount)} caption="Мои объявления" />
-          <StatCard title={String(myServicesCount)} caption="Мои услуги" />
-        </div>
-
         {isAuth ? (
           <Section>
             <h4>Мои сущности</h4>
