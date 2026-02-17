@@ -7,11 +7,15 @@ import restaurantHero from "../assets/restaurant-hero.svg";
 import taxiHero from "../assets/taxi-hero.svg";
 import serviceHero from "../assets/service-hero.svg";
 
-export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, onRequireAuth }) {
+export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, onRequireAuth, currentUserName }) {
   const { item, type } = data;
   const photos = item.photos || [];
   const feedbackEnabled = type === "taxi" || type === "services";
   const reviews = Array.isArray(item.reviews) ? item.reviews : [];
+  const normalizedUserName = String(currentUserName || "").trim().toLowerCase();
+  const alreadyLeftReview = Boolean(
+    normalizedUserName && reviews.some((review) => String(review.author || "").trim().toLowerCase() === normalizedUserName)
+  );
   const ratingValue = typeof item.ratingValue === "number" ? item.ratingValue : null;
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
@@ -179,7 +183,7 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
           ) : (
             <p className="small" style={{ marginTop: 6 }}>Отзывов пока нет.</p>
           )}
-          {isAuth ? (
+          {isAuth && !alreadyLeftReview ? (
             <form className="reviews-form" onSubmit={submitFeedback}>
               <Field label="Ваша оценка">
                 <div className="rating-stars-shell">
@@ -214,11 +218,16 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
               </Field>
               <button className="primary-btn" type="submit">Оставить отзыв</button>
             </form>
+          ) : null}
+          {isAuth && alreadyLeftReview ? (
+            <p className="small" style={{ marginTop: 6 }}>Вы уже оставили отзыв для этого предложения.</p>
           ) : (
-            <div className="reviews-guest-actions">
-              <p className="small" style={{ margin: 0 }}>Войдите в аккаунт, чтобы оставить оценку и отзыв.</p>
-              <button className="primary-btn" type="button" onClick={onRequireAuth}>Оставить отзыв</button>
-            </div>
+            !isAuth ? (
+              <div className="reviews-guest-actions">
+                <p className="small" style={{ margin: 0 }}>Войдите в аккаунт, чтобы оставить оценку и отзыв.</p>
+                <button className="primary-btn" type="button" onClick={onRequireAuth}>Оставить отзыв</button>
+              </div>
+            ) : null
           )}
         </section>
       ) : null}

@@ -344,20 +344,26 @@ export default function App() {
     ensureAuth(() => {
       const message = String(text || "").trim();
       if (!message) return;
+      const authorName = String(profile.name || "Пользователь").trim();
 
       const nextReview = {
         id: `review-${Date.now()}-${randomSuffix()}`,
-        author: profile.name || "Пользователь",
+        author: authorName,
         rating: normalizeRating(rating),
         text: message,
         createdAt: new Date().toISOString(),
       };
 
-      setFeedbackByItem((prev) => ({
-        ...prev,
-        [itemId]: [nextReview, ...(Array.isArray(prev[itemId]) ? prev[itemId] : [])],
-      }));
-      added = true;
+      setFeedbackByItem((prev) => {
+        const current = Array.isArray(prev[itemId]) ? prev[itemId] : [];
+        const alreadyLeft = current.some((review) => String(review.author || "").trim().toLowerCase() === authorName.toLowerCase());
+        if (alreadyLeft) return prev;
+        added = true;
+        return {
+          ...prev,
+          [itemId]: [nextReview, ...current],
+        };
+      });
     });
 
     return added;
@@ -544,6 +550,7 @@ export default function App() {
             isAuth={isAuth}
             onAddFeedback={addFeedback}
             onRequireAuth={requireAuthForFeedback}
+            currentUserName={profile.name}
           />
         )}
 
