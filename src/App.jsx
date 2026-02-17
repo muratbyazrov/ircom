@@ -95,6 +95,46 @@ const normalizeWeekdays = (value) => {
   const source = Array.isArray(value) ? value : String(value || "").split(",");
   return source.map((x) => String(x).trim()).filter((x) => x in WEEKDAY_TO_INDEX);
 };
+const nextWeekdayDate = (targetWeekday, now) => {
+  const date = dayStart(now);
+  const diff = (targetWeekday - now.getDay() + 7) % 7;
+  date.setDate(date.getDate() + diff);
+  return date;
+};
+const parseTaxiWhenValue = (whenValue) => {
+  const text = String(whenValue || "").trim();
+  if (!text) return null;
+
+  const timeMatch = text.match(/(\d{1,2}):(\d{2})/);
+  if (!timeMatch) return null;
+  const hour = Number(timeMatch[1]);
+  const minute = Number(timeMatch[2]);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+
+  const now = new Date();
+  let datePart = dayStart(now);
+
+  const dateInBrackets = text.match(/\((\d{2})\.(\d{2})\.(\d{4})\)/);
+  if (dateInBrackets) {
+    const day = Number(dateInBrackets[1]);
+    const month = Number(dateInBrackets[2]) - 1;
+    const year = Number(dateInBrackets[3]);
+    datePart = new Date(year, month, day);
+  } else if (text.startsWith("Сегодня")) {
+    datePart = dayStart(now);
+  } else if (text.startsWith("Завтра")) {
+    datePart = dayStart(now);
+    datePart.setDate(datePart.getDate() + 1);
+  } else {
+    const weekdayMatch = text.match(/^(Вс|Пн|Вт|Ср|Чт|Пт|Сб)\b/);
+    if (weekdayMatch) {
+      datePart = nextWeekdayDate(WEEKDAY_TO_INDEX[weekdayMatch[1]], now);
+    }
+  }
+
+  datePart.setHours(hour, minute, 0, 0);
+  return datePart;
+};
 
 function buildRecurringTaxiOccurrences(templates, horizonDays = 14) {
   const today = dayStart(new Date());
@@ -141,6 +181,7 @@ export default function App() {
   const [servicesSort, setServicesSort] = useState("date");
   const [foodSort, setFoodSort] = useState("price");
   const [taxiSort, setTaxiSort] = useState("rating");
+  const [taxiRequestedAt, setTaxiRequestedAt] = useState("");
   const [customTaxiItems, setCustomTaxiItems] = useState([]);
   const [taxiTemplates, setTaxiTemplates] = useState([]);
   const [feedbackByItem, setFeedbackByItem] = useState(() => buildInitialFeedback());
@@ -264,10 +305,29 @@ export default function App() {
   const recurringTaxiItems = useMemo(() => buildRecurringTaxiOccurrences(taxiTemplates, 14), [taxiTemplates]);
   const allTaxiItems = useMemo(() => [...customTaxiItems, ...recurringTaxiItems, ...mock.taxi], [customTaxiItems, recurringTaxiItems]);
   const taxiCatalog = useMemo(() => allTaxiItems.map((item) => decorateWithFeedback(item)), [allTaxiItems, feedbackByItem]);
+  const taxiRequestTime = useMemo(() => {
+    if (!taxiRequestedAt) return null;
+    const parsed = new Date(taxiRequestedAt);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }, [taxiRequestedAt]);
   const taxiItems = useMemo(
-    () => sortItems(taxiCatalog.filter((x) => x.category === taxiCategory), taxiSort, favorites),
-    [taxiCatalog, taxiCategory, taxiSort, favorites]
+    () => {
+      const byCategory = taxiCatalog.filter((x) => x.category === taxiCategory);
+      if (!taxiRequestTime || taxiCategory === "Такси по Цхинвалу") return sortItems(byCategory, taxiSort, favorites);
+
+      const filteredByTime = byCategory.filter((item) => {
+        const rideDate = parseTaxiWhenValue(item.when);
+        if (!rideDate) return false;
+        return rideDate.getTime() >= taxiRequestTime.getTime();
+      });
+      return sortItems(filteredByTime, taxiSort, favorites);
+    },
+    [taxiCatalog, taxiCategory, taxiSort, favorites, taxiRequestTime]
   );
+
+  useEffect(() => {
+    if (taxiCategory === "Такси по Цхинвалу" && taxiRequestedAt) setTaxiRequestedAt("");
+  }, [taxiCategory, taxiRequestedAt]);
 
   const openDetail = (type, id) => {
     const source = type === "ads" ? mock.ads : type === "services" ? servicesCatalog : type === "food" ? mock.food : taxiCatalog;
@@ -507,6 +567,8 @@ export default function App() {
             taxiSort={taxiSort}
             setTaxiSort={setTaxiSort}
             taxiItems={taxiItems}
+            taxiRequestedAt={taxiRequestedAt}
+            setTaxiRequestedAt={setTaxiRequestedAt}
             taxiCategories={mock.taxiCategories}
             openCreate={openCreate}
             openDetail={openDetail}

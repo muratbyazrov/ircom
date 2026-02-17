@@ -395,6 +395,14 @@ body {
   flex-wrap: wrap;
 }
 
+.taxi-time-filter-actions {
+  align-items: center;
+}
+
+.taxi-time-filter-actions .input {
+  flex: 1 1 220px;
+}
+
 .rating-line {
   display: flex;
   align-items: center;

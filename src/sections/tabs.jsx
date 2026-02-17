@@ -1,4 +1,4 @@
-import { CategoryTabs, Empty, Icon, Section, SectionHeader, SortSelect, StatCard } from "../components/ui";
+import { CategoryTabs, Empty, Field, Icon, Section, SectionHeader, SortSelect, StatCard } from "../components/ui";
 import { FoodCard, ItemCard, TaxiCard } from "../components/cards";
 
 export function AdsTab({ adsCategoriesVisible, adsCategory, setAdsCategory, adsSort, setAdsSort, adsItems, openCreate, openDetail, toggleFavorite, favorites }) {
@@ -31,16 +31,51 @@ export function ServicesTab({ serviceCategory, setServiceCategory, servicesSort,
   );
 }
 
-export function TaxiTab({ taxiCategory, setTaxiCategory, taxiSort, setTaxiSort, taxiItems, taxiCategories, openCreate, openDetail, toggleFavorite, favorites }) {
+export function TaxiTab({
+  taxiCategory,
+  setTaxiCategory,
+  taxiSort,
+  setTaxiSort,
+  taxiItems,
+  taxiRequestedAt,
+  setTaxiRequestedAt,
+  taxiCategories,
+  openCreate,
+  openDetail,
+  toggleFavorite,
+  favorites,
+}) {
+  const isIntercity = taxiCategory !== "Такси по Цхинвалу";
+
   return (
     <>
       <SectionHeader title="Такси" actionLabel="Добавить себя" onAction={() => openCreate("taxi")} />
       <Section>
         <CategoryTabs list={taxiCategories} value={taxiCategory} onChange={setTaxiCategory} />
+        {isIntercity ? (
+          <Field label="Когда хотите поехать">
+            <div className="actions taxi-time-filter-actions">
+              <input
+                type="datetime-local"
+                className="input"
+                value={taxiRequestedAt}
+                onChange={(e) => setTaxiRequestedAt(e.currentTarget.value)}
+              />
+              {taxiRequestedAt ? (
+                <button className="ghost-btn" type="button" onClick={() => setTaxiRequestedAt("")}>
+                  Сбросить
+                </button>
+              ) : null}
+            </div>
+            <p className="small" style={{ marginTop: 6 }}>Показываем поездки не раньше выбранного времени.</p>
+          </Field>
+        ) : null}
         <SortSelect value={taxiSort} onChange={setTaxiSort} />
       </Section>
       <section className="list">
-        {taxiItems.length ? taxiItems.map((x) => <TaxiCard key={x.id} item={x} onOpen={() => openDetail("taxi", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} />) : <Empty text="Пока нет предложений" />}
+        {taxiItems.length
+          ? taxiItems.map((x) => <TaxiCard key={x.id} item={x} onOpen={() => openDetail("taxi", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} />)
+          : <Empty text={taxiRequestedAt && isIntercity ? "Нет поездок на выбранное время" : "Пока нет предложений"} />}
       </section>
     </>
   );
