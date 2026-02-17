@@ -283,6 +283,35 @@ body {
   height: 94px;
 }
 
+.card-taxi .media {
+  border-radius: 18px;
+}
+
+.card-taxi .media.media-has-image {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.card-taxi .media-img,
+.card-taxi .media-slide {
+  border-radius: 18px;
+}
+
+.card-taxi .taxi-card-layout {
+  grid-template-columns: 112px 1fr;
+  gap: 14px;
+  align-items: center;
+}
+
+.card-taxi .taxi-card-content {
+  padding-left: 2px;
+}
+
+.card-taxi .media-compact {
+  min-height: 112px;
+  height: 112px;
+}
+
 .media-bleed {
   width: calc(100% + 20px);
   margin: -10px -10px 2px;
@@ -376,6 +405,7 @@ button {
   font: inherit;
   border: none;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .primary-btn,
