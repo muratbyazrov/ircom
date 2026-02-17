@@ -13,7 +13,7 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
   const feedbackEnabled = type === "taxi" || type === "services";
   const reviews = Array.isArray(item.reviews) ? item.reviews : [];
   const ratingValue = typeof item.ratingValue === "number" ? item.ratingValue : null;
-  const [reviewRating, setReviewRating] = useState("5");
+  const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const [viewerIndex, setViewerIndex] = useState(null);
   const [dragX, setDragX] = useState(0);
@@ -56,12 +56,12 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
     e.preventDefault();
     const added = onAddFeedback?.({
       itemId: item.id,
-      rating: Number(reviewRating),
+      rating: reviewRating,
       text: reviewText,
     });
     if (!added) return;
     setReviewText("");
-    setReviewRating("5");
+    setReviewRating(5);
   };
 
   useEffect(() => {
@@ -182,13 +182,24 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
           {isAuth ? (
             <form className="reviews-form" onSubmit={submitFeedback}>
               <Field label="Ваша оценка">
-                <select className="select" value={reviewRating} onChange={(e) => setReviewRating(e.currentTarget.value)}>
-                  <option value="5">5</option>
-                  <option value="4">4</option>
-                  <option value="3">3</option>
-                  <option value="2">2</option>
-                  <option value="1">1</option>
-                </select>
+                <div className="rating-stars-shell">
+                  <div className="rating-stars" role="radiogroup" aria-label="Ваша оценка">
+                    {[1, 2, 3, 4, 5].map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        className={`rating-star ${value <= reviewRating ? "active" : ""}`}
+                        role="radio"
+                        aria-checked={reviewRating === value}
+                        aria-label={`${value} из 5`}
+                        onClick={() => setReviewRating(value)}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  <span className="rating-score-chip">{reviewRating}.0 / 5</span>
+                </div>
               </Field>
               <Field label="Ваш отзыв">
                 <textarea
