@@ -17,7 +17,7 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
   const alreadyLeftReview = Boolean(
     normalizedUserName && reviews.some((review) => String(review.author || "").trim().toLowerCase() === normalizedUserName)
   );
-  const REVIEWS_STEP = 8;
+  const REVIEWS_STEP = 3;
   const ratingValue = typeof item.ratingValue === "number" ? item.ratingValue : null;
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
