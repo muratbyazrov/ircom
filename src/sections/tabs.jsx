@@ -53,22 +53,24 @@ export function TaxiTab({
       <Section>
         <CategoryTabs list={taxiCategories} value={taxiCategory} onChange={setTaxiCategory} />
         {isIntercity ? (
-          <Field label="Когда хотите поехать">
-            <div className="actions taxi-time-filter-actions">
-              <input
-                type="datetime-local"
-                className="input"
-                value={taxiRequestedAt}
-                onChange={(e) => setTaxiRequestedAt(e.currentTarget.value)}
-              />
-              {taxiRequestedAt ? (
-                <button className="ghost-btn" type="button" onClick={() => setTaxiRequestedAt("")}>
-                  Сбросить
-                </button>
-              ) : null}
-            </div>
-            <p className="small" style={{ marginTop: 6 }}>Показываем поездки не раньше выбранного времени.</p>
-          </Field>
+          <div className="taxi-time-field">
+            <Field label="Когда хотите поехать">
+              <div className="actions taxi-time-filter-actions">
+                <input
+                  type="datetime-local"
+                  className="input"
+                  value={taxiRequestedAt}
+                  onChange={(e) => setTaxiRequestedAt(e.currentTarget.value)}
+                />
+                {taxiRequestedAt ? (
+                  <button className="ghost-btn" type="button" onClick={() => setTaxiRequestedAt("")}>
+                    Сбросить
+                  </button>
+                ) : null}
+              </div>
+              <p className="small" style={{ marginTop: 6 }}>Показываем поездки не раньше выбранного времени.</p>
+            </Field>
+          </div>
         ) : null}
         <SortSelect value={taxiSort} onChange={setTaxiSort} />
       </Section>
