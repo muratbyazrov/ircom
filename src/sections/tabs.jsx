@@ -151,7 +151,7 @@ export function ProfileTab({
 
         {isAuth ? (
           <Section>
-            <h4>Мои сущности</h4>
+            <h4>Мой бизнес</h4>
             <div className="entity-groups-compact">
               {entityGroups.map((entry) => (
                 <article className="entity-compact-card" key={entry.key}>
