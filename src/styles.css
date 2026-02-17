@@ -298,18 +298,99 @@ body {
 }
 
 .card-taxi .taxi-card-layout {
-  grid-template-columns: 112px 1fr;
-  gap: 14px;
-  align-items: center;
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
 }
 
 .card-taxi .taxi-card-content {
-  padding-left: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 5px;
 }
 
 .card-taxi .media-compact {
-  min-height: 112px;
-  height: 112px;
+  min-height: 104px;
+  height: 104px;
+}
+
+.taxi-card-body {
+  padding-top: 12px;
+}
+
+.taxi-rating-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.taxi-rating-line .small {
+  color: var(--muted);
+}
+
+.taxi-tags {
+  margin-top: 2px;
+}
+
+.taxi-card-head {
+  display: grid;
+  gap: 2px;
+  padding-right: 136px;
+}
+
+.taxi-card-head .price {
+  font-size: 17px;
+}
+
+.card-taxi .fav-corner-btn.taxi-fav-btn {
+  top: 8px;
+  right: 8px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  justify-content: flex-start;
+  touch-action: manipulation;
+}
+
+.card-taxi .fav-corner-btn.taxi-fav-btn span {
+  display: inline;
+}
+
+.card-taxi .taxi-media-full {
+  flex: 0 0 auto;
+  align-self: stretch;
+  aspect-ratio: 1 / 1;
+  width: auto;
+  min-width: 94px;
+  max-width: 132px;
+  min-height: 0;
+}
+
+.card-taxi .taxi-media-full.media-has-image,
+.card-taxi .taxi-media-full .media-slide,
+.card-taxi .taxi-media-full .media-img {
+  height: 100%;
+}
+
+@media (max-width: 380px) {
+  .card-taxi .taxi-card-layout {
+    gap: 10px;
+  }
+
+  .card-taxi .taxi-media-full {
+    min-width: 84px;
+    max-width: 108px;
+  }
+
+  .taxi-card-head {
+    padding-right: 118px;
+  }
+
+  .taxi-card-head .price {
+    font-size: 15px;
+  }
 }
 
 .media-bleed {

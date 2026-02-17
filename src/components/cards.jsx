@@ -17,9 +17,15 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
     >
       <div className="card-body">
         <button
-          className={`fav-corner-btn ${activeFav ? "active" : ""}`}
+          className={`fav-corner-btn taxi-fav-btn ${activeFav ? "active" : ""}`}
           type="button"
           aria-label={activeFav ? "Убрать из избранного" : "Добавить в избранное"}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+          }}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+          }}
           onClick={(e) => {
             e.stopPropagation();
             onFav();
@@ -62,11 +68,17 @@ export function TaxiCard({ item, onOpen, onFav, activeFav }) {
         if (e.key === "Enter" || e.key === " ") onOpen();
       }}
     >
-      <div className="card-body">
+      <div className="card-body taxi-card-body">
         <button
-          className={`fav-corner-btn ${activeFav ? "active" : ""}`}
+          className={`fav-corner-btn taxi-fav-btn ${activeFav ? "active" : ""}`}
           type="button"
           aria-label={activeFav ? "Убрать из избранного" : "Добавить в избранное"}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+          }}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+          }}
           onClick={(e) => {
             e.stopPropagation();
             onFav();
@@ -75,17 +87,21 @@ export function TaxiCard({ item, onOpen, onFav, activeFav }) {
           <Icon name={activeFav ? "heart-fill" : "heart"} />
           <span>{activeFav ? "В избранном" : "В избранное"}</span>
         </button>
-        <div className="grid-2" style={{ gridTemplateColumns: "94px 1fr", alignItems: "center" }}>
-          <Media photos={item.photos} emptyText="Нет фото" compact section="taxi" />
-          <div>
-            <div className="card-title">{item.name}</div>
+        <div className="taxi-card-layout">
+          <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full" />
+          <div className="taxi-card-content">
+            <div className="taxi-card-head">
+              <div className="card-title">{item.name}</div>
+              <div className="price">{fmtRub.format(item.price)}</div>
+            </div>
             <div className="meta">{item.category}</div>
-            <div className="price">{fmtRub.format(item.price)}</div>
-            <div className="small">{hasRating ? `Оценка ${item.ratingValue.toFixed(1)}` : "Нет оценок"}</div>
-            <div className="small">{item.reviewsCount || 0} отзыв(ов)</div>
+            <div className="taxi-rating-line">
+              <span className="badge">{hasRating ? `Оценка ${item.ratingValue.toFixed(1)}` : "Нет оценок"}</span>
+              <span className="small">{item.reviewsCount || 0} отзыв(ов)</span>
+            </div>
           </div>
         </div>
-        <div className="row wrap">
+        <div className="row wrap taxi-tags">
           {item.weekdays ? <span className="badge">Регулярно</span> : null}
           {item.when ? <span className="badge">{item.when}</span> : null}
           {item.seats ? <span className="badge">Места: {item.seats.free}/{item.seats.total}</span> : null}
@@ -138,7 +154,7 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
   );
 }
 
-export function Media({ photos, emptyText, compact = false, onOpen, bleed = false, section = "ads" }) {
+export function Media({ photos, emptyText, compact = false, onOpen, bleed = false, section = "ads", className = "" }) {
   const items = Array.isArray(photos) ? photos.filter(Boolean) : [];
   const hasPhotos = items.length > 0;
   const [index, setIndex] = useState(0);
@@ -179,7 +195,7 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
 
   return (
     <div
-      className={`media ${compact ? "media-compact" : ""} ${bleed ? "media-bleed" : ""} ${hasPhotos ? "media-has-image" : ""} ${hasPhotos && onOpen ? "media-clickable" : ""}`}
+      className={`media ${compact ? "media-compact" : ""} ${bleed ? "media-bleed" : ""} ${hasPhotos ? "media-has-image" : ""} ${hasPhotos && onOpen ? "media-clickable" : ""} ${className}`}
       role={hasPhotos && onOpen ? "button" : undefined}
       tabIndex={hasPhotos && onOpen ? 0 : undefined}
       onClick={
