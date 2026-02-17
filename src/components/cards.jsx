@@ -105,6 +105,7 @@ export function TaxiCard({ item, onOpen, onFav, activeFav }) {
           {item.weekdays ? <span className="badge">Регулярно</span> : null}
           {item.when ? <span className="badge">{item.when}</span> : null}
           {item.seats ? <span className="badge">Места: {item.seats.free}/{item.seats.total}</span> : null}
+          {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
         </div>
         <p className="small">{short(item.desc)}</p>
       </div>

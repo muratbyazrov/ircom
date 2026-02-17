@@ -170,6 +170,7 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
       {type === "food" ? <p><b>Готовность:</b> {item.always ? "Всегда в наличии" : `${item.prep} минут`}</p> : null}
       {type === "taxi" && item.when ? <p><b>Дата и время:</b> {item.when}</p> : null}
       {type === "taxi" && item.seats ? <p><b>Места:</b> {item.seats.free}/{item.seats.total}</p> : null}
+      {type === "taxi" && item.isFilled ? <p><b>Статус:</b> Водитель заполнен</p> : null}
       <p><b>Описание:</b> {item.desc || "Нет описания"}</p>
       {feedbackEnabled ? (
         <section className="reviews-block">

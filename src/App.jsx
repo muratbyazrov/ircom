@@ -91,6 +91,78 @@ const getFeedbackRating = (reviews) => {
   const sum = reviews.reduce((acc, review) => acc + (Number(review.rating) || 0), 0);
   return Number((sum / reviews.length).toFixed(1));
 };
+const deepCopy = (value) => (value == null ? value : JSON.parse(JSON.stringify(value)));
+const TEST_USERS = {
+  user_with_entities: {
+    label: "Пользователь с сущностями",
+    owner: "test_driver",
+    profile: {
+      name: "Тест Водитель",
+      phone: "+7(929)111-22-33",
+      telegram: "@test_driver_ircom",
+      whatsapp: "+7(929)111-22-33",
+      about: "Тестовый аккаунт: есть заведение, услуга и поездка такси.",
+    },
+    hasRestaurant: true,
+    restaurantEntity: {
+      title: "Кафе Тест",
+      desc: "Домашняя кухня и выпечка.",
+      address: "г. Цхинвал, ул. Тестовая, 10",
+      phone: "+7(929)111-22-33",
+      telegram: "@cafe_test",
+      whatsapp: "+7(929)111-22-33",
+    },
+    services: [
+      {
+        id: "service-test-user-1",
+        category: "Другое",
+        title: "Услуга тестового пользователя",
+        price: 1500,
+        date: 0,
+        desc: "Тестовая услуга для проверки профиля.",
+        owner: "test_driver",
+        contacts: { phone: "+7(929)111-22-33", tg: "@test_driver_ircom", wa: "+7(929)111-22-33" },
+        photos: [buildUserPhoto("service-test-user-1", 0)],
+      },
+    ],
+    taxiItems: [
+      {
+        id: "taxi-test-user-1",
+        category: "Цхинвал -> Владикавказ",
+        name: "Тест Водитель",
+        price: 1200,
+        rating: 5,
+        date: 0,
+        seats: { total: 4, free: 1 },
+        when: "Сегодня 18:00",
+        mode: "one-time",
+        isFilled: false,
+        desc: "Тестовая поездка межгород.",
+        contacts: { phone: "+7(929)111-22-33", wa: "+7(929)111-22-33" },
+        photos: [buildUserPhoto("taxi-test-user-1", 0)],
+      },
+    ],
+    taxiTemplates: [],
+    isTaxiDriver: true,
+  },
+  user_empty: {
+    label: "Пользователь без сущностей",
+    owner: "test_empty",
+    profile: {
+      name: "Тест Пустой",
+      phone: "+7(929)444-55-66",
+      telegram: "@test_empty_ircom",
+      whatsapp: "+7(929)444-55-66",
+      about: "Тестовый аккаунт без объявлений и услуг.",
+    },
+    hasRestaurant: false,
+    restaurantEntity: null,
+    services: [],
+    taxiItems: [],
+    taxiTemplates: [],
+    isTaxiDriver: false,
+  },
+};
 const normalizeWeekdays = (value) => {
   const source = Array.isArray(value) ? value : String(value || "").split(",");
   return source.map((x) => String(x).trim()).filter((x) => x in WEEKDAY_TO_INDEX);
@@ -164,6 +236,8 @@ function buildRecurringTaxiOccurrences(templates, horizonDays = 14) {
 export default function App() {
   const [tab, setTab] = useState("ads");
   const [isAuth, setIsAuth] = useState(false);
+  const [currentOwner, setCurrentOwner] = useState(null);
+  const [selectedAuthUser, setSelectedAuthUser] = useState("user_with_entities");
   const [profile, setProfile] = useState({
     name: "Гость",
     phone: "-",
@@ -172,6 +246,7 @@ export default function App() {
     about: "Авторизуйтесь, чтобы управлять профилем.",
   });
   const [hasRestaurant, setHasRestaurant] = useState(false);
+  const [restaurantEntity, setRestaurantEntity] = useState(null);
   const [favorites, setFavorites] = useState(new Set());
   const [adsCategory, setAdsCategory] = useState("Все");
   const [serviceCategory, setServiceCategory] = useState("Все");
@@ -183,6 +258,7 @@ export default function App() {
   const [taxiSort, setTaxiSort] = useState("rating");
   const [taxiRequestedAt, setTaxiRequestedAt] = useState("");
   const [customTaxiItems, setCustomTaxiItems] = useState([]);
+  const [customServices, setCustomServices] = useState([]);
   const [taxiTemplates, setTaxiTemplates] = useState([]);
   const [feedbackByItem, setFeedbackByItem] = useState(() => buildInitialFeedback());
   const [isTaxiDriver, setIsTaxiDriver] = useState(false);
@@ -233,20 +309,31 @@ export default function App() {
   const toggleAuth = () => {
     if (isAuth) {
       setIsAuth(false);
+      setCurrentOwner(null);
       setProfile({ name: "Гость", phone: "-", telegram: "-", whatsapp: "-", about: "Авторизуйтесь, чтобы управлять профилем." });
       setHasRestaurant(false);
+      setRestaurantEntity(null);
+      setCustomServices([]);
+      setCustomTaxiItems([]);
+      setTaxiTemplates([]);
       setIsTaxiDriver(false);
       return;
     }
 
+    setModal({ type: "auth", payload: {} });
+  };
+
+  const applyAuthUser = (userKey) => {
+    const data = TEST_USERS[userKey] || TEST_USERS.user_empty;
     setIsAuth(true);
-    setProfile({
-      name: "Мурад",
-      phone: "+7(929)000-00-00",
-      telegram: "@murat_ircom",
-      whatsapp: "+7(929)000-00-00",
-      about: "Продаю технику и размещаю междугородние поездки.",
-    });
+    setCurrentOwner(data.owner || null);
+    setProfile(deepCopy(data.profile));
+    setHasRestaurant(Boolean(data.hasRestaurant));
+    setRestaurantEntity(deepCopy(data.restaurantEntity));
+    setCustomServices(deepCopy(data.services) || []);
+    setCustomTaxiItems(deepCopy(data.taxiItems) || []);
+    setTaxiTemplates(deepCopy(data.taxiTemplates) || []);
+    setIsTaxiDriver(Boolean(data.isTaxiDriver) || Boolean((data.taxiItems || []).length) || Boolean((data.taxiTemplates || []).length));
   };
 
   const ensureAuth = (fn, options = {}) => {
@@ -269,10 +356,10 @@ export default function App() {
   const adsItems = useMemo(() => {
     const category = adsCategoriesVisible.includes(adsCategory) ? adsCategory : "Все";
     const filtered = mock.ads.filter(
-      (x) => category === "Все" || x.category === category || (category === "Мои объявления" && x.owner === "murat")
+      (x) => category === "Все" || x.category === category || (category === "Мои объявления" && currentOwner && x.owner === currentOwner)
     );
     return sortItems(filtered, adsSort, favorites);
-  }, [adsCategoriesVisible, adsCategory, adsSort, favorites]);
+  }, [adsCategoriesVisible, adsCategory, adsSort, favorites, currentOwner]);
 
   const decorateWithFeedback = (item) => {
     const reviews = Array.isArray(feedbackByItem[item.id]) ? feedbackByItem[item.id] : [];
@@ -290,7 +377,7 @@ export default function App() {
     };
   };
 
-  const servicesCatalog = useMemo(() => mock.services.map((item) => decorateWithFeedback(item)), [feedbackByItem]);
+  const servicesCatalog = useMemo(() => [...customServices, ...mock.services].map((item) => decorateWithFeedback(item)), [feedbackByItem, customServices]);
 
   const servicesItems = useMemo(
     () => sortItems(servicesCatalog.filter((x) => serviceCategory === "Все" || x.category === serviceCategory), servicesSort, favorites),
@@ -364,6 +451,36 @@ export default function App() {
     }
 
     if (type === "restaurant") setHasRestaurant(true);
+    if (type === "restaurant") {
+      setRestaurantEntity({
+        title: payload.title || "Моё заведение",
+        desc: payload.desc || "",
+        address: payload.address || "",
+        phone: payload.phone || "",
+        telegram: payload.telegram || "",
+        whatsapp: payload.whatsapp || "",
+      });
+    }
+    if (type === "service") {
+      setCustomServices((prev) => [
+        {
+          id: `service-custom-${Date.now()}-${randomSuffix()}`,
+          category: payload.category || "Другое",
+          title: payload.title || "Услуга",
+          price: Number(payload.price) || 0,
+          date: 0,
+          desc: payload.desc || "",
+          owner: currentOwner || "test_driver",
+          contacts: {
+            ...(profile.phone && profile.phone !== "-" ? { phone: profile.phone } : {}),
+            ...(profile.whatsapp && profile.whatsapp !== "-" ? { wa: profile.whatsapp } : {}),
+            ...(profile.telegram && profile.telegram !== "-" ? { tg: profile.telegram } : {}),
+          },
+          photos: toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx)),
+        },
+        ...prev,
+      ]);
+    }
     if (type === "profile") {
       setProfile({
         name: payload.name || "-",
@@ -414,6 +531,8 @@ export default function App() {
           date: 0,
           seats,
           when: payload.when || null,
+          mode: "one-time",
+          isFilled: false,
           desc: payload.desc || "Новое предложение",
           contacts,
           photos,
@@ -451,6 +570,68 @@ export default function App() {
 
       return { ...template, weekdays: nextDays, time: nextTime };
     }));
+  };
+
+  const toggleTaxiFilled = (id) => {
+    setCustomTaxiItems((prev) => prev.map((x) => (x.id === id ? { ...x, isFilled: !x.isFilled } : x)));
+  };
+
+  const editTaxiOffer = (id) => {
+    setCustomTaxiItems((prev) => prev.map((offer) => {
+      if (offer.id !== id) return offer;
+      const nextName = window.prompt("Имя/ник водителя", offer.name || "");
+      if (nextName === null) return offer;
+      const nextPrice = window.prompt("Стоимость (₽)", String(offer.price || ""));
+      if (nextPrice === null) return offer;
+      const parsedPrice = Number(nextPrice);
+      if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) return offer;
+      const nextWhen = window.prompt("Дата и время поездки", offer.when || "");
+      if (nextWhen === null) return offer;
+      return {
+        ...offer,
+        name: nextName.trim() || offer.name,
+        price: parsedPrice,
+        when: nextWhen.trim() || offer.when,
+      };
+    }));
+  };
+
+  const editService = (id) => {
+    setCustomServices((prev) => prev.map((service) => {
+      if (service.id !== id) return service;
+      const nextTitle = window.prompt("Название услуги", service.title || "");
+      if (nextTitle === null) return service;
+      const nextPrice = window.prompt("Цена (₽)", String(service.price || ""));
+      if (nextPrice === null) return service;
+      const parsedPrice = Number(nextPrice);
+      if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) return service;
+      const nextDesc = window.prompt("Описание услуги", service.desc || "");
+      if (nextDesc === null) return service;
+      return {
+        ...service,
+        title: nextTitle.trim() || service.title,
+        price: parsedPrice,
+        desc: nextDesc.trim() || service.desc,
+      };
+    }));
+  };
+
+  const editRestaurant = () => {
+    setRestaurantEntity((prev) => {
+      if (!prev) return prev;
+      const nextTitle = window.prompt("Название заведения", prev.title || "");
+      if (nextTitle === null) return prev;
+      const nextAddress = window.prompt("Адрес", prev.address || "");
+      if (nextAddress === null) return prev;
+      const nextDesc = window.prompt("Описание", prev.desc || "");
+      if (nextDesc === null) return prev;
+      return {
+        ...prev,
+        title: nextTitle.trim() || prev.title,
+        address: nextAddress.trim() || prev.address,
+        desc: nextDesc.trim() || prev.desc,
+      };
+    });
   };
 
   const addFeedback = ({ itemId, rating, text }) => {
@@ -597,15 +778,22 @@ export default function App() {
           <ProfileTab
             isAuth={isAuth}
             profile={profile}
-            myAdsCount={mock.ads.filter((x) => x.owner === "murat").length}
-            myServicesCount={2}
+            myAdsCount={currentOwner ? mock.ads.filter((x) => x.owner === currentOwner).length : 0}
+            myServicesCount={customServices.length}
             hasRestaurant={hasRestaurant}
+            restaurantEntity={restaurantEntity}
             isTaxiDriver={isTaxiDriver}
             taxiTemplates={taxiTemplates}
+            oneTimeIntercityOffers={customTaxiItems.filter((x) => x.mode === "one-time" && x.category !== "Такси по Цхинвалу")}
+            myServices={customServices}
             onPauseTemplate={(id) => setTemplateStatus(id, "paused")}
             onResumeTemplate={(id) => setTemplateStatus(id, "active")}
             onDeleteTemplate={removeTemplate}
             onEditTemplate={editTemplate}
+            onToggleTaxiFilled={toggleTaxiFilled}
+            onEditTaxiOffer={editTaxiOffer}
+            onEditService={editService}
+            onEditRestaurant={editRestaurant}
             openCreate={openCreate}
             openEditProfile={openEditProfile}
             toggleAuth={toggleAuth}
@@ -631,20 +819,26 @@ export default function App() {
         {modal?.type === "auth" && (
           <>
             <h3>Требуется авторизация</h3>
-            <p className="small">Для этого действия нужно войти или зарегистрироваться.</p>
+            <p className="small">Временно выберите тестового пользователя для входа.</p>
+            <div className="multi-select-buttons" style={{ marginTop: 8 }}>
+              {Object.entries(TEST_USERS).map(([key, user]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`multi-select-btn ${selectedAuthUser === key ? "active" : ""}`}
+                  onClick={() => setSelectedAuthUser(key)}
+                  aria-pressed={selectedAuthUser === key}
+                >
+                  {user.label}
+                </button>
+              ))}
+            </div>
             <div className="actions" style={{ marginTop: 8 }}>
               <button
                 className="primary-btn"
                 type="button"
                 onClick={() => {
-                  setIsAuth(true);
-                  setProfile({
-                    name: "Мурад",
-                    phone: "+7(929)000-00-00",
-                    telegram: "@murat_ircom",
-                    whatsapp: "+7(929)000-00-00",
-                    about: "Продаю технику и размещаю междугородние поездки.",
-                  });
+                  applyAuthUser(selectedAuthUser);
                   if (modal?.payload?.returnTo) {
                     setModal({ type: "detail", payload: modal.payload.returnTo });
                   } else {
@@ -652,7 +846,7 @@ export default function App() {
                   }
                 }}
               >
-                Войти
+                Войти как выбранный
               </button>
               <button className="ghost-btn" type="button" onClick={closeModal}>Отмена</button>
             </div>

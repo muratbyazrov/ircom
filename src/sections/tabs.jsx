@@ -113,12 +113,19 @@ export function ProfileTab({
   myAdsCount,
   myServicesCount,
   hasRestaurant,
+  restaurantEntity,
   isTaxiDriver,
   taxiTemplates,
+  oneTimeIntercityOffers,
+  myServices,
   onPauseTemplate,
   onResumeTemplate,
   onDeleteTemplate,
   onEditTemplate,
+  onToggleTaxiFilled,
+  onEditTaxiOffer,
+  onEditService,
+  onEditRestaurant,
   openCreate,
   openEditProfile,
   toggleAuth,
@@ -146,20 +153,78 @@ export function ProfileTab({
           <StatCard title={String(myServicesCount)} caption="Мои услуги" />
         </div>
 
+        {isAuth ? (
+          <Section>
+            <h4>Мои сущности</h4>
+            <div className="list" style={{ marginTop: 8 }}>
+              {hasRestaurant ? (
+                <article className="card">
+                  <div className="card-body">
+                    <div className="card-title">{restaurantEntity?.title || "Заведение"}</div>
+                    <p className="small">{restaurantEntity?.address || "Адрес не указан"}</p>
+                    <div className="actions">
+                      <button className="ghost-btn" type="button" onClick={onEditRestaurant}>Редактировать</button>
+                    </div>
+                  </div>
+                </article>
+              ) : null}
+
+              {myServices.length ? myServices.map((service) => (
+                <article className="card" key={service.id}>
+                  <div className="card-body">
+                    <div className="card-title">{service.title}</div>
+                    <p className="small">{service.category} · {service.price} ₽</p>
+                    <div className="actions">
+                      <button className="ghost-btn" type="button" onClick={() => onEditService(service.id)}>Редактировать</button>
+                    </div>
+                  </div>
+                </article>
+              )) : null}
+
+              {isTaxiDriver && oneTimeIntercityOffers.length ? oneTimeIntercityOffers.map((offer) => (
+                <article className="card" key={offer.id}>
+                  <div className="card-body">
+                    <div className="card-title">{offer.category}</div>
+                    <p className="small">{offer.when || "Дата не указана"} · {offer.price} ₽</p>
+                    <div className="actions">
+                      <button className="ghost-btn" type="button" onClick={() => onEditTaxiOffer(offer.id)}>Редактировать</button>
+                      <button className={offer.isFilled ? "primary-btn" : "ghost-btn"} type="button" onClick={() => onToggleTaxiFilled(offer.id)}>
+                        {offer.isFilled ? "Снять заполнение" : "Заполнен"}
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              )) : null}
+
+              {!hasRestaurant && !myServices.length && !(isTaxiDriver && oneTimeIntercityOffers.length) ? (
+                <p className="small">Создайте заведение, услугу или поездку, чтобы управлять ими из профиля.</p>
+              ) : null}
+            </div>
+          </Section>
+        ) : null}
+
         <Section>
           <h4>Быстрые действия</h4>
           <div className="quick-actions" style={{ marginTop: 8 }}>
-            <button className="ghost-btn quick-action-btn" type="button" onClick={() => openCreate("restaurant")}>
+            <button
+              className="ghost-btn quick-action-btn"
+              type="button"
+              onClick={() => (hasRestaurant ? onEditRestaurant() : openCreate("restaurant"))}
+            >
               <Icon name="food" />
               {hasRestaurant ? "Управлять заведением" : "Добавить заведение"}
             </button>
             <button className="ghost-btn quick-action-btn" type="button" onClick={() => openCreate("taxi")}>
               <Icon name="taxi" />
-              Стать водителем такси
+              {isTaxiDriver ? "Добавить поездку" : "Стать водителем такси"}
             </button>
-            <button className="ghost-btn quick-action-btn" type="button" onClick={() => openCreate("service")}>
+            <button
+              className="ghost-btn quick-action-btn"
+              type="button"
+              onClick={() => (myServices.length ? onEditService(myServices[0].id) : openCreate("service"))}
+            >
               <Icon name="services" />
-              Добавить услугу
+              {myServices.length ? "Редактировать услугу" : "Добавить услугу"}
             </button>
           </div>
         </Section>
