@@ -633,27 +633,46 @@ button {
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
 .quick-action-btn {
   width: 100%;
-  min-height: 86px;
-  justify-content: center;
+  min-height: 116px;
+  justify-content: flex-start;
   text-align: center;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
   white-space: normal;
-  word-break: normal;
-  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  padding: 10px 12px;
+}
+
+.quick-action-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #f7c5c9;
+  background: #fff6f7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 34px;
+}
+
+.quick-action-btn span:last-child {
+  line-height: 1.22;
 }
 
 .quick-action-btn .icon {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  color: #e57f86;
 }
 
 .entity-summary {
@@ -1138,6 +1157,10 @@ button {
   .screen {
     padding-left: 20px;
     padding-right: 20px;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .bottom-nav {
