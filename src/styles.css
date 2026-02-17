@@ -812,12 +812,12 @@ button {
 }
 
 .rating-star {
-  width: 34px;
-  height: 34px;
+  width: 42px;
+  height: 42px;
   border: none;
   background: transparent;
   color: #d1d5db;
-  font-size: 26px;
+  font-size: 32px;
   line-height: 1;
   display: inline-flex;
   align-items: center;
