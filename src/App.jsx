@@ -125,6 +125,19 @@ const TEST_USERS = {
         photos: [buildUserPhoto("service-test-user-1", 0)],
       },
     ],
+    ads: [
+      {
+        id: "ad-test-user-1",
+        category: "Электроника",
+        title: "Ноутбук Lenovo ThinkPad",
+        price: 38000,
+        date: 0,
+        desc: "Тестовое объявление пользователя для проверки блока сущностей.",
+        owner: "test_driver",
+        contacts: { phone: "+7(929)111-22-33", tg: "@test_driver_ircom" },
+        photos: [buildUserPhoto("ad-test-user-1", 0)],
+      },
+    ],
     taxiItems: [
       {
         id: "taxi-test-user-1",
@@ -158,6 +171,7 @@ const TEST_USERS = {
     hasRestaurant: false,
     restaurantEntity: null,
     services: [],
+    ads: [],
     taxiItems: [],
     taxiTemplates: [],
     isTaxiDriver: false,
@@ -257,6 +271,7 @@ export default function App() {
   const [foodSort, setFoodSort] = useState("price");
   const [taxiSort, setTaxiSort] = useState("rating");
   const [taxiRequestedAt, setTaxiRequestedAt] = useState("");
+  const [customAds, setCustomAds] = useState([]);
   const [customTaxiItems, setCustomTaxiItems] = useState([]);
   const [customServices, setCustomServices] = useState([]);
   const [taxiTemplates, setTaxiTemplates] = useState([]);
@@ -314,6 +329,7 @@ export default function App() {
       setHasRestaurant(false);
       setRestaurantEntity(null);
       setCustomServices([]);
+      setCustomAds([]);
       setCustomTaxiItems([]);
       setTaxiTemplates([]);
       setIsTaxiDriver(false);
@@ -331,6 +347,7 @@ export default function App() {
     setHasRestaurant(Boolean(data.hasRestaurant));
     setRestaurantEntity(deepCopy(data.restaurantEntity));
     setCustomServices(deepCopy(data.services) || []);
+    setCustomAds(deepCopy(data.ads) || []);
     setCustomTaxiItems(deepCopy(data.taxiItems) || []);
     setTaxiTemplates(deepCopy(data.taxiTemplates) || []);
     setIsTaxiDriver(Boolean(data.isTaxiDriver) || Boolean((data.taxiItems || []).length) || Boolean((data.taxiTemplates || []).length));
@@ -353,13 +370,19 @@ export default function App() {
     });
   };
 
+  const adsCatalog = useMemo(() => [...customAds, ...mock.ads], [customAds]);
+  const myAds = useMemo(
+    () => (currentOwner ? adsCatalog.filter((x) => x.owner === currentOwner) : []),
+    [adsCatalog, currentOwner]
+  );
+
   const adsItems = useMemo(() => {
     const category = adsCategoriesVisible.includes(adsCategory) ? adsCategory : "Все";
-    const filtered = mock.ads.filter(
+    const filtered = adsCatalog.filter(
       (x) => category === "Все" || x.category === category || (category === "Мои объявления" && currentOwner && x.owner === currentOwner)
     );
     return sortItems(filtered, adsSort, favorites);
-  }, [adsCategoriesVisible, adsCategory, adsSort, favorites, currentOwner]);
+  }, [adsCategoriesVisible, adsCategory, adsSort, favorites, currentOwner, adsCatalog]);
 
   const decorateWithFeedback = (item) => {
     const reviews = Array.isArray(feedbackByItem[item.id]) ? feedbackByItem[item.id] : [];
@@ -417,17 +440,19 @@ export default function App() {
   }, [taxiCategory, taxiRequestedAt]);
 
   const openDetail = (type, id) => {
-    const source = type === "ads" ? mock.ads : type === "services" ? servicesCatalog : type === "food" ? mock.food : taxiCatalog;
+    const source = type === "ads" ? adsCatalog : type === "services" ? servicesCatalog : type === "food" ? mock.food : taxiCatalog;
     const item = source.find((x) => x.id === id);
     if (!item) return;
     setModal({ type: "detail", payload: { type, id } });
   };
 
   const openCreate = (type) => ensureAuth(() => setModal({ type: "create", payload: { type } }));
+  const openEditEntity = (payload) => ensureAuth(() => setModal({ type: "editEntity", payload }));
+  const openEntityGroup = (group) => ensureAuth(() => setModal({ type: "entityGroup", payload: { group } }));
   const openEditProfile = () => ensureAuth(() => setModal({ type: "profileEdit", payload: profile }));
-  const createType = modal?.type === "create" ? modal.payload?.type : null;
+  const createType = modal?.type === "create" || modal?.type === "editEntity" ? modal.payload?.type : null;
   const fullScreenCreate = createType === "ad" || createType === "service" || createType === "taxi" || createType === "restaurant";
-  const fullScreenModal = modal?.type === "detail" || modal?.type === "profileEdit" || fullScreenCreate;
+  const fullScreenModal = modal?.type === "detail" || modal?.type === "profileEdit" || modal?.type === "entityGroup" || fullScreenCreate;
   const blockAuthBackdropClose = modal?.type === "auth" && Boolean(modal?.payload?.returnTo);
 
   const submitMock = (event, type) => {
@@ -450,36 +475,102 @@ export default function App() {
       }
     }
 
+    const editEntityId = typeof payload.editEntityId === "string" ? payload.editEntityId : "";
+    const editEntityKind = typeof payload.editEntityKind === "string" ? payload.editEntityKind : "";
+    const isEdit = Boolean(editEntityId || editEntityKind === "restaurant");
+
     if (type === "restaurant") setHasRestaurant(true);
     if (type === "restaurant") {
-      setRestaurantEntity({
-        title: payload.title || "Моё заведение",
-        desc: payload.desc || "",
-        address: payload.address || "",
-        phone: payload.phone || "",
-        telegram: payload.telegram || "",
-        whatsapp: payload.whatsapp || "",
+      setRestaurantEntity((prev) => {
+        const nextPhotos = toArray(payload.images).length
+          ? toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx))
+          : Array.isArray(prev?.photos)
+            ? prev.photos
+            : [];
+        return {
+          title: payload.title || "Моё заведение",
+          desc: payload.desc || "",
+          address: payload.address || "",
+          phone: payload.phone || "",
+          telegram: payload.telegram || "",
+          whatsapp: payload.whatsapp || "",
+          photos: nextPhotos,
+        };
       });
     }
-    if (type === "service") {
-      setCustomServices((prev) => [
-        {
-          id: `service-custom-${Date.now()}-${randomSuffix()}`,
-          category: payload.category || "Другое",
-          title: payload.title || "Услуга",
-          price: Number(payload.price) || 0,
-          date: 0,
-          desc: payload.desc || "",
-          owner: currentOwner || "test_driver",
-          contacts: {
-            ...(profile.phone && profile.phone !== "-" ? { phone: profile.phone } : {}),
-            ...(profile.whatsapp && profile.whatsapp !== "-" ? { wa: profile.whatsapp } : {}),
-            ...(profile.telegram && profile.telegram !== "-" ? { tg: profile.telegram } : {}),
+    if (type === "ad") {
+      if (isEdit && editEntityId) {
+        setCustomAds((prev) => prev.map((ad) => {
+          if (ad.id !== editEntityId) return ad;
+          const nextPhotos = toArray(payload.images).length
+            ? toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx))
+            : ad.photos || [];
+          return {
+            ...ad,
+            category: payload.category || ad.category,
+            title: payload.title || ad.title,
+            price: Number(payload.price) || ad.price || 0,
+            desc: payload.desc || ad.desc || "",
+            photos: nextPhotos,
+          };
+        }));
+      } else {
+        setCustomAds((prev) => [
+          {
+            id: `ad-custom-${Date.now()}-${randomSuffix()}`,
+            category: payload.category || "Другое",
+            title: payload.title || "Объявление",
+            price: Number(payload.price) || 0,
+            date: 0,
+            desc: payload.desc || "",
+            owner: currentOwner || "test_driver",
+            contacts: {
+              ...(profile.phone && profile.phone !== "-" ? { phone: profile.phone } : {}),
+              ...(profile.whatsapp && profile.whatsapp !== "-" ? { wa: profile.whatsapp } : {}),
+              ...(profile.telegram && profile.telegram !== "-" ? { tg: profile.telegram } : {}),
+            },
+            photos: toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx)),
           },
-          photos: toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx)),
-        },
-        ...prev,
-      ]);
+          ...prev,
+        ]);
+      }
+    }
+    if (type === "service") {
+      if (isEdit && editEntityId) {
+        setCustomServices((prev) => prev.map((service) => {
+          if (service.id !== editEntityId) return service;
+          const nextPhotos = toArray(payload.images).length
+            ? toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx))
+            : service.photos || [];
+          return {
+            ...service,
+            category: payload.category || service.category,
+            title: payload.title || service.title,
+            price: Number(payload.price) || service.price || 0,
+            desc: payload.desc || service.desc || "",
+            photos: nextPhotos,
+          };
+        }));
+      } else {
+        setCustomServices((prev) => [
+          {
+            id: `service-custom-${Date.now()}-${randomSuffix()}`,
+            category: payload.category || "Другое",
+            title: payload.title || "Услуга",
+            price: Number(payload.price) || 0,
+            date: 0,
+            desc: payload.desc || "",
+            owner: currentOwner || "test_driver",
+            contacts: {
+              ...(profile.phone && profile.phone !== "-" ? { phone: profile.phone } : {}),
+              ...(profile.whatsapp && profile.whatsapp !== "-" ? { wa: profile.whatsapp } : {}),
+              ...(profile.telegram && profile.telegram !== "-" ? { tg: profile.telegram } : {}),
+            },
+            photos: toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx)),
+          },
+          ...prev,
+        ]);
+      }
     }
     if (type === "profile") {
       setProfile({
@@ -504,7 +595,40 @@ export default function App() {
         ...(payload.tg ? { tg: payload.tg } : {}),
       };
 
-      if (mode === "recurring" && scheduleDays.length && categories.length) {
+      if (isEdit && editEntityId && editEntityKind === "taxi-one-time") {
+        setCustomTaxiItems((prev) => prev.map((item) => {
+          if (item.id !== editEntityId) return item;
+          return {
+            ...item,
+            category: categories[0] || item.category,
+            name: payload.name || item.name,
+            price: Number(payload.price) || item.price || 0,
+            seats,
+            when: payload.when || item.when || null,
+            desc: payload.desc || item.desc || "",
+            contacts,
+            photos: photos.length ? photos : item.photos || [],
+          };
+        }));
+        setIsTaxiDriver(true);
+      } else if (isEdit && editEntityId && editEntityKind === "taxi-template") {
+        setTaxiTemplates((prev) => prev.map((template) => {
+          if (template.id !== editEntityId) return template;
+          return {
+            ...template,
+            category: categories[0] || template.category,
+            name: payload.name || template.name,
+            price: Number(payload.price) || template.price || 0,
+            seats,
+            desc: payload.desc || template.desc || "",
+            contacts,
+            photos: photos.length ? photos : template.photos || [],
+            weekdays: scheduleDays.length ? scheduleDays : template.weekdays || [],
+            time: scheduleHour || template.time,
+          };
+        }));
+        setIsTaxiDriver(true);
+      } else if (mode === "recurring" && scheduleDays.length && categories.length) {
         const templates = categories.map((category) => ({
           id: `taxi-template-${Date.now()}-${randomSuffix()}`,
           category,
@@ -554,85 +678,18 @@ export default function App() {
     setTaxiTemplates((prev) => prev.filter((x) => x.id !== id));
   };
 
-  const editTemplate = (id) => {
-    setTaxiTemplates((prev) => prev.map((template) => {
-      if (template.id !== id) return template;
-
-      const daysInput = window.prompt("Дни недели через запятую (например: Пн,Ср,Пт)", template.weekdays.join(","));
-      if (daysInput === null) return template;
-      const nextDays = normalizeWeekdays(daysInput);
-      if (!nextDays.length) return template;
-
-      const timeInput = window.prompt("Время выезда в формате HH:00 (например: 08:00)", template.time);
-      if (timeInput === null) return template;
-      const nextTime = String(timeInput).trim();
-      if (!/^(0[4-9]|1\d|2[0-4]):00$/.test(nextTime)) return template;
-
-      return { ...template, weekdays: nextDays, time: nextTime };
-    }));
-  };
+  const editTemplate = (id) => openEditEntity({ type: "taxi", id, kind: "taxi-template" });
 
   const toggleTaxiFilled = (id) => {
     setCustomTaxiItems((prev) => prev.map((x) => (x.id === id ? { ...x, isFilled: !x.isFilled } : x)));
   };
 
-  const editTaxiOffer = (id) => {
-    setCustomTaxiItems((prev) => prev.map((offer) => {
-      if (offer.id !== id) return offer;
-      const nextName = window.prompt("Имя/ник водителя", offer.name || "");
-      if (nextName === null) return offer;
-      const nextPrice = window.prompt("Стоимость (₽)", String(offer.price || ""));
-      if (nextPrice === null) return offer;
-      const parsedPrice = Number(nextPrice);
-      if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) return offer;
-      const nextWhen = window.prompt("Дата и время поездки", offer.when || "");
-      if (nextWhen === null) return offer;
-      return {
-        ...offer,
-        name: nextName.trim() || offer.name,
-        price: parsedPrice,
-        when: nextWhen.trim() || offer.when,
-      };
-    }));
-  };
+  const editTaxiOffer = (id) => openEditEntity({ type: "taxi", id, kind: "taxi-one-time" });
 
-  const editService = (id) => {
-    setCustomServices((prev) => prev.map((service) => {
-      if (service.id !== id) return service;
-      const nextTitle = window.prompt("Название услуги", service.title || "");
-      if (nextTitle === null) return service;
-      const nextPrice = window.prompt("Цена (₽)", String(service.price || ""));
-      if (nextPrice === null) return service;
-      const parsedPrice = Number(nextPrice);
-      if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) return service;
-      const nextDesc = window.prompt("Описание услуги", service.desc || "");
-      if (nextDesc === null) return service;
-      return {
-        ...service,
-        title: nextTitle.trim() || service.title,
-        price: parsedPrice,
-        desc: nextDesc.trim() || service.desc,
-      };
-    }));
-  };
+  const editService = (id) => openEditEntity({ type: "service", id, kind: "service" });
+  const editAd = (id) => openEditEntity({ type: "ad", id, kind: "ad" });
 
-  const editRestaurant = () => {
-    setRestaurantEntity((prev) => {
-      if (!prev) return prev;
-      const nextTitle = window.prompt("Название заведения", prev.title || "");
-      if (nextTitle === null) return prev;
-      const nextAddress = window.prompt("Адрес", prev.address || "");
-      if (nextAddress === null) return prev;
-      const nextDesc = window.prompt("Описание", prev.desc || "");
-      if (nextDesc === null) return prev;
-      return {
-        ...prev,
-        title: nextTitle.trim() || prev.title,
-        address: nextAddress.trim() || prev.address,
-        desc: nextDesc.trim() || prev.desc,
-      };
-    });
-  };
+  const editRestaurant = () => openEditEntity({ type: "restaurant", kind: "restaurant" });
 
   const addFeedback = ({ itemId, rating, text }) => {
     let added = false;
@@ -685,7 +742,7 @@ export default function App() {
     const detailType = modal.payload?.type;
     const detailId = modal.payload?.id;
     const source = detailType === "ads"
-      ? mock.ads
+      ? adsCatalog
       : detailType === "services"
         ? servicesCatalog
         : detailType === "food"
@@ -694,7 +751,87 @@ export default function App() {
     const item = source.find((x) => x.id === detailId);
     if (!item) return null;
     return { type: detailType, item };
-  }, [modal, servicesCatalog, taxiCatalog]);
+  }, [modal, adsCatalog, servicesCatalog, taxiCatalog]);
+
+  const editEntityData = useMemo(() => {
+    if (modal?.type !== "editEntity") return null;
+    const editType = modal.payload?.type;
+    const editId = modal.payload?.id;
+    const editKind = modal.payload?.kind;
+
+    if (editType === "restaurant") {
+      return {
+        type: "restaurant",
+        initialValues: restaurantEntity || {},
+        editMeta: { kind: editKind || "restaurant" },
+      };
+    }
+
+    if (editType === "service") {
+      const item = customServices.find((x) => x.id === editId);
+      if (!item) return null;
+      return {
+        type: "service",
+        initialValues: item,
+        editMeta: { id: item.id, kind: editKind || "service" },
+      };
+    }
+
+    if (editType === "ad") {
+      const item = customAds.find((x) => x.id === editId);
+      if (!item) return null;
+      return {
+        type: "ad",
+        initialValues: item,
+        editMeta: { id: item.id, kind: editKind || "ad" },
+      };
+    }
+
+    if (editType === "taxi") {
+      if (editKind === "taxi-template") {
+        const item = taxiTemplates.find((x) => x.id === editId);
+        if (!item) return null;
+        return {
+          type: "taxi",
+          initialValues: { ...item, mode: "recurring", categories: [item.category] },
+          editMeta: { id: item.id, kind: "taxi-template" },
+        };
+      }
+      const item = customTaxiItems.find((x) => x.id === editId);
+      if (!item) return null;
+      return {
+        type: "taxi",
+        initialValues: { ...item, mode: "one-time", categories: [item.category] },
+        editMeta: { id: item.id, kind: "taxi-one-time" },
+      };
+    }
+
+    return null;
+  }, [modal, restaurantEntity, customServices, customAds, taxiTemplates, customTaxiItems]);
+
+  const entityGroupData = useMemo(() => {
+    if (modal?.type !== "entityGroup") return null;
+    const group = modal.payload?.group;
+    if (group === "restaurant") {
+      return { title: "Заведения", items: hasRestaurant && restaurantEntity ? [restaurantEntity] : [] };
+    }
+    if (group === "ads") {
+      return { title: "Объявления", items: myAds };
+    }
+    if (group === "services") {
+      return { title: "Услуги", items: customServices };
+    }
+    if (group === "taxi") {
+      return {
+        title: "Моё такси",
+        items: {
+          oneTime: customTaxiItems.filter((x) => x.mode === "one-time" && x.category !== "Такси по Цхинвалу"),
+          regular: taxiTemplates,
+        },
+      };
+    }
+    return null;
+  }, [modal, hasRestaurant, restaurantEntity, myAds, customServices, customTaxiItems, taxiTemplates]);
 
   return (
     <div className="app-shell">
@@ -778,22 +915,16 @@ export default function App() {
           <ProfileTab
             isAuth={isAuth}
             profile={profile}
-            myAdsCount={currentOwner ? mock.ads.filter((x) => x.owner === currentOwner).length : 0}
+            myAdsCount={myAds.length}
             myServicesCount={customServices.length}
+            myAds={myAds}
             hasRestaurant={hasRestaurant}
             restaurantEntity={restaurantEntity}
             isTaxiDriver={isTaxiDriver}
             taxiTemplates={taxiTemplates}
             oneTimeIntercityOffers={customTaxiItems.filter((x) => x.mode === "one-time" && x.category !== "Такси по Цхинвалу")}
             myServices={customServices}
-            onPauseTemplate={(id) => setTemplateStatus(id, "paused")}
-            onResumeTemplate={(id) => setTemplateStatus(id, "active")}
-            onDeleteTemplate={removeTemplate}
-            onEditTemplate={editTemplate}
-            onToggleTaxiFilled={toggleTaxiFilled}
-            onEditTaxiOffer={editTaxiOffer}
-            onEditService={editService}
-            onEditRestaurant={editRestaurant}
+            onOpenEntityGroup={openEntityGroup}
             openCreate={openCreate}
             openEditProfile={openEditProfile}
             toggleAuth={toggleAuth}
@@ -867,6 +998,121 @@ export default function App() {
 
         {modal?.type === "create" && (
           <CreateForm type={modal.payload.type} onSubmit={submitMock} onClose={() => setModal(null)} taxiCategories={mock.taxiCategories} />
+        )}
+
+        {modal?.type === "editEntity" && editEntityData && (
+          <CreateForm
+            type={editEntityData.type}
+            mode="edit"
+            initialValues={editEntityData.initialValues}
+            editMeta={editEntityData.editMeta}
+            onSubmit={submitMock}
+            onClose={() => setModal(null)}
+            taxiCategories={mock.taxiCategories}
+          />
+        )}
+
+        {modal?.type === "entityGroup" && entityGroupData && (
+          <>
+            <h3 style={{ marginBottom: 8 }}>{entityGroupData.title}</h3>
+            {modal.payload?.group !== "taxi" && entityGroupData.items.length ? (
+              <div className="list">
+                {modal.payload?.group === "restaurant" ? entityGroupData.items.map((item) => (
+                  <article className="card" key={item.title || "restaurant"}>
+                    <div className="card-body">
+                      <div className="card-title">{item.title || "Заведение"}</div>
+                      <p className="small">{item.address || "Адрес не указан"}</p>
+                      <div className="actions">
+                        <button className="ghost-btn" type="button" onClick={editRestaurant}>Редактировать</button>
+                      </div>
+                    </div>
+                  </article>
+                )) : null}
+
+                {modal.payload?.group === "ads" ? entityGroupData.items.map((item) => (
+                  <article className="card" key={item.id}>
+                    <div className="card-body">
+                      <div className="card-title">{item.title}</div>
+                      <p className="small">{item.category} · {item.price} ₽</p>
+                      <div className="actions">
+                        <button className="ghost-btn" type="button" onClick={() => editAd(item.id)}>Редактировать</button>
+                      </div>
+                    </div>
+                  </article>
+                )) : null}
+
+                {modal.payload?.group === "services" ? entityGroupData.items.map((item) => (
+                  <article className="card" key={item.id}>
+                    <div className="card-body">
+                      <div className="card-title">{item.title}</div>
+                      <p className="small">{item.category} · {item.price} ₽</p>
+                      <div className="actions">
+                        <button className="ghost-btn" type="button" onClick={() => editService(item.id)}>Редактировать</button>
+                      </div>
+                    </div>
+                  </article>
+                )) : null}
+              </div>
+            ) : modal.payload?.group === "taxi" ? (
+              <div className="list">
+                <section className="section" style={{ padding: 10 }}>
+                  <h4 style={{ marginBottom: 4 }}>Разовые поездки</h4>
+                  {(entityGroupData.items.oneTime || []).length ? (
+                    <div className="list">
+                      {entityGroupData.items.oneTime.map((item) => (
+                        <article className="card" key={item.id}>
+                          <div className="card-body">
+                            <div className="card-title">{item.category}</div>
+                            <p className="small">{item.when || "Дата не указана"} · {item.price} ₽</p>
+                            <div className="actions">
+                              <button className="ghost-btn" type="button" onClick={() => editTaxiOffer(item.id)}>Редактировать</button>
+                              <button className={item.isFilled ? "primary-btn" : "ghost-btn"} type="button" onClick={() => toggleTaxiFilled(item.id)}>
+                                {item.isFilled ? "Снять заполнение" : "Заполнен"}
+                              </button>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="small">Разовых поездок пока нет.</p>
+                  )}
+                </section>
+
+                <section className="section" style={{ padding: 10 }}>
+                  <h4 style={{ marginBottom: 4 }}>Регулярные поездки</h4>
+                  {(entityGroupData.items.regular || []).length ? (
+                    <div className="list">
+                      {entityGroupData.items.regular.map((item) => (
+                        <article className="card" key={item.id}>
+                          <div className="card-body">
+                            <div className="card-title">{item.category}</div>
+                            <p className="small">{item.weekdays.join(", ")} · {item.time}</p>
+                            <div className="row wrap">
+                              <span className="badge">{item.status === "paused" ? "На паузе" : "Активна"}</span>
+                            </div>
+                            <div className="actions">
+                              {item.status === "paused" ? (
+                                <button className="ghost-btn" type="button" onClick={() => setTemplateStatus(item.id, "active")}>Возобновить</button>
+                              ) : (
+                                <button className="ghost-btn" type="button" onClick={() => setTemplateStatus(item.id, "paused")}>Пауза</button>
+                              )}
+                              <button className="ghost-btn" type="button" onClick={() => editTemplate(item.id)}>Изменить</button>
+                              <button className="danger-btn" type="button" onClick={() => removeTemplate(item.id)}>Удалить</button>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="small">Регулярных поездок пока нет.</p>
+                  )}
+                </section>
+              </div>
+            ) : (
+              <p className="small">Пока ничего нет в этой группе.</p>
+            )}
+          </>
         )}
 
         {modal?.type === "profileEdit" && <ProfileEditForm profile={profile} onSubmit={submitMock} onClose={() => setModal(null)} />}

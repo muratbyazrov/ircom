@@ -656,6 +656,86 @@ button {
   flex: 0 0 24px;
 }
 
+.entity-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.entity-groups {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.entity-groups-compact {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.entity-compact-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fff, #fcfcff);
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+
+.entity-compact-main {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "icon title"
+    "icon count";
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
+}
+
+.entity-compact-title {
+  grid-area: title;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.entity-compact-count {
+  grid-area: count;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.entity-compact-icon-wrap {
+  grid-area: icon;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #334155;
+}
+
+.entity-compact-icon-wrap .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.entity-compact-card-empty {
+  opacity: 0.75;
+}
+
+.entity-card {
+  margin: 0;
+}
+
 .stat-card {
   min-height: 84px;
   display: grid;

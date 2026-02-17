@@ -112,24 +112,25 @@ export function ProfileTab({
   profile,
   myAdsCount,
   myServicesCount,
+  myAds,
   hasRestaurant,
   restaurantEntity,
   isTaxiDriver,
   taxiTemplates,
   oneTimeIntercityOffers,
   myServices,
-  onPauseTemplate,
-  onResumeTemplate,
-  onDeleteTemplate,
-  onEditTemplate,
-  onToggleTaxiFilled,
-  onEditTaxiOffer,
-  onEditService,
-  onEditRestaurant,
+  onOpenEntityGroup,
   openCreate,
   openEditProfile,
   toggleAuth,
 }) {
+  const entityGroups = [
+    { key: "restaurant", label: "Заведения", count: hasRestaurant ? 1 : 0, icon: "food" },
+    { key: "ads", label: "Объявления", count: myAds.length, icon: "ads" },
+    { key: "services", label: "Услуги", count: myServices.length, icon: "services" },
+    { key: "taxi", label: "Моё такси", count: oneTimeIntercityOffers.length + taxiTemplates.length, icon: "taxi" },
+  ].filter((entry) => entry.count > 0);
+
   return (
     <Section>
       <h2>Профиль</h2>
@@ -156,48 +157,27 @@ export function ProfileTab({
         {isAuth ? (
           <Section>
             <h4>Мои сущности</h4>
-            <div className="list" style={{ marginTop: 8 }}>
-              {hasRestaurant ? (
-                <article className="card">
-                  <div className="card-body">
-                    <div className="card-title">{restaurantEntity?.title || "Заведение"}</div>
-                    <p className="small">{restaurantEntity?.address || "Адрес не указан"}</p>
-                    <div className="actions">
-                      <button className="ghost-btn" type="button" onClick={onEditRestaurant}>Редактировать</button>
+            <div className="entity-groups-compact">
+              {entityGroups.map((entry) => (
+                <article className="entity-compact-card" key={entry.key}>
+                  <div className="entity-compact-main">
+                    <div className="entity-compact-icon-wrap">
+                      <Icon name={entry.icon} />
                     </div>
+                    <div className="entity-compact-title">{entry.label}</div>
+                    <div className="entity-compact-count">{entry.count}</div>
                   </div>
+                  <button
+                    className="ghost-btn"
+                    type="button"
+                    onClick={() => onOpenEntityGroup(entry.key)}
+                  >
+                    Открыть
+                  </button>
                 </article>
-              ) : null}
-
-              {myServices.length ? myServices.map((service) => (
-                <article className="card" key={service.id}>
-                  <div className="card-body">
-                    <div className="card-title">{service.title}</div>
-                    <p className="small">{service.category} · {service.price} ₽</p>
-                    <div className="actions">
-                      <button className="ghost-btn" type="button" onClick={() => onEditService(service.id)}>Редактировать</button>
-                    </div>
-                  </div>
-                </article>
-              )) : null}
-
-              {isTaxiDriver && oneTimeIntercityOffers.length ? oneTimeIntercityOffers.map((offer) => (
-                <article className="card" key={offer.id}>
-                  <div className="card-body">
-                    <div className="card-title">{offer.category}</div>
-                    <p className="small">{offer.when || "Дата не указана"} · {offer.price} ₽</p>
-                    <div className="actions">
-                      <button className="ghost-btn" type="button" onClick={() => onEditTaxiOffer(offer.id)}>Редактировать</button>
-                      <button className={offer.isFilled ? "primary-btn" : "ghost-btn"} type="button" onClick={() => onToggleTaxiFilled(offer.id)}>
-                        {offer.isFilled ? "Снять заполнение" : "Заполнен"}
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              )) : null}
-
-              {!hasRestaurant && !myServices.length && !(isTaxiDriver && oneTimeIntercityOffers.length) ? (
-                <p className="small">Создайте заведение, услугу или поездку, чтобы управлять ими из профиля.</p>
+              ))}
+              {!hasRestaurant && !myAds.length && !myServices.length && !oneTimeIntercityOffers.length && !taxiTemplates.length ? (
+                <p className="small">Создайте заведение, объявление, услугу или поездку, чтобы управлять ими из профиля.</p>
               ) : null}
             </div>
           </Section>
@@ -206,57 +186,32 @@ export function ProfileTab({
         <Section>
           <h4>Быстрые действия</h4>
           <div className="quick-actions" style={{ marginTop: 8 }}>
-            <button
-              className="ghost-btn quick-action-btn"
-              type="button"
-              onClick={() => (hasRestaurant ? onEditRestaurant() : openCreate("restaurant"))}
-            >
-              <Icon name="food" />
-              {hasRestaurant ? "Управлять заведением" : "Добавить заведение"}
-            </button>
+            {!hasRestaurant ? (
+              <button
+                className="ghost-btn quick-action-btn"
+                type="button"
+                onClick={() => openCreate("restaurant")}
+              >
+                <Icon name="food" />
+                Добавить заведение
+              </button>
+            ) : null}
             <button className="ghost-btn quick-action-btn" type="button" onClick={() => openCreate("taxi")}>
               <Icon name="taxi" />
               {isTaxiDriver ? "Добавить поездку" : "Стать водителем такси"}
             </button>
-            <button
-              className="ghost-btn quick-action-btn"
-              type="button"
-              onClick={() => (myServices.length ? onEditService(myServices[0].id) : openCreate("service"))}
-            >
-              <Icon name="services" />
-              {myServices.length ? "Редактировать услугу" : "Добавить услугу"}
-            </button>
+            {!myServices.length ? (
+              <button
+                className="ghost-btn quick-action-btn"
+                type="button"
+                onClick={() => openCreate("service")}
+              >
+                <Icon name="services" />
+                Добавить услугу
+              </button>
+            ) : null}
           </div>
         </Section>
-
-        {isAuth && isTaxiDriver ? (
-          <Section>
-            <h4>Мои регулярные поездки</h4>
-            <p className="small">{taxiTemplates.length ? "Управляйте расписанием без повторного создания объявлений." : "Пока нет регулярных поездок."}</p>
-            <div className="list" style={{ marginTop: 8 }}>
-              {taxiTemplates.map((template) => (
-                <article className="card" key={template.id}>
-                  <div className="card-body">
-                    <div className="card-title">{template.category}</div>
-                    <div className="small">{template.weekdays.join(", ")} · {template.time}</div>
-                    <div className="row wrap">
-                      <span className="badge">{template.status === "paused" ? "На паузе" : "Активна"}</span>
-                    </div>
-                    <div className="actions">
-                      {template.status === "paused" ? (
-                        <button className="ghost-btn" type="button" onClick={() => onResumeTemplate(template.id)}>Возобновить</button>
-                      ) : (
-                        <button className="ghost-btn" type="button" onClick={() => onPauseTemplate(template.id)}>Пауза</button>
-                      )}
-                      <button className="ghost-btn" type="button" onClick={() => onEditTemplate(template.id)}>Изменить</button>
-                      <button className="danger-btn" type="button" onClick={() => onDeleteTemplate(template.id)}>Удалить</button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </Section>
-        ) : null}
 
         <div className="actions profile-actions">
           <button className={isAuth ? "ghost-btn" : "primary-btn"} type="button" onClick={toggleAuth}>
