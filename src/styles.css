@@ -201,10 +201,20 @@ body {
 
 .card-clickable {
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .card-clickable:active {
   transform: scale(0.997);
+}
+
+.card-clickable:focus {
+  outline: none;
+}
+
+.card-clickable:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .card-body {
@@ -231,6 +241,7 @@ body {
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .fav-corner-btn.active {
