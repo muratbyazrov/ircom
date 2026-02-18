@@ -124,10 +124,10 @@ export function FoodTab({
           >
             <div className="card-body">
               <div className="restaurant-list-photo-wrap">
-                {restaurant.photos?.[0] ? (
+                {restaurant.logo ? (
                   <img
                     className="restaurant-list-photo"
-                    src={restaurant.photos[0]}
+                    src={restaurant.logo}
                     alt={restaurant.title || "Заведение"}
                     loading="lazy"
                     onError={(e) => applyImageFallback(e, "food")}

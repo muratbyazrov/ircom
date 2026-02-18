@@ -56,7 +56,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
   const [isTimeDragging, setIsTimeDragging] = useState(false);
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
-  const maxPhotos = type === "taxi" ? 3 : 10;
+  const maxPhotos = type === "taxi" ? 3 : type === "restaurant" ? 1 : 10;
 
   useEffect(() => {
     return () => {
@@ -176,7 +176,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
               borderRadius: 12,
             }}
           />
-          <p className="small" style={{ margin: 0, color: "var(--text)" }}>Расскажите о заведении и добавьте лучшие фото</p>
+          <p className="small" style={{ margin: 0, color: "var(--text)" }}>Расскажите о заведении и добавьте логотип</p>
         </div>
         <h3 style={{ marginBottom: 8 }}>{isEdit ? "Редактирование заведения" : "Создать заведение"}</h3>
         <form className="list" onSubmit={(e) => onSubmit(e, "restaurant")}>
@@ -269,13 +269,12 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
               />
             </Field>
           ) : null}
-          <Field label="Фото (до 10)">
+          <Field label="Логотип заведения (1 фото)">
             <div className="input-with-clear">
               <input
                 type="file"
-                name="images"
+                name="logo"
                 className={`input ${selectedPhotoCount > 0 ? "input-has-clear" : ""}`}
-                multiple
                 accept="image/*"
                 ref={imagesInputRef}
                 onChange={handleImagesChange}

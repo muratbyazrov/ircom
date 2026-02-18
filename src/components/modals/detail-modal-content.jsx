@@ -9,6 +9,7 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
   const photos = item.photos || [];
   const feedbackEnabled = type === "taxi" || type === "services";
   const isRestaurantDetail = type === "restaurant";
+  const restaurantLogo = isRestaurantDetail ? String(item.logo || "").trim() : "";
   const reviews = Array.isArray(item.reviews) ? item.reviews : [];
   const normalizedUserName = String(currentUserName || "").trim().toLowerCase();
   const alreadyLeftReview = Boolean(
@@ -221,10 +222,10 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
       {hasRestaurantMeta ? (
         <section className="detail-restaurant-meta restaurant-list-card">
           <div className="detail-restaurant-photo-wrap restaurant-list-photo-wrap">
-            {photos[0] ? (
+            {restaurantLogo ? (
               <img
                 className="detail-restaurant-photo restaurant-list-photo"
-                src={photos[0]}
+                src={restaurantLogo}
                 alt={item.title || "Заведение"}
                 loading="lazy"
                 onError={(e) => applyImageFallback(e, "food")}

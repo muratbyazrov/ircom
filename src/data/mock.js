@@ -16,6 +16,17 @@ export const mock = {
     "Пироговый Дом": "г. Цхинвал, ул. Таболова, 9",
     "Green Bowl": "г. Цхинвал, ул. Московская, 3",
   },
+  foodRestaurantLogos: {
+    "Пекарня Дарьял": img("bakery,logo,sign", 801),
+    "Sakura Roll": img("sushi,restaurant,logo", 802),
+    "Кавказ Двор": img("caucasus,restaurant,logo", 803),
+    "Burger Point": img("burger,restaurant,logo", 804),
+    "Ocean Sushi Lab": img("ocean,sushi,logo", 805),
+    "Smash House": img("smash-burger,logo", 806),
+    "Мангал №1": img("grill,restaurant,logo", 807),
+    "Пироговый Дом": img("pie,shop,logo", 808),
+    "Green Bowl": img("healthy,bowl,logo", 809),
+  },
   ads: [
     { id: "ad1", category: "Электроника", title: "iPhone 12, 128GB", price: 32000, date: 2, desc: "Состояние отличное, аккумулятор 86%, комплект полный.", owner: "murat", contacts: { phone: "+7(929)123-45-67" }, photos: [img("iphone,smartphone", 101), img("phone,apple", 102), img("mobile,device", 109)] },
     { id: "ad2", category: "Недвижимость", title: "1-комн. квартира", price: 18000, date: 5, desc: "Центр, после ремонта, рядом транспорт.", owner: "other", contacts: { tg: "@rentos", wa: "+7(929)111-11-11" }, photos: [] },

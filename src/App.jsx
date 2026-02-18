@@ -123,6 +123,7 @@ const TEST_USERS = {
       title: "Кафе Тест",
       desc: "Домашняя кухня и выпечка.",
       address: "г. Цхинвал, ул. Тестовая, 10",
+      logo: buildUserPhoto("restaurant-test-user-logo", 0),
       deliveryMode: "free",
       deliveryPrice: 0,
       phone: "+7(929)111-22-33",
@@ -440,6 +441,7 @@ export default function App() {
         return acc;
       }, {});
       const restaurantAddress = String(mock.foodRestaurantAddresses?.[restaurantTitle] || dishes.find((x) => x.address)?.address || "").trim();
+      const restaurantLogo = String(mock.foodRestaurantLogos?.[restaurantTitle] || "").trim();
       const id = buildRestaurantId(restaurantTitle);
       const reviews = Array.isArray(feedbackByItem[id]) ? feedbackByItem[id] : [];
       const categories = [...new Set(dishes.map((x) => x.category).filter(Boolean))];
@@ -449,6 +451,7 @@ export default function App() {
         title: restaurantTitle,
         desc: categories.length ? `Кухня: ${categories.join(", ")}` : "Описание заведения не указано.",
         address: restaurantAddress,
+        logo: restaurantLogo,
         deliveryMode: dishes.some((x) => x.delivery) ? "free" : "none",
         deliveryPrice: 0,
         contacts,
@@ -469,6 +472,7 @@ export default function App() {
         address: restaurantEntity.address || "",
         deliveryMode: restaurantEntity.deliveryMode || "none",
         deliveryPrice: Number(restaurantEntity.deliveryPrice) || 0,
+        logo: String(restaurantEntity.logo || "").trim(),
         contacts: {
           ...(restaurantEntity.phone ? { phone: restaurantEntity.phone } : {}),
           ...(restaurantEntity.telegram ? { tg: restaurantEntity.telegram } : {}),
@@ -575,11 +579,9 @@ export default function App() {
         const deliveryModeRaw = String(payload.deliveryMode || "none");
         const deliveryMode = deliveryModeRaw === "free" || deliveryModeRaw === "paid" ? deliveryModeRaw : "none";
         const deliveryPrice = deliveryMode === "paid" ? Math.max(0, Number(payload.deliveryPrice) || 0) : 0;
-        const nextPhotos = toArray(payload.images).length
-          ? toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx))
-          : Array.isArray(prev?.photos)
-            ? prev.photos
-            : [];
+        const nextLogo = toArray(payload.logo).length
+          ? buildUserPhoto(String(toArray(payload.logo)[0]), 0)
+          : String(prev?.logo || "").trim();
         return {
           title: payload.title || "Моё заведение",
           desc: payload.desc || "",
@@ -589,7 +591,7 @@ export default function App() {
           phone: payload.phone || "",
           telegram: payload.telegram || "",
           whatsapp: payload.whatsapp || "",
-          photos: nextPhotos,
+          logo: nextLogo,
         };
       });
     }
