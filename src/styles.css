@@ -1340,7 +1340,7 @@ button {
 }
 
 .detail-restaurant-dish-item {
-  border: 1px solid #f1d4d8;
+  border: none;
   border-radius: 14px;
   padding: 0 8px 10px;
   background: #fff;
@@ -1352,7 +1352,7 @@ button {
 
 .detail-restaurant-dish-photo-wrap {
   margin: 0 -8px;
-  border-radius: 14px 14px 0 0;
+  border-radius: 14px;
   overflow: hidden;
   background: #fff;
 }
