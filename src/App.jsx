@@ -113,6 +113,8 @@ const TEST_USERS = {
       title: "Кафе Тест",
       desc: "Домашняя кухня и выпечка.",
       address: "г. Цхинвал, ул. Тестовая, 10",
+      deliveryMode: "free",
+      deliveryPrice: 0,
       phone: "+7(929)111-22-33",
       telegram: "@cafe_test",
       whatsapp: "+7(929)111-22-33",
@@ -493,6 +495,9 @@ export default function App() {
     if (type === "restaurant") setHasRestaurant(true);
     if (type === "restaurant") {
       setRestaurantEntity((prev) => {
+        const deliveryModeRaw = String(payload.deliveryMode || "none");
+        const deliveryMode = deliveryModeRaw === "free" || deliveryModeRaw === "paid" ? deliveryModeRaw : "none";
+        const deliveryPrice = deliveryMode === "paid" ? Math.max(0, Number(payload.deliveryPrice) || 0) : 0;
         const nextPhotos = toArray(payload.images).length
           ? toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx))
           : Array.isArray(prev?.photos)
@@ -502,6 +507,8 @@ export default function App() {
           title: payload.title || "Моё заведение",
           desc: payload.desc || "",
           address: payload.address || "",
+          deliveryMode,
+          deliveryPrice,
           phone: payload.phone || "",
           telegram: payload.telegram || "",
           whatsapp: payload.whatsapp || "",
@@ -766,6 +773,8 @@ export default function App() {
           title: restaurantEntity.title || "Заведение",
           desc: restaurantEntity.desc || "",
           address: restaurantEntity.address || "",
+          deliveryMode: restaurantEntity.deliveryMode || "none",
+          deliveryPrice: Number(restaurantEntity.deliveryPrice) || 0,
           photos: Array.isArray(restaurantEntity.photos) ? restaurantEntity.photos : [],
           contacts: {
             ...(restaurantEntity.phone ? { phone: restaurantEntity.phone } : {}),

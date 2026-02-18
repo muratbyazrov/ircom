@@ -45,6 +45,14 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
     return source.length ? source : ["Пн", "Ср", "Пт"];
   });
   const [recurringHourPreset, setRecurringHourPreset] = useState(initialRecurringHourPreset);
+  const [restaurantDeliveryMode, setRestaurantDeliveryMode] = useState(() => {
+    const mode = String(initialValues?.deliveryMode || "none");
+    return mode === "free" || mode === "paid" ? mode : "none";
+  });
+  const [restaurantDeliveryPrice, setRestaurantDeliveryPrice] = useState(() => {
+    const price = Number(initialValues?.deliveryPrice);
+    return Number.isFinite(price) && price > 0 ? String(price) : "";
+  });
   const [isTimeDragging, setIsTimeDragging] = useState(false);
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
@@ -211,6 +219,56 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
               onFocus={syncPhonePrev}
             />
           </Field>
+          <Field label="Доставка">
+            <div className="multi-select-buttons">
+              <button
+                type="button"
+                className={`multi-select-btn ${restaurantDeliveryMode === "none" ? "active" : ""}`}
+                onClick={() => {
+                  setRestaurantDeliveryMode("none");
+                  setRestaurantDeliveryPrice("");
+                }}
+                aria-pressed={restaurantDeliveryMode === "none"}
+              >
+                Нет доставки
+              </button>
+              <button
+                type="button"
+                className={`multi-select-btn ${restaurantDeliveryMode === "free" ? "active" : ""}`}
+                onClick={() => {
+                  setRestaurantDeliveryMode("free");
+                  setRestaurantDeliveryPrice("");
+                }}
+                aria-pressed={restaurantDeliveryMode === "free"}
+              >
+                Бесплатно
+              </button>
+              <button
+                type="button"
+                className={`multi-select-btn ${restaurantDeliveryMode === "paid" ? "active" : ""}`}
+                onClick={() => setRestaurantDeliveryMode("paid")}
+                aria-pressed={restaurantDeliveryMode === "paid"}
+              >
+                Указать цену
+              </button>
+            </div>
+            <input type="hidden" name="deliveryMode" value={restaurantDeliveryMode} />
+          </Field>
+          {restaurantDeliveryMode === "paid" ? (
+            <Field label="Стоимость доставки, ₽">
+              <input
+                required
+                name="deliveryPrice"
+                type="number"
+                min={1}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                className="input"
+                value={restaurantDeliveryPrice}
+                onChange={(e) => setRestaurantDeliveryPrice(e.currentTarget.value)}
+              />
+            </Field>
+          ) : null}
           <Field label="Фото (до 10)">
             <div className="input-with-clear">
               <input

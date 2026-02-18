@@ -16,6 +16,13 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
   );
   const REVIEWS_STEP = 3;
   const ratingValue = typeof item.ratingValue === "number" ? item.ratingValue : null;
+  const restaurantDeliveryText = isRestaurantDetail
+    ? item.deliveryMode === "free"
+      ? "Бесплатно"
+      : item.deliveryMode === "paid"
+        ? `Платная (${fmtRub.format(Number(item.deliveryPrice) || 0)})`
+        : "Нет доставки"
+    : "";
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const [visibleReviewsCount, setVisibleReviewsCount] = useState(REVIEWS_STEP);
@@ -164,7 +171,9 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
         </div>
       ) : null}
       {!isRestaurantDetail ? <p><b>Цена:</b> {fmtRub.format(item.price)}</p> : null}
+      {type === "food" && item.restaurant ? <p><b>Заведение:</b> {item.restaurant}</p> : null}
       {isRestaurantDetail && item.address ? <p><b>Адрес:</b> {item.address}</p> : null}
+      {isRestaurantDetail ? <p><b>Доставка:</b> {restaurantDeliveryText}</p> : null}
       {type === "food" ? <p><b>Готовность:</b> {item.always ? "Всегда в наличии" : `${item.prep} минут`}</p> : null}
       {type === "taxi" && item.when ? <p><b>Дата и время:</b> {item.when}</p> : null}
       {type === "taxi" && item.seats ? <p><b>Места:</b> {item.seats.free}/{item.seats.total}</p> : null}
