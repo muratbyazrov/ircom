@@ -1,0 +1,39 @@
+<svg width="420" height="220" viewBox="0 0 420 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="24" y1="10" x2="388" y2="206" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE9D2"/>
+      <stop offset="1" stop-color="#FFDDE1"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="210" y1="52" x2="210" y2="96" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E33D49"/>
+      <stop offset="1" stop-color="#C8232F"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="8" y="8" width="404" height="204" rx="28" fill="url(#bg)"/>
+
+  <g>
+    <rect x="74" y="92" width="272" height="102" rx="10" fill="#FFFDFB" stroke="#E8D9D3" stroke-width="2"/>
+    <path d="M64 92L210 42L356 92H64Z" fill="url(#roof)" stroke="#B81F2A" stroke-width="2"/>
+    <rect x="88" y="106" width="244" height="18" rx="4" fill="#FBE6D2"/>
+
+    <rect x="96" y="126" width="52" height="60" rx="6" fill="#F6F0EA" stroke="#E2D3CB"/>
+    <rect x="156" y="126" width="52" height="60" rx="6" fill="#F6F0EA" stroke="#E2D3CB"/>
+    <rect x="216" y="126" width="52" height="60" rx="6" fill="#F6F0EA" stroke="#E2D3CB"/>
+    <rect x="276" y="126" width="52" height="60" rx="6" fill="#F6F0EA" stroke="#E2D3CB"/>
+
+    <rect x="168" y="140" width="84" height="54" rx="8" fill="#FFFFFF" stroke="#DECFC7" stroke-width="2"/>
+    <circle cx="242" cy="168" r="3" fill="#D0894C"/>
+
+    <text x="210" y="119" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="12" font-weight="700" fill="#B35C2A">
+      Заведение
+    </text>
+  </g>
+
+  <g opacity="0.9">
+    <circle cx="50" cy="184" r="16" fill="#8CC36A"/>
+    <rect x="47" y="184" width="6" height="16" rx="3" fill="#8B6A4D"/>
+    <circle cx="370" cy="184" r="16" fill="#8CC36A"/>
+    <rect x="367" y="184" width="6" height="16" rx="3" fill="#8B6A4D"/>
+  </g>
+</svg>
