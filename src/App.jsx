@@ -270,6 +270,7 @@ export default function App() {
   const [adsCategory, setAdsCategory] = useState("Все");
   const [serviceCategory, setServiceCategory] = useState("Все");
   const [foodCategory, setFoodCategory] = useState("Все");
+  const [foodViewMode, setFoodViewMode] = useState("restaurants");
   const [taxiCategory, setTaxiCategory] = useState("Такси по Цхинвалу");
   const [adsSort, setAdsSort] = useState("date");
   const [servicesSort, setServicesSort] = useState("date");
@@ -975,6 +976,8 @@ export default function App() {
           <FoodTab
             foodCategory={foodCategory}
             setFoodCategory={setFoodCategory}
+            foodViewMode={foodViewMode}
+            setFoodViewMode={setFoodViewMode}
             foodSort={foodSort}
             setFoodSort={setFoodSort}
             foodItems={foodItems}

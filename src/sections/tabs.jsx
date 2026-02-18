@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { CategoryTabs, Empty, Field, Icon, Section, SectionHeader, SortSelect, StatCard } from "../components/ui";
 import { FoodCard, ItemCard, TaxiCard } from "../components/cards";
 
@@ -83,7 +84,31 @@ export function TaxiTab({
   );
 }
 
-export function FoodTab({ foodCategory, setFoodCategory, foodSort, setFoodSort, foodItems, foodCategories, hasRestaurant, openCreate, openDetail, toggleFavorite, favorites }) {
+export function FoodTab({
+  foodCategory,
+  setFoodCategory,
+  foodViewMode,
+  setFoodViewMode,
+  foodSort,
+  setFoodSort,
+  foodItems,
+  foodCategories,
+  hasRestaurant,
+  openCreate,
+  openDetail,
+  toggleFavorite,
+  favorites,
+}) {
+  const groupedByRestaurants = useMemo(() => {
+    const buckets = new Map();
+    foodItems.forEach((item) => {
+      const restaurantName = (item.restaurant || "").trim() || "Без названия заведения";
+      if (!buckets.has(restaurantName)) buckets.set(restaurantName, []);
+      buckets.get(restaurantName).push(item);
+    });
+    return [...buckets.entries()].map(([name, items]) => ({ name, items }));
+  }, [foodItems]);
+
   return (
     <>
       <SectionHeader
@@ -93,6 +118,26 @@ export function FoodTab({ foodCategory, setFoodCategory, foodSort, setFoodSort, 
       />
       <Section>
         <CategoryTabs list={foodCategories} value={foodCategory} onChange={setFoodCategory} />
+        <div className="food-view-switch" role="tablist" aria-label="Режим отображения блюд">
+          <button
+            className={`food-view-switch-btn ${foodViewMode === "restaurants" ? "active" : ""}`}
+            type="button"
+            onClick={() => setFoodViewMode("restaurants")}
+            role="tab"
+            aria-selected={foodViewMode === "restaurants"}
+          >
+            По заведениям
+          </button>
+          <button
+            className={`food-view-switch-btn ${foodViewMode === "all" ? "active" : ""}`}
+            type="button"
+            onClick={() => setFoodViewMode("all")}
+            role="tab"
+            aria-selected={foodViewMode === "all"}
+          >
+            Все блюда
+          </button>
+        </div>
         {hasRestaurant ? (
           <div className="actions" style={{ marginTop: 10 }}>
             <button className="ghost-btn" onClick={() => openCreate("dish")} type="button">Добавить блюдо</button>
@@ -101,7 +146,25 @@ export function FoodTab({ foodCategory, setFoodCategory, foodSort, setFoodSort, 
         <SortSelect value={foodSort} onChange={setFoodSort} />
       </Section>
       <section className="list">
-        {foodItems.length ? foodItems.map((x) => <FoodCard key={x.id} item={x} onOpen={() => openDetail("food", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} />) : <Empty text="Пока нет блюд" />}
+        {!foodItems.length ? <Empty text="Пока нет блюд" /> : null}
+        {foodItems.length && foodViewMode === "all"
+          ? foodItems.map((x) => <FoodCard key={x.id} item={x} onOpen={() => openDetail("food", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} />)
+          : null}
+        {foodItems.length && foodViewMode === "restaurants"
+          ? groupedByRestaurants.map((group) => (
+            <article className="section food-group" key={group.name}>
+              <div className="food-group-head">
+                <h4>{group.name}</h4>
+                <span className="badge">{group.items.length} блюд</span>
+              </div>
+              <div className="list food-group-list">
+                {group.items.map((x) => (
+                  <FoodCard key={x.id} item={x} onOpen={() => openDetail("food", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} />
+                ))}
+              </div>
+            </article>
+          ))
+          : null}
       </section>
     </>
   );
