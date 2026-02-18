@@ -5,6 +5,7 @@ import taxiHero from "../assets/taxi-hero.svg";
 
 const SECTION_FALLBACKS = {
   ads: adsHero,
+  restaurant: restaurantHero,
   services: serviceHero,
   food: restaurantHero,
   taxi: taxiHero,

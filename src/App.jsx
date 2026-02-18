@@ -79,6 +79,10 @@ const formatDateRu = (date) => new Intl.DateTimeFormat("ru-RU", { day: "2-digit"
 const buildUserPhoto = (name, idx) => `https://picsum.photos/seed/${encodeURIComponent(`user-taxi-${name}-${idx}`)}/900/600`;
 const randomSuffix = () => Math.random().toString(36).slice(2, 8);
 const normalizeRating = (value) => Math.max(1, Math.min(5, Number(value) || 1));
+const profileValue = (value) => {
+  const text = String(value || "").trim();
+  return text === "-" ? "" : text;
+};
 const buildInitialFeedback = () => {
   const source = [...mock.services, ...mock.taxi];
   return source.reduce((acc, item) => {
@@ -440,6 +444,11 @@ export default function App() {
   }, [taxiCategory, taxiRequestedAt]);
 
   const openDetail = (type, id) => {
+    if (type === "restaurant") {
+      if (!hasRestaurant || !restaurantEntity) return;
+      setModal({ type: "detail", payload: { type: "restaurant", id: "my-restaurant" } });
+      return;
+    }
     const source = type === "ads" ? adsCatalog : type === "services" ? servicesCatalog : type === "food" ? mock.food : taxiCatalog;
     const item = source.find((x) => x.id === id);
     if (!item) return;
@@ -690,6 +699,7 @@ export default function App() {
   const editAd = (id) => openEditEntity({ type: "ad", id, kind: "ad" });
 
   const editRestaurant = () => openEditEntity({ type: "restaurant", kind: "restaurant" });
+  const viewRestaurant = () => openDetail("restaurant", "my-restaurant");
 
   const addFeedback = ({ itemId, rating, text }) => {
     let added = false;
@@ -741,6 +751,24 @@ export default function App() {
     if (modal?.type !== "detail") return null;
     const detailType = modal.payload?.type;
     const detailId = modal.payload?.id;
+    if (detailType === "restaurant") {
+      if (!restaurantEntity) return null;
+      return {
+        type: "restaurant",
+        item: {
+          id: "my-restaurant",
+          title: restaurantEntity.title || "Заведение",
+          desc: restaurantEntity.desc || "",
+          address: restaurantEntity.address || "",
+          photos: Array.isArray(restaurantEntity.photos) ? restaurantEntity.photos : [],
+          contacts: {
+            ...(restaurantEntity.phone ? { phone: restaurantEntity.phone } : {}),
+            ...(restaurantEntity.telegram ? { tg: restaurantEntity.telegram } : {}),
+            ...(restaurantEntity.whatsapp ? { wa: restaurantEntity.whatsapp } : {}),
+          },
+        },
+      };
+    }
     const source = detailType === "ads"
       ? adsCatalog
       : detailType === "services"
@@ -751,7 +779,33 @@ export default function App() {
     const item = source.find((x) => x.id === detailId);
     if (!item) return null;
     return { type: detailType, item };
-  }, [modal, adsCatalog, servicesCatalog, taxiCatalog]);
+  }, [modal, adsCatalog, servicesCatalog, taxiCatalog, restaurantEntity]);
+
+  const createInitialValues = useMemo(() => {
+    if (modal?.type !== "create") return null;
+    const createTarget = modal.payload?.type;
+
+    if (createTarget === "taxi") {
+      return {
+        name: profileValue(profile.name),
+        contacts: {
+          phone: profileValue(profile.phone),
+          wa: profileValue(profile.whatsapp),
+          tg: profileValue(profile.telegram),
+        },
+      };
+    }
+
+    if (createTarget === "restaurant") {
+      return {
+        phone: profileValue(profile.phone),
+        telegram: profileValue(profile.telegram),
+        whatsapp: profileValue(profile.whatsapp),
+      };
+    }
+
+    return null;
+  }, [modal, profile]);
 
   const editEntityData = useMemo(() => {
     if (modal?.type !== "editEntity") return null;
@@ -997,7 +1051,13 @@ export default function App() {
         )}
 
         {modal?.type === "create" && (
-          <CreateForm type={modal.payload.type} onSubmit={submitMock} onClose={() => setModal(null)} taxiCategories={mock.taxiCategories} />
+          <CreateForm
+            type={modal.payload.type}
+            initialValues={createInitialValues}
+            onSubmit={submitMock}
+            onClose={() => setModal(null)}
+            taxiCategories={mock.taxiCategories}
+          />
         )}
 
         {modal?.type === "editEntity" && editEntityData && (
@@ -1023,6 +1083,7 @@ export default function App() {
                       <div className="card-title">{item.title || "Заведение"}</div>
                       <p className="small">{item.address || "Адрес не указан"}</p>
                       <div className="actions">
+                        <button className="primary-btn" type="button" onClick={viewRestaurant}>Просмотреть</button>
                         <button className="ghost-btn" type="button" onClick={editRestaurant}>Редактировать</button>
                       </div>
                     </div>
