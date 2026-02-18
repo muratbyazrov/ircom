@@ -26,6 +26,7 @@ import {
   Sofa,
   Smartphone,
   Sparkles,
+  Star,
   Store,
   User,
   UtensilsCrossed,
@@ -173,6 +174,7 @@ export function Icon({ name }) {
     phone: Phone,
     heart: Heart,
     "heart-fill": Heart,
+    star: Star,
     telegram: Send,
     whatsapp: MessageCircle,
   };

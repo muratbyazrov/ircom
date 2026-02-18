@@ -212,11 +212,43 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
       ) : null}
       {type !== "food" && !isRestaurantDetail ? <p><b>Цена:</b> {fmtRub.format(item.price)}</p> : null}
       {isRestaurantDetail && item.address ? <p><b>Адрес:</b> {item.address}</p> : null}
+      {isRestaurantDetail ? (
+        <p>
+          <b>Рейтинг:</b>{" "}
+          {typeof item.ratingValue === "number"
+            ? `${item.ratingValue.toFixed(1)}/5 (${item.reviewsCount || 0} отзыв(ов))`
+            : "Пока нет оценок"}
+        </p>
+      ) : null}
       {isRestaurantDetail ? <p><b>Доставка:</b> {restaurantDeliveryText}</p> : null}
       {type === "taxi" && item.when ? <p><b>Дата и время:</b> {item.when}</p> : null}
       {type === "taxi" && item.seats ? <p><b>Места:</b> {item.seats.free}/{item.seats.total}</p> : null}
       {type === "taxi" && item.isFilled ? <p><b>Статус:</b> Водитель заполнен</p> : null}
       <p><b>Описание:</b> {item.desc || "Нет описания"}</p>
+      {isRestaurantDetail ? (
+        <section className="detail-restaurant-dishes">
+          <h4>Блюда заведения</h4>
+          {(item.dishes || []).length ? (
+            <div className="detail-restaurant-dishes-list">
+              {item.dishes.map((dish) => (
+                <article className="detail-restaurant-dish-item" key={dish.id || `${dish.title}-${dish.price}`}>
+                  <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                    <b>{dish.title || "Блюдо"}</b>
+                    <span className="detail-restaurant-dish-price">{fmtRub.format(Number(dish.price) || 0)}</span>
+                  </div>
+                  <div className="detail-restaurant-dish-meta">
+                    <span>{dish.category || "Категория не указана"}</span>
+                    <span>{dish.always ? "Всегда в наличии" : `${dish.prep || 0} минут`}</span>
+                    <span>{dish.delivery ? "Есть доставка" : "Только самовывоз"}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="small" style={{ marginTop: 6 }}>В этом заведении пока нет добавленных блюд.</p>
+          )}
+        </section>
+      ) : null}
       {feedbackEnabled ? (
         <section className="reviews-block">
           <div className="reviews-header">

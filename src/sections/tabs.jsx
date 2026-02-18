@@ -1,7 +1,7 @@
-import { useMemo } from "react";
 import { CategoryTabs, Empty, Field, Icon, Section, SectionHeader, SortSelect, StatCard } from "../components/ui";
-import { FoodCard, ItemCard, TaxiCard } from "../components/cards";
+import { ItemCard, TaxiCard } from "../components/cards";
 import { sectionSortModes } from "../utils/constants";
+import { applyImageFallback } from "../utils/images";
 
 export function AdsTab({ adsCategoriesVisible, adsCategory, setAdsCategory, adsSort, setAdsSort, adsItems, openCreate, openDetail, toggleFavorite, favorites }) {
   return (
@@ -88,28 +88,12 @@ export function TaxiTab({
 export function FoodTab({
   foodCategory,
   setFoodCategory,
-  foodViewMode,
-  setFoodViewMode,
-  foodSort,
-  setFoodSort,
-  foodItems,
+  restaurants,
   foodCategories,
   hasRestaurant,
   openCreate,
   openDetail,
-  toggleFavorite,
-  favorites,
 }) {
-  const groupedByRestaurants = useMemo(() => {
-    const buckets = new Map();
-    foodItems.forEach((item) => {
-      const restaurantName = (item.restaurant || "").trim() || "Без названия заведения";
-      if (!buckets.has(restaurantName)) buckets.set(restaurantName, []);
-      buckets.get(restaurantName).push(item);
-    });
-    return [...buckets.entries()].map(([name, items]) => ({ name, items }));
-  }, [foodItems]);
-
   return (
     <>
       <SectionHeader
@@ -119,53 +103,57 @@ export function FoodTab({
       />
       <Section>
         <CategoryTabs list={foodCategories} value={foodCategory} onChange={setFoodCategory} />
-        <div className="food-view-switch" role="tablist" aria-label="Режим отображения блюд">
-          <button
-            className={`food-view-switch-btn ${foodViewMode === "restaurants" ? "active" : ""}`}
-            type="button"
-            onClick={() => setFoodViewMode("restaurants")}
-            role="tab"
-            aria-selected={foodViewMode === "restaurants"}
-          >
-            По заведениям
-          </button>
-          <button
-            className={`food-view-switch-btn ${foodViewMode === "all" ? "active" : ""}`}
-            type="button"
-            onClick={() => setFoodViewMode("all")}
-            role="tab"
-            aria-selected={foodViewMode === "all"}
-          >
-            Все блюда
-          </button>
-        </div>
         {hasRestaurant ? (
           <div className="actions" style={{ marginTop: 10 }}>
             <button className="ghost-btn" onClick={() => openCreate("dish")} type="button">Добавить блюдо</button>
           </div>
         ) : null}
-        <SortSelect value={foodSort} onChange={setFoodSort} modes={sectionSortModes.food} />
       </Section>
       <section className="list">
-        {!foodItems.length ? <Empty text="Пока нет блюд" /> : null}
-        {foodItems.length && foodViewMode === "all"
-          ? foodItems.map((x) => <FoodCard key={x.id} item={x} onOpen={() => openDetail("food", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} />)
-          : null}
-        {foodItems.length && foodViewMode === "restaurants"
-          ? groupedByRestaurants.map((group) => (
-            <article className="section food-group" key={group.name}>
-              <div className="food-group-head">
-                <h4>{group.name}</h4>
-                <span className="badge">{group.items.length} блюд</span>
+        {!restaurants.length ? <Empty text="Пока нет заведений" /> : null}
+        {restaurants.map((restaurant) => (
+          <article
+            className="card card-clickable restaurant-list-card"
+            key={restaurant.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => openDetail("restaurant", restaurant.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") openDetail("restaurant", restaurant.id);
+            }}
+          >
+            <div className="card-body">
+              <div className="restaurant-list-photo-wrap">
+                {restaurant.photos?.[0] ? (
+                  <img
+                    className="restaurant-list-photo"
+                    src={restaurant.photos[0]}
+                    alt={restaurant.title || "Заведение"}
+                    loading="lazy"
+                    onError={(e) => applyImageFallback(e, "food")}
+                  />
+                ) : (
+                  <div className="restaurant-list-photo-empty">Нет фото</div>
+                )}
               </div>
-              <div className="list food-group-list">
-                {group.items.map((x) => (
-                  <FoodCard key={x.id} item={x} onOpen={() => openDetail("food", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} />
-                ))}
+              <div className="restaurant-list-head">
+                <div className="card-title">{restaurant.title}</div>
+                <span className="badge">{restaurant.dishes.length} блюд</span>
               </div>
-            </article>
-          ))
-          : null}
+              <div className="restaurant-list-address">{restaurant.address || "Адрес не указан"}</div>
+              <div className="restaurant-list-meta">
+                <span className="food-meta-chip">
+                  <Icon name="star" />
+                  {typeof restaurant.ratingValue === "number" ? `${restaurant.ratingValue.toFixed(1)} (${restaurant.reviewsCount || 0})` : "Нет оценок"}
+                </span>
+                <span className="food-meta-chip">
+                  <Icon name="delivery" />
+                  {restaurant.deliveryMode === "none" ? "Нет доставки" : "Есть доставка"}
+                </span>
+              </div>
+            </div>
+          </article>
+        ))}
       </section>
     </>
   );

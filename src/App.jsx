@@ -80,6 +80,16 @@ const formatDateRu = (date) => new Intl.DateTimeFormat("ru-RU", { day: "2-digit"
 const buildUserPhoto = (name, idx) => `https://picsum.photos/seed/${encodeURIComponent(`user-taxi-${name}-${idx}`)}/900/600`;
 const randomSuffix = () => Math.random().toString(36).slice(2, 8);
 const normalizeRating = (value) => Math.max(1, Math.min(5, Number(value) || 1));
+const buildRestaurantId = (name) => {
+  const normalized = String(name || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9а-яё-]/gi, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return `restaurant-${normalized || "unknown"}`;
+};
 const profileValue = (value) => {
   const text = String(value || "").trim();
   return text === "-" ? "" : text;
@@ -272,11 +282,9 @@ export default function App() {
   const [adsCategory, setAdsCategory] = useState("Все");
   const [serviceCategory, setServiceCategory] = useState("Все");
   const [foodCategory, setFoodCategory] = useState("Все");
-  const [foodViewMode, setFoodViewMode] = useState("restaurants");
   const [taxiCategory, setTaxiCategory] = useState("Такси по Цхинвалу");
   const [adsSort, setAdsSort] = useState("date");
   const [servicesSort, setServicesSort] = useState("date");
-  const [foodSort, setFoodSort] = useState("price");
   const [taxiSort, setTaxiSort] = useState("rating");
   const [taxiRequestedAt, setTaxiRequestedAt] = useState("");
   const [customAds, setCustomAds] = useState([]);
@@ -415,9 +423,75 @@ export default function App() {
     [serviceCategory, servicesSort, favorites, servicesCatalog]
   );
 
-  const foodItems = useMemo(
-    () => sortItems(mock.food.filter((x) => foodCategory === "Все" || x.category === foodCategory), foodSort, favorites),
-    [foodCategory, foodSort, favorites]
+  const foodRestaurants = useMemo(() => {
+    const buckets = new Map();
+    mock.food.forEach((dish) => {
+      const restaurantName = String(dish.restaurant || "").trim() || "Без названия заведения";
+      if (!buckets.has(restaurantName)) buckets.set(restaurantName, []);
+      buckets.get(restaurantName).push(dish);
+    });
+
+    const fromFood = [...buckets.entries()].map(([restaurantTitle, dishes]) => {
+      const contacts = dishes.reduce((acc, dish) => {
+        const nextContacts = dish.contacts || {};
+        if (!acc.phone && nextContacts.phone) acc.phone = nextContacts.phone;
+        if (!acc.wa && nextContacts.wa) acc.wa = nextContacts.wa;
+        if (!acc.tg && nextContacts.tg) acc.tg = nextContacts.tg;
+        return acc;
+      }, {});
+      const id = buildRestaurantId(restaurantTitle);
+      const reviews = Array.isArray(feedbackByItem[id]) ? feedbackByItem[id] : [];
+      const categories = [...new Set(dishes.map((x) => x.category).filter(Boolean))];
+
+      return {
+        id,
+        title: restaurantTitle,
+        desc: categories.length ? `Кухня: ${categories.join(", ")}` : "Описание заведения не указано.",
+        address: "",
+        deliveryMode: dishes.some((x) => x.delivery) ? "free" : "none",
+        deliveryPrice: 0,
+        contacts,
+        photos: [...new Set(dishes.flatMap((x) => (Array.isArray(x.photos) ? x.photos : [])))].slice(0, 10),
+        dishes,
+        reviews,
+        reviewsCount: reviews.length,
+        ratingValue: getFeedbackRating(reviews),
+      };
+    });
+
+    if (hasRestaurant && restaurantEntity) {
+      const ownReviews = Array.isArray(feedbackByItem["my-restaurant"]) ? feedbackByItem["my-restaurant"] : [];
+      fromFood.unshift({
+        id: "my-restaurant",
+        title: restaurantEntity.title || "Моё заведение",
+        desc: restaurantEntity.desc || "",
+        address: restaurantEntity.address || "",
+        deliveryMode: restaurantEntity.deliveryMode || "none",
+        deliveryPrice: Number(restaurantEntity.deliveryPrice) || 0,
+        contacts: {
+          ...(restaurantEntity.phone ? { phone: restaurantEntity.phone } : {}),
+          ...(restaurantEntity.telegram ? { tg: restaurantEntity.telegram } : {}),
+          ...(restaurantEntity.whatsapp ? { wa: restaurantEntity.whatsapp } : {}),
+        },
+        photos: Array.isArray(restaurantEntity.photos) ? restaurantEntity.photos : [],
+        dishes: [],
+        reviews: ownReviews,
+        reviewsCount: ownReviews.length,
+        ratingValue: getFeedbackRating(ownReviews),
+      });
+    }
+
+    return fromFood;
+  }, [hasRestaurant, restaurantEntity, feedbackByItem]);
+
+  const visibleFoodRestaurants = useMemo(
+    () => foodRestaurants
+      .map((restaurant) => ({
+        ...restaurant,
+        dishes: restaurant.dishes.filter((dish) => foodCategory === "Все" || dish.category === foodCategory),
+      }))
+      .filter((restaurant) => restaurant.dishes.length > 0 || (foodCategory === "Все" && restaurant.id === "my-restaurant")),
+    [foodRestaurants, foodCategory]
   );
 
   const recurringTaxiItems = useMemo(() => buildRecurringTaxiOccurrences(taxiTemplates, 14), [taxiTemplates]);
@@ -449,8 +523,10 @@ export default function App() {
 
   const openDetail = (type, id) => {
     if (type === "restaurant") {
-      if (!hasRestaurant || !restaurantEntity) return;
-      setModal({ type: "detail", payload: { type: "restaurant", id: "my-restaurant" } });
+      if (!id) return;
+      const restaurant = foodRestaurants.find((entry) => entry.id === id);
+      if (!restaurant) return;
+      setModal({ type: "detail", payload: { type: "restaurant", id: restaurant.id } });
       return;
     }
     const source = type === "ads" ? adsCatalog : type === "services" ? servicesCatalog : type === "food" ? mock.food : taxiCatalog;
@@ -765,24 +841,9 @@ export default function App() {
     const detailType = modal.payload?.type;
     const detailId = modal.payload?.id;
     if (detailType === "restaurant") {
-      if (!restaurantEntity) return null;
-      return {
-        type: "restaurant",
-        item: {
-          id: "my-restaurant",
-          title: restaurantEntity.title || "Заведение",
-          desc: restaurantEntity.desc || "",
-          address: restaurantEntity.address || "",
-          deliveryMode: restaurantEntity.deliveryMode || "none",
-          deliveryPrice: Number(restaurantEntity.deliveryPrice) || 0,
-          photos: Array.isArray(restaurantEntity.photos) ? restaurantEntity.photos : [],
-          contacts: {
-            ...(restaurantEntity.phone ? { phone: restaurantEntity.phone } : {}),
-            ...(restaurantEntity.telegram ? { tg: restaurantEntity.telegram } : {}),
-            ...(restaurantEntity.whatsapp ? { wa: restaurantEntity.whatsapp } : {}),
-          },
-        },
-      };
+      const restaurant = foodRestaurants.find((entry) => entry.id === detailId);
+      if (!restaurant) return null;
+      return { type: "restaurant", item: restaurant };
     }
     const source = detailType === "ads"
       ? adsCatalog
@@ -811,7 +872,7 @@ export default function App() {
     }
     if (!item) return null;
     return { type: detailType, item };
-  }, [modal, adsCatalog, servicesCatalog, taxiCatalog, restaurantEntity, taxiTemplates]);
+  }, [modal, adsCatalog, servicesCatalog, taxiCatalog, taxiTemplates, foodRestaurants]);
 
   const createInitialValues = useMemo(() => {
     if (modal?.type !== "create") return null;
@@ -985,17 +1046,11 @@ export default function App() {
           <FoodTab
             foodCategory={foodCategory}
             setFoodCategory={setFoodCategory}
-            foodViewMode={foodViewMode}
-            setFoodViewMode={setFoodViewMode}
-            foodSort={foodSort}
-            setFoodSort={setFoodSort}
-            foodItems={foodItems}
+            restaurants={visibleFoodRestaurants}
             foodCategories={mock.foodCategories}
             hasRestaurant={hasRestaurant}
             openCreate={openCreate}
             openDetail={openDetail}
-            toggleFavorite={toggleFavorite}
-            favorites={favorites}
           />
         )}
 
