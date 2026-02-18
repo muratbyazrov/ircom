@@ -83,13 +83,20 @@ export function SortSelect({ value, onChange, modes = sortModes }) {
 export function Modal({ open, onClose, children, variant = "sheet", closeOnBackdrop = true }) {
   if (!open) return null;
 
+  const closeButton = (
+    <div className="modal-close-wrap">
+      <button className="modal-close-inline" type="button" onClick={onClose} aria-label="Закрыть окно">
+        <span className="modal-close-inline-icon" aria-hidden="true">✕</span>
+        <span>Закрыть</span>
+      </button>
+    </div>
+  );
+
   if (variant === "full") {
     return (
       <section className="modal" aria-hidden="false">
         <article className="modal-card modal-card-full">
-          <button className="modal-close-inline" type="button" onClick={onClose}>
-            Закрыть
-          </button>
+          {closeButton}
           {children}
         </article>
       </section>
@@ -99,7 +106,10 @@ export function Modal({ open, onClose, children, variant = "sheet", closeOnBackd
   return (
     <section className="modal" aria-hidden="false">
       <div className="modal-backdrop" onClick={closeOnBackdrop ? onClose : undefined} />
-      <article className="modal-card">{children}</article>
+      <article className="modal-card">
+        {closeButton}
+        {children}
+      </article>
     </section>
   );
 }
