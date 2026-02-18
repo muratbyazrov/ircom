@@ -227,17 +227,15 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
             {(item.dishes || []).length ? <span>{item.dishes.length} блюд в меню</span> : null}
           </div>
           <div className="detail-restaurant-info-list">
-            {item.address ? (
-              <div className="detail-restaurant-info-item">
-                <span className="detail-restaurant-info-icon">
-                  <Icon name="store" />
-                </span>
-                <span className="detail-restaurant-info-content">
-                  <b>Адрес</b>
-                  <span>{item.address}</span>
-                </span>
-              </div>
-            ) : null}
+            <div className="detail-restaurant-info-item">
+              <span className="detail-restaurant-info-icon">
+                <Icon name="store" />
+              </span>
+              <span className="detail-restaurant-info-content">
+                <b>Адрес</b>
+                <span>{item.address || "Адрес не указан"}</span>
+              </span>
+            </div>
             <div className="detail-restaurant-info-row">
               {cuisineText ? (
                 <div className="detail-restaurant-info-item">

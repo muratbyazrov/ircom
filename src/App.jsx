@@ -439,6 +439,7 @@ export default function App() {
         if (!acc.tg && nextContacts.tg) acc.tg = nextContacts.tg;
         return acc;
       }, {});
+      const restaurantAddress = String(mock.foodRestaurantAddresses?.[restaurantTitle] || dishes.find((x) => x.address)?.address || "").trim();
       const id = buildRestaurantId(restaurantTitle);
       const reviews = Array.isArray(feedbackByItem[id]) ? feedbackByItem[id] : [];
       const categories = [...new Set(dishes.map((x) => x.category).filter(Boolean))];
@@ -447,7 +448,7 @@ export default function App() {
         id,
         title: restaurantTitle,
         desc: categories.length ? `Кухня: ${categories.join(", ")}` : "Описание заведения не указано.",
-        address: "",
+        address: restaurantAddress,
         deliveryMode: dishes.some((x) => x.delivery) ? "free" : "none",
         deliveryPrice: 0,
         contacts,
