@@ -339,25 +339,13 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
                       <div className="detail-restaurant-dish-photo-empty">Нет фото</div>
                     )}
                   </div>
-                  <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-                    <b>{dish.title || "Блюдо"}</b>
-                    <span className="detail-restaurant-dish-price">{fmtRub.format(Number(dish.price) || 0)}</span>
-                  </div>
-                  <div className="detail-restaurant-dish-meta">
-                    <span>{dish.category || "Категория не указана"}</span>
-                    <span>{dish.always ? "Всегда в наличии" : `${dish.prep || 0} минут`}</span>
+                  <div className="detail-restaurant-dish-price">{fmtRub.format(Number(dish.price) || 0)}</div>
+                  <div className="detail-restaurant-dish-title">{dish.title || "Блюдо"}</div>
+                  <div className="detail-restaurant-dish-submeta">
+                    <span>{dish.prep ? `${dish.prep} минут` : "Время не указано"}</span>
                     <span>{dish.delivery ? "Есть доставка" : "Только самовывоз"}</span>
+                    {dish.always ? <span>Всегда в наличии</span> : null}
                   </div>
-                  <button
-                    className="ghost-btn detail-restaurant-dish-open-btn"
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenDish?.(dish.id, item.id);
-                    }}
-                  >
-                    Подробнее
-                  </button>
                 </article>
               ))}
             </div>
