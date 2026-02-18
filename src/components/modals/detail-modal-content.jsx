@@ -25,15 +25,6 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
         ? `Платная (${fmtRub.format(Number(item.deliveryPrice) || 0)})`
         : "Нет доставки"
     : "";
-  const restaurantPrepWindow = isRestaurantDetail
-    ? (() => {
-        const prepValues = (item.dishes || []).map((dish) => Number(dish.prep) || 0).filter((x) => x > 0);
-        if (!prepValues.length) return "20-40 мин";
-        const min = Math.max(10, Math.min(...prepValues));
-        const max = Math.max(min, Math.max(...prepValues));
-        return min === max ? `${min} мин` : `${min}-${max} мин`;
-      })()
-    : "";
   const restaurantDescText = isRestaurantDetail ? String(item.desc || "").trim() : "";
   const isCuisineOnlyDesc = /^Кухня:/i.test(restaurantDescText);
   const hasRestaurantMeta = isRestaurantDetail && (Boolean(item.address) || (Boolean(restaurantDescText) && !isCuisineOnlyDesc));
@@ -195,10 +186,6 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
               <span className="restaurant-hero-fact">
                 <Icon name="star" />
                 {typeof item.ratingValue === "number" ? `${item.ratingValue.toFixed(1)} (${item.reviewsCount || 0})` : "Нет оценок"}
-              </span>
-              <span className="restaurant-hero-fact">
-                <Icon name="time" />
-                {restaurantPrepWindow}
               </span>
               <span className="restaurant-hero-fact">
                 <Icon name="delivery" />
