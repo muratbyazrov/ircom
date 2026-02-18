@@ -27,7 +27,9 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
     : "";
   const restaurantDescText = isRestaurantDetail ? String(item.desc || "").trim() : "";
   const isCuisineOnlyDesc = /^Кухня:/i.test(restaurantDescText);
-  const hasRestaurantMeta = isRestaurantDetail && (Boolean(item.address) || (Boolean(restaurantDescText) && !isCuisineOnlyDesc));
+  const cuisineText = isCuisineOnlyDesc ? restaurantDescText.replace(/^Кухня:\s*/i, "").trim() : "";
+  const restaurantAboutText = !isCuisineOnlyDesc ? restaurantDescText : "";
+  const hasRestaurantMeta = isRestaurantDetail;
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const [visibleReviewsCount, setVisibleReviewsCount] = useState(REVIEWS_STEP);
@@ -169,37 +171,7 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
 
   return (
     <>
-      {isRestaurantDetail ? (
-        <section className="restaurant-hero-card">
-          {photos[0] ? (
-            <img
-              className="restaurant-hero-bg"
-              src={photos[0]}
-              alt={item.title || "Заведение"}
-              loading="lazy"
-              onError={(e) => applyImageFallback(e, "food")}
-            />
-          ) : null}
-          <div className="restaurant-hero-overlay">
-            <h3 className="restaurant-hero-title">{item.title || "Заведение"}</h3>
-            <div className="restaurant-hero-facts">
-              <span className="restaurant-hero-fact">
-                <Icon name="star" />
-                {typeof item.ratingValue === "number" ? `${item.ratingValue.toFixed(1)} (${item.reviewsCount || 0})` : "Нет оценок"}
-              </span>
-              <span className="restaurant-hero-fact">
-                <Icon name="delivery" />
-                {restaurantDeliveryText}
-              </span>
-            </div>
-            {contactButtons.length ? (
-              <div className="restaurant-hero-contacts">{contactButtons}</div>
-            ) : null}
-          </div>
-        </section>
-      ) : (
-        <h3 style={{ marginBottom: 8 }}>{item.title || item.name}</h3>
-      )}
+      {!isRestaurantDetail ? <h3 style={{ marginBottom: 8 }}>{item.title || item.name}</h3> : null}
       {!isRestaurantDetail ? (
         <Media
           photos={photos}
@@ -248,13 +220,52 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
       {type !== "food" && !isRestaurantDetail ? <p><b>Цена:</b> {fmtRub.format(item.price)}</p> : null}
       {hasRestaurantMeta ? (
         <section className="detail-restaurant-meta">
-          {item.address ? (
-            <div className="detail-restaurant-address">
-              <Icon name="store" />
-              <span>{item.address}</span>
+          <div className="detail-restaurant-meta-head">
+            <div className="detail-restaurant-meta-title-wrap">
+              <b>{item.title || "Заведение"}</b>
+              <span>О заведении</span>
+            </div>
+            {(item.dishes || []).length ? <span>{item.dishes.length} блюд в меню</span> : null}
+          </div>
+          <div className="detail-restaurant-info-list">
+            {item.address ? (
+              <div className="detail-restaurant-info-item">
+                <span className="detail-restaurant-info-icon">
+                  <Icon name="store" />
+                </span>
+                <span className="detail-restaurant-info-content">
+                  <b>Адрес</b>
+                  <span>{item.address}</span>
+                </span>
+              </div>
+            ) : null}
+            {cuisineText ? (
+              <div className="detail-restaurant-info-item">
+                <span className="detail-restaurant-info-icon">
+                  <Icon name="foodall" />
+                </span>
+                <span className="detail-restaurant-info-content">
+                  <b>Кухня</b>
+                  <span>{cuisineText}</span>
+                </span>
+              </div>
+            ) : null}
+            <div className="detail-restaurant-info-item">
+              <span className="detail-restaurant-info-icon">
+                <Icon name="delivery" />
+              </span>
+              <span className="detail-restaurant-info-content">
+                <b>Доставка</b>
+                <span>{restaurantDeliveryText}</span>
+              </span>
+            </div>
+          </div>
+          {contactButtons.length ? (
+            <div className="detail-restaurant-contacts">
+              {contactButtons}
             </div>
           ) : null}
-          {restaurantDescText && !isCuisineOnlyDesc ? <p className="detail-restaurant-desc">{restaurantDescText}</p> : null}
+          {restaurantAboutText ? <p className="detail-restaurant-desc">{restaurantAboutText}</p> : null}
         </section>
       ) : null}
       {type === "taxi" && item.when ? <p><b>Дата и время:</b> {item.when}</p> : null}
