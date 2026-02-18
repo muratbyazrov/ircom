@@ -219,44 +219,41 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
       ) : null}
       {type !== "food" && !isRestaurantDetail ? <p><b>Цена:</b> {fmtRub.format(item.price)}</p> : null}
       {hasRestaurantMeta ? (
-        <section className="detail-restaurant-meta">
-          <div className="detail-restaurant-meta-head">
-            <div className="detail-restaurant-meta-title-wrap">
-              <b>{item.title || "Заведение"}</b>
-            </div>
-            {(item.dishes || []).length ? <span>{item.dishes.length} блюд в меню</span> : null}
+        <section className="detail-restaurant-meta restaurant-list-card">
+          <div className="detail-restaurant-photo-wrap restaurant-list-photo-wrap">
+            {photos[0] ? (
+              <img
+                className="detail-restaurant-photo restaurant-list-photo"
+                src={photos[0]}
+                alt={item.title || "Заведение"}
+                loading="lazy"
+                onError={(e) => applyImageFallback(e, "food")}
+              />
+            ) : (
+              <div className="detail-restaurant-photo-empty restaurant-list-photo-empty">Нет фото</div>
+            )}
           </div>
+          <div className="detail-restaurant-meta-head restaurant-list-head">
+            <div className="card-title">{item.title || "Заведение"}</div>
+            {(item.dishes || []).length ? <span className="badge">{item.dishes.length} блюд</span> : null}
+          </div>
+          <div className="detail-restaurant-address restaurant-list-address">{item.address || "Адрес не указан"}</div>
           <div className="detail-restaurant-info-list">
-            <div className="detail-restaurant-info-item">
-              <span className="detail-restaurant-info-icon">
-                <Icon name="store" />
-              </span>
-              <span className="detail-restaurant-info-content">
-                <b>Адрес</b>
-                <span>{item.address || "Адрес не указан"}</span>
-              </span>
-            </div>
-            <div className="detail-restaurant-info-row">
+            <div className="detail-restaurant-info-row restaurant-list-meta">
               {cuisineText ? (
-                <div className="detail-restaurant-info-item">
-                  <span className="detail-restaurant-info-icon">
-                    <Icon name="foodall" />
-                  </span>
-                  <span className="detail-restaurant-info-content">
-                    <b>Кухня</b>
-                    <span>{cuisineText}</span>
-                  </span>
-                </div>
+                <span className="food-meta-chip">
+                  <Icon name="foodall" />
+                  {cuisineText}
+                </span>
               ) : null}
-              <div className="detail-restaurant-info-item">
-                <span className="detail-restaurant-info-icon">
-                  <Icon name="delivery" />
-                </span>
-                <span className="detail-restaurant-info-content">
-                  <b>Доставка</b>
-                  <span>{restaurantDeliveryText}</span>
-                </span>
-              </div>
+              <span className="food-meta-chip">
+                <Icon name="star" />
+                {ratingValue !== null ? `${ratingValue.toFixed(1)} (${item.reviewsCount || 0})` : "Нет оценок"}
+              </span>
+              <span className="food-meta-chip">
+                <Icon name="delivery" />
+                {restaurantDeliveryText}
+              </span>
             </div>
           </div>
           {contactButtons.length ? (
