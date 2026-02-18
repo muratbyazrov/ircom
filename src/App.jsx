@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { mock } from "./data/mock";
 import { CreateForm, DetailModalContent, ProfileEditForm } from "./components/modals";
+import { EntityGroupModalContent } from "./components/entity-group-modal-content";
 import { Icon, Modal } from "./components/ui";
 import { AdsTab, FoodTab, ProfileTab, ServicesTab, TaxiTab } from "./sections/tabs";
 import { tabConfig } from "./utils/constants";
@@ -700,6 +701,10 @@ export default function App() {
 
   const editRestaurant = () => openEditEntity({ type: "restaurant", kind: "restaurant" });
   const viewRestaurant = () => openDetail("restaurant", "my-restaurant");
+  const viewTaxiTemplate = (id) => {
+    if (!id) return;
+    setModal({ type: "detail", payload: { type: "taxi", id: `template-preview-${id}` } });
+  };
 
   const addFeedback = ({ itemId, rating, text }) => {
     let added = false;
@@ -777,9 +782,26 @@ export default function App() {
           ? mock.food
           : taxiCatalog;
     const item = source.find((x) => x.id === detailId);
+    if (!item && detailType === "taxi" && typeof detailId === "string" && detailId.startsWith("template-preview-")) {
+      const templateId = detailId.slice("template-preview-".length);
+      const template = taxiTemplates.find((x) => x.id === templateId);
+      if (!template) return null;
+      return {
+        type: "taxi",
+        item: {
+          ...template,
+          id: detailId,
+          mode: "one-time",
+          when: template.weekdays?.length
+            ? `${template.weekdays.join(", ")} · ${template.time || "Время не указано"}`
+            : template.time || "Время не указано",
+          isFilled: false,
+        },
+      };
+    }
     if (!item) return null;
     return { type: detailType, item };
-  }, [modal, adsCatalog, servicesCatalog, taxiCatalog, restaurantEntity]);
+  }, [modal, adsCatalog, servicesCatalog, taxiCatalog, restaurantEntity, taxiTemplates]);
 
   const createInitialValues = useMemo(() => {
     if (modal?.type !== "create") return null;
@@ -1073,107 +1095,23 @@ export default function App() {
         )}
 
         {modal?.type === "entityGroup" && entityGroupData && (
-          <>
-            <h3 style={{ marginBottom: 8 }}>{entityGroupData.title}</h3>
-            {modal.payload?.group !== "taxi" && entityGroupData.items.length ? (
-              <div className="list">
-                {modal.payload?.group === "restaurant" ? entityGroupData.items.map((item) => (
-                  <article className="card" key={item.title || "restaurant"}>
-                    <div className="card-body">
-                      <div className="card-title">{item.title || "Заведение"}</div>
-                      <p className="small">{item.address || "Адрес не указан"}</p>
-                      <div className="actions">
-                        <button className="primary-btn" type="button" onClick={viewRestaurant}>Просмотреть</button>
-                        <button className="ghost-btn" type="button" onClick={editRestaurant}>Редактировать</button>
-                      </div>
-                    </div>
-                  </article>
-                )) : null}
-
-                {modal.payload?.group === "ads" ? entityGroupData.items.map((item) => (
-                  <article className="card" key={item.id}>
-                    <div className="card-body">
-                      <div className="card-title">{item.title}</div>
-                      <p className="small">{item.category} · {item.price} ₽</p>
-                      <div className="actions">
-                        <button className="ghost-btn" type="button" onClick={() => editAd(item.id)}>Редактировать</button>
-                      </div>
-                    </div>
-                  </article>
-                )) : null}
-
-                {modal.payload?.group === "services" ? entityGroupData.items.map((item) => (
-                  <article className="card" key={item.id}>
-                    <div className="card-body">
-                      <div className="card-title">{item.title}</div>
-                      <p className="small">{item.category} · {item.price} ₽</p>
-                      <div className="actions">
-                        <button className="ghost-btn" type="button" onClick={() => editService(item.id)}>Редактировать</button>
-                      </div>
-                    </div>
-                  </article>
-                )) : null}
-              </div>
-            ) : modal.payload?.group === "taxi" ? (
-              <div className="list">
-                <section className="section" style={{ padding: 10 }}>
-                  <h4 style={{ marginBottom: 4 }}>Разовые поездки</h4>
-                  {(entityGroupData.items.oneTime || []).length ? (
-                    <div className="list">
-                      {entityGroupData.items.oneTime.map((item) => (
-                        <article className="card" key={item.id}>
-                          <div className="card-body">
-                            <div className="card-title">{item.category}</div>
-                            <p className="small">{item.when || "Дата не указана"} · {item.price} ₽</p>
-                            <div className="actions">
-                              <button className="ghost-btn" type="button" onClick={() => editTaxiOffer(item.id)}>Редактировать</button>
-                              <button className={item.isFilled ? "primary-btn" : "ghost-btn"} type="button" onClick={() => toggleTaxiFilled(item.id)}>
-                                {item.isFilled ? "Снять заполнение" : "Заполнен"}
-                              </button>
-                            </div>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="small">Разовых поездок пока нет.</p>
-                  )}
-                </section>
-
-                <section className="section" style={{ padding: 10 }}>
-                  <h4 style={{ marginBottom: 4 }}>Регулярные поездки</h4>
-                  {(entityGroupData.items.regular || []).length ? (
-                    <div className="list">
-                      {entityGroupData.items.regular.map((item) => (
-                        <article className="card" key={item.id}>
-                          <div className="card-body">
-                            <div className="card-title">{item.category}</div>
-                            <p className="small">{item.weekdays.join(", ")} · {item.time}</p>
-                            <div className="row wrap">
-                              <span className="badge">{item.status === "paused" ? "На паузе" : "Активна"}</span>
-                            </div>
-                            <div className="actions">
-                              {item.status === "paused" ? (
-                                <button className="ghost-btn" type="button" onClick={() => setTemplateStatus(item.id, "active")}>Возобновить</button>
-                              ) : (
-                                <button className="ghost-btn" type="button" onClick={() => setTemplateStatus(item.id, "paused")}>Пауза</button>
-                              )}
-                              <button className="ghost-btn" type="button" onClick={() => editTemplate(item.id)}>Изменить</button>
-                              <button className="danger-btn" type="button" onClick={() => removeTemplate(item.id)}>Удалить</button>
-                            </div>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="small">Регулярных поездок пока нет.</p>
-                  )}
-                </section>
-              </div>
-            ) : (
-              <p className="small">Пока ничего нет в этой группе.</p>
-            )}
-          </>
+          <EntityGroupModalContent
+            group={modal.payload?.group}
+            entityGroupData={entityGroupData}
+            onViewRestaurant={viewRestaurant}
+            onEditRestaurant={editRestaurant}
+            onViewAd={(id) => openDetail("ads", id)}
+            onEditAd={editAd}
+            onViewService={(id) => openDetail("services", id)}
+            onEditService={editService}
+            onViewTaxi={(id) => openDetail("taxi", id)}
+            onEditTaxi={editTaxiOffer}
+            onToggleTaxiFilled={toggleTaxiFilled}
+            onViewTaxiTemplate={viewTaxiTemplate}
+            onSetTemplateStatus={setTemplateStatus}
+            onEditTemplate={editTemplate}
+            onRemoveTemplate={removeTemplate}
+          />
         )}
 
         {modal?.type === "profileEdit" && <ProfileEditForm profile={profile} onSubmit={submitMock} onClose={() => setModal(null)} />}

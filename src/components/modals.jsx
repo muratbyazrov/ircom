@@ -12,6 +12,7 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
   const { item, type } = data;
   const photos = item.photos || [];
   const feedbackEnabled = type === "taxi" || type === "services";
+  const isRestaurantDetail = type === "restaurant";
   const reviews = Array.isArray(item.reviews) ? item.reviews : [];
   const normalizedUserName = String(currentUserName || "").trim().toLowerCase();
   const alreadyLeftReview = Boolean(
@@ -166,7 +167,8 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
           })}
         </div>
       ) : null}
-      <p><b>Цена:</b> {fmtRub.format(item.price)}</p>
+      {!isRestaurantDetail ? <p><b>Цена:</b> {fmtRub.format(item.price)}</p> : null}
+      {isRestaurantDetail && item.address ? <p><b>Адрес:</b> {item.address}</p> : null}
       {type === "food" ? <p><b>Готовность:</b> {item.always ? "Всегда в наличии" : `${item.prep} минут`}</p> : null}
       {type === "taxi" && item.when ? <p><b>Дата и время:</b> {item.when}</p> : null}
       {type === "taxi" && item.seats ? <p><b>Места:</b> {item.seats.free}/{item.seats.total}</p> : null}
@@ -256,9 +258,11 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
         </section>
       ) : null}
       <div className="actions" style={{ marginTop: 8 }}>{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
-      <div className="actions" style={{ marginTop: 8 }}>
-        <button className="primary-btn" type="button" onClick={() => onFav(item.id)}>{isFav(item.id) ? <><Icon name="heart-fill" /> Убрать из избранного</> : <><Icon name="heart" /> В избранное</>}</button>
-      </div>
+      {!isRestaurantDetail ? (
+        <div className="actions" style={{ marginTop: 8 }}>
+          <button className="primary-btn" type="button" onClick={() => onFav(item.id)}>{isFav(item.id) ? <><Icon name="heart-fill" /> Убрать из избранного</> : <><Icon name="heart" /> В избранное</>}</button>
+        </div>
+      ) : null}
 
       {viewerIndex !== null ? (
         <section className="viewer" role="dialog" aria-modal="true" aria-label="Просмотр фото">
