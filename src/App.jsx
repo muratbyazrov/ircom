@@ -829,6 +829,10 @@ export default function App() {
   };
 
   const closeModal = () => {
+    if (modal?.type === "detail" && modal?.payload?.returnTo) {
+      setModal({ type: "detail", payload: modal.payload.returnTo });
+      return;
+    }
     if (modal?.type === "auth" && modal?.payload?.returnTo) {
       setModal({ type: "detail", payload: modal.payload.returnTo });
       return;
@@ -1136,6 +1140,17 @@ export default function App() {
             onAddFeedback={addFeedback}
             onRequireAuth={requireAuthForFeedback}
             currentUserName={profile.name}
+            onOpenDish={(dishId, restaurantId) => {
+              if (!dishId) return;
+              setModal({
+                type: "detail",
+                payload: {
+                  type: "food",
+                  id: dishId,
+                  returnTo: restaurantId ? { type: "restaurant", id: restaurantId } : null,
+                },
+              });
+            }}
           />
         )}
 

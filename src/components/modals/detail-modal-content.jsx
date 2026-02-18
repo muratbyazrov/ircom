@@ -4,7 +4,7 @@ import { applyImageFallback } from "../../utils/images";
 import { Icon, Field } from "../ui";
 import { Media } from "../cards";
 
-export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, onRequireAuth, currentUserName }) {
+export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, onRequireAuth, currentUserName, onOpenDish }) {
   const { item, type } = data;
   const photos = item.photos || [];
   const feedbackEnabled = type === "taxi" || type === "services";
@@ -167,13 +167,15 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
   return (
     <>
       <h3 style={{ marginBottom: 8 }}>{item.title || item.name}</h3>
-      <Media
-        photos={photos}
-        emptyText="Нет фотографий"
-        section={type}
-        onOpen={(startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)}
-      />
-      {photos.length > 1 ? (
+      {!isRestaurantDetail ? (
+        <Media
+          photos={photos}
+          emptyText="Нет фотографий"
+          section={type}
+          onOpen={(startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)}
+        />
+      ) : null}
+      {!isRestaurantDetail && photos.length > 1 ? (
         <div className="gallery" style={{ marginTop: 8 }}>
           {photos.slice(1).map((photo, thumbIndex) => {
             const index = thumbIndex + 1;
@@ -225,30 +227,6 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
       {type === "taxi" && item.seats ? <p><b>Места:</b> {item.seats.free}/{item.seats.total}</p> : null}
       {type === "taxi" && item.isFilled ? <p><b>Статус:</b> Водитель заполнен</p> : null}
       <p><b>Описание:</b> {item.desc || "Нет описания"}</p>
-      {isRestaurantDetail ? (
-        <section className="detail-restaurant-dishes">
-          <h4>Блюда заведения</h4>
-          {(item.dishes || []).length ? (
-            <div className="detail-restaurant-dishes-list">
-              {item.dishes.map((dish) => (
-                <article className="detail-restaurant-dish-item" key={dish.id || `${dish.title}-${dish.price}`}>
-                  <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-                    <b>{dish.title || "Блюдо"}</b>
-                    <span className="detail-restaurant-dish-price">{fmtRub.format(Number(dish.price) || 0)}</span>
-                  </div>
-                  <div className="detail-restaurant-dish-meta">
-                    <span>{dish.category || "Категория не указана"}</span>
-                    <span>{dish.always ? "Всегда в наличии" : `${dish.prep || 0} минут`}</span>
-                    <span>{dish.delivery ? "Есть доставка" : "Только самовывоз"}</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="small" style={{ marginTop: 6 }}>В этом заведении пока нет добавленных блюд.</p>
-          )}
-        </section>
-      ) : null}
       {feedbackEnabled ? (
         <section className="reviews-block">
           <div className="reviews-header">
@@ -333,6 +311,61 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
         </section>
       ) : null}
       <div className="detail-contact-grid" style={{ marginTop: 8 }}>{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
+      {isRestaurantDetail ? (
+        <>
+          {(item.dishes || []).length ? (
+            <div className="detail-restaurant-dishes-list">
+              {item.dishes.map((dish) => (
+                <article
+                  className="detail-restaurant-dish-item card-clickable"
+                  key={dish.id || `${dish.title}-${dish.price}`}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onOpenDish?.(dish.id, item.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") onOpenDish?.(dish.id, item.id);
+                  }}
+                >
+                  <div className="detail-restaurant-dish-photo-wrap">
+                    {dish.photos?.[0] ? (
+                      <img
+                        className="detail-restaurant-dish-photo"
+                        src={dish.photos[0]}
+                        alt={dish.title || "Блюдо"}
+                        loading="lazy"
+                        onError={(e) => applyImageFallback(e, "food")}
+                      />
+                    ) : (
+                      <div className="detail-restaurant-dish-photo-empty">Нет фото</div>
+                    )}
+                  </div>
+                  <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                    <b>{dish.title || "Блюдо"}</b>
+                    <span className="detail-restaurant-dish-price">{fmtRub.format(Number(dish.price) || 0)}</span>
+                  </div>
+                  <div className="detail-restaurant-dish-meta">
+                    <span>{dish.category || "Категория не указана"}</span>
+                    <span>{dish.always ? "Всегда в наличии" : `${dish.prep || 0} минут`}</span>
+                    <span>{dish.delivery ? "Есть доставка" : "Только самовывоз"}</span>
+                  </div>
+                  <button
+                    className="ghost-btn detail-restaurant-dish-open-btn"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenDish?.(dish.id, item.id);
+                    }}
+                  >
+                    Подробнее
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="small" style={{ marginTop: 6 }}>В этом заведении пока нет добавленных блюд.</p>
+          )}
+        </>
+      ) : null}
       {!isRestaurantDetail ? (
         <div className="actions" style={{ marginTop: 8 }}>
           <button className="primary-btn" type="button" onClick={() => onFav(item.id)}>{isFav(item.id) ? <><Icon name="heart-fill" /> Убрать из избранного</> : <><Icon name="heart" /> В избранное</>}</button>
