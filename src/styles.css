@@ -1229,6 +1229,41 @@ button {
   flex: 0 0 13px;
 }
 
+.restaurant-hero-contacts {
+  display: grid;
+  gap: 6px;
+}
+
+.restaurant-hero-contacts .detail-contact-btn {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 6px 8px;
+}
+
+.restaurant-hero-contacts .detail-contact-icon {
+  width: 24px;
+  height: 24px;
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.restaurant-hero-contacts .detail-contact-icon .icon {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 13px;
+}
+
+.restaurant-hero-contacts .detail-contact-text b {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.restaurant-hero-contacts .detail-contact-text span {
+  font-size: 12px;
+  color: #fff;
+}
+
 .detail-restaurant-meta {
   margin-top: 6px;
   padding: 7px 9px;

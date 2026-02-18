@@ -192,6 +192,9 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
                 {restaurantDeliveryText}
               </span>
             </div>
+            {contactButtons.length ? (
+              <div className="restaurant-hero-contacts">{contactButtons}</div>
+            ) : null}
           </div>
         </section>
       ) : (
@@ -341,7 +344,9 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
           )}
         </section>
       ) : null}
-      <div className="detail-contact-grid" style={{ marginTop: 8 }}>{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
+      {!isRestaurantDetail ? (
+        <div className="detail-contact-grid" style={{ marginTop: 8 }}>{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
+      ) : null}
       {isRestaurantDetail ? (
         <>
           {(item.dishes || []).length ? (
