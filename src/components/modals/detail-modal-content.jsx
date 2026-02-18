@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { clamp, contactLabel, fmtRub, getTouchDistance } from "../../utils/helpers";
+import { clamp, fmtRub, getTouchDistance } from "../../utils/helpers";
 import { applyImageFallback } from "../../utils/images";
 import { Icon, Field } from "../ui";
 import { Media } from "../cards";
@@ -16,6 +16,8 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
   );
   const REVIEWS_STEP = 3;
   const ratingValue = typeof item.ratingValue === "number" ? item.ratingValue : null;
+  const foodPrepText = type === "food" ? (item.always ? "Всегда в наличии" : `${item.prep} минут`) : "";
+  const foodDeliveryText = type === "food" ? (item.delivery ? "Есть доставка" : "Только самовывоз") : "";
   const restaurantDeliveryText = isRestaurantDetail
     ? item.deliveryMode === "free"
       ? "Бесплатно"
@@ -48,11 +50,24 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
   const activeImageRef = useRef(null);
   const closeTimerRef = useRef(null);
 
-  const contactButtons = Object.entries(item.contacts || {}).map(([k, v]) => (
-    <button className="ghost-btn" key={`${k}-${v}`} type="button" onClick={() => alert(`Откроем контакт: ${v}`)}>
-      {contactLabel(k)} {v}
-    </button>
-  ));
+  const contactButtons = Object.entries(item.contacts || {})
+    .filter(([, value]) => Boolean(String(value || "").trim()))
+    .map(([k, v]) => {
+      const contactType = k === "tg" ? "telegram" : k === "wa" ? "whatsapp" : "phone";
+      const contactLabel = k === "tg" ? "Telegram" : k === "wa" ? "WhatsApp" : "Телефон";
+
+      return (
+        <button className="detail-contact-btn" key={`${k}-${v}`} type="button" onClick={() => alert(`Откроем контакт: ${v}`)}>
+          <span className={`detail-contact-icon detail-contact-icon-${contactType}`}>
+            <Icon name={contactType} />
+          </span>
+          <span className="detail-contact-text">
+            <b>{contactLabel}</b>
+            <span>{v}</span>
+          </span>
+        </button>
+      );
+    });
 
   const showPrev = () => setViewerIndex((prev) => Math.max(0, prev - 1));
   const showNext = () => setViewerIndex((prev) => Math.min(photos.length - 1, prev + 1));
@@ -170,11 +185,34 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
           })}
         </div>
       ) : null}
-      {!isRestaurantDetail ? <p><b>Цена:</b> {fmtRub.format(item.price)}</p> : null}
-      {type === "food" && item.restaurant ? <p><b>Заведение:</b> {item.restaurant}</p> : null}
+      {type === "food" ? (
+        <section className="detail-food-meta">
+          <div className="detail-food-price">{fmtRub.format(item.price)}</div>
+          <div className="detail-food-info-list">
+            <div className="detail-food-info-item">
+              <Icon name="foodall" />
+              <span>{item.category || "Категория не указана"}</span>
+            </div>
+            {item.restaurant ? (
+              <div className="detail-food-info-item">
+                <Icon name="store" />
+                <span>{item.restaurant}</span>
+              </div>
+            ) : null}
+            <div className="detail-food-info-item">
+              <Icon name="time" />
+              <span>{foodPrepText}</span>
+            </div>
+            <div className="detail-food-info-item">
+              <Icon name="delivery" />
+              <span>{foodDeliveryText}</span>
+            </div>
+          </div>
+        </section>
+      ) : null}
+      {type !== "food" && !isRestaurantDetail ? <p><b>Цена:</b> {fmtRub.format(item.price)}</p> : null}
       {isRestaurantDetail && item.address ? <p><b>Адрес:</b> {item.address}</p> : null}
       {isRestaurantDetail ? <p><b>Доставка:</b> {restaurantDeliveryText}</p> : null}
-      {type === "food" ? <p><b>Готовность:</b> {item.always ? "Всегда в наличии" : `${item.prep} минут`}</p> : null}
       {type === "taxi" && item.when ? <p><b>Дата и время:</b> {item.when}</p> : null}
       {type === "taxi" && item.seats ? <p><b>Места:</b> {item.seats.free}/{item.seats.total}</p> : null}
       {type === "taxi" && item.isFilled ? <p><b>Статус:</b> Водитель заполнен</p> : null}
@@ -262,7 +300,7 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
           )}
         </section>
       ) : null}
-      <div className="actions" style={{ marginTop: 8 }}>{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
+      <div className="detail-contact-grid" style={{ marginTop: 8 }}>{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
       {!isRestaurantDetail ? (
         <div className="actions" style={{ marginTop: 8 }}>
           <button className="primary-btn" type="button" onClick={() => onFav(item.id)}>{isFav(item.id) ? <><Icon name="heart-fill" /> Убрать из избранного</> : <><Icon name="heart" /> В избранное</>}</button>

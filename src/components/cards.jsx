@@ -114,9 +114,12 @@ export function TaxiCard({ item, onOpen, onFav, activeFav }) {
 }
 
 export function FoodCard({ item, onOpen, onFav, activeFav }) {
+  const deliveryText = item.delivery ? "Есть доставка" : "Только самовывоз";
+  const prepText = item.always ? "Всегда в наличии" : `${item.prep} минут`;
+
   return (
     <article
-      className="card card-clickable"
+      className="card card-clickable food-card"
       role="button"
       tabIndex={0}
       onClick={onOpen}
@@ -138,16 +141,33 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
           <span>{activeFav ? "В избранном" : "В избранное"}</span>
         </button>
         <Media photos={item.photos} emptyText="Нет фотографий" bleed section="food" />
-        <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
+        <div className="food-card-head">
+          <div className="food-card-main">
+            <div className="row wrap">
+              <span className="food-meta-chip">
+                <Icon name="foodall" />
+                {item.category}
+              </span>
+              {item.restaurant ? (
+                <span className="food-meta-chip">
+                  <Icon name="store" />
+                  {item.restaurant}
+                </span>
+              ) : null}
+            </div>
             <div className="card-title">{item.title}</div>
-            <div className="meta">{item.category}</div>
           </div>
           <div className="price">{fmtRub.format(item.price)}</div>
         </div>
-        <div className="row wrap">
-          <span className="badge">{item.always ? "Всегда в наличии" : `${item.prep} мин`}</span>
-          <span className="badge">{item.delivery ? "Есть доставка" : "Самовывоз"}</span>
+        <div className="food-info-list">
+          <div className="food-info-item">
+            <Icon name="time" />
+            <span>{prepText}</span>
+          </div>
+          <div className="food-info-item">
+            <Icon name="delivery" />
+            <span>{deliveryText}</span>
+          </div>
         </div>
         <p className="small">{short(item.desc)}</p>
       </div>

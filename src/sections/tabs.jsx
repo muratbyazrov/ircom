@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { CategoryTabs, Empty, Field, Icon, Section, SectionHeader, SortSelect, StatCard } from "../components/ui";
 import { FoodCard, ItemCard, TaxiCard } from "../components/cards";
+import { sectionSortModes } from "../utils/constants";
 
 export function AdsTab({ adsCategoriesVisible, adsCategory, setAdsCategory, adsSort, setAdsSort, adsItems, openCreate, openDetail, toggleFavorite, favorites }) {
   return (
@@ -8,7 +9,7 @@ export function AdsTab({ adsCategoriesVisible, adsCategory, setAdsCategory, adsS
       <SectionHeader title="Объявления" subtitle="Продажа б/у вещей" actionLabel="Разместить" onAction={() => openCreate("ad")} />
       <Section>
         <CategoryTabs list={adsCategoriesVisible} value={adsCategory} onChange={setAdsCategory} />
-        <SortSelect value={adsSort} onChange={setAdsSort} />
+        <SortSelect value={adsSort} onChange={setAdsSort} modes={sectionSortModes.ads} />
       </Section>
       <section className="list">
         {adsItems.length ? adsItems.map((x) => <ItemCard key={x.id} item={x} section="ads" onOpen={() => openDetail("ads", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} />) : <Empty text="Пока нет объявлений" />}
@@ -23,7 +24,7 @@ export function ServicesTab({ serviceCategory, setServiceCategory, servicesSort,
       <SectionHeader title="Услуги" actionLabel="Разместить услугу" onAction={() => openCreate("service")} />
       <Section>
         <CategoryTabs list={serviceCategories} value={serviceCategory} onChange={setServiceCategory} />
-        <SortSelect value={servicesSort} onChange={setServicesSort} />
+        <SortSelect value={servicesSort} onChange={setServicesSort} modes={sectionSortModes.services} />
       </Section>
       <section className="list">
         {servicesItems.length ? servicesItems.map((x) => <ItemCard key={x.id} item={x} section="services" onOpen={() => openDetail("services", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} showRating />) : <Empty text="Пока нет услуг" />}
@@ -73,7 +74,7 @@ export function TaxiTab({
             </Field>
           </div>
         ) : null}
-        <SortSelect value={taxiSort} onChange={setTaxiSort} />
+        <SortSelect value={taxiSort} onChange={setTaxiSort} modes={sectionSortModes.taxi} />
       </Section>
       <section className="list">
         {taxiItems.length
@@ -143,7 +144,7 @@ export function FoodTab({
             <button className="ghost-btn" onClick={() => openCreate("dish")} type="button">Добавить блюдо</button>
           </div>
         ) : null}
-        <SortSelect value={foodSort} onChange={setFoodSort} />
+        <SortSelect value={foodSort} onChange={setFoodSort} modes={sectionSortModes.food} />
       </Section>
       <section className="list">
         {!foodItems.length ? <Empty text="Пока нет блюд" /> : null}

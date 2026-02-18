@@ -1,9 +1,11 @@
 import { sortModes } from "../utils/constants";
 import {
+  Bike,
   CakeSlice,
   Car,
   CarFront,
   Circle,
+  Clock3,
   ExternalLink,
   FileText,
   Fish,
@@ -16,6 +18,7 @@ import {
   Mountain,
   MoveLeft,
   MoveRight,
+  Phone,
   Pizza,
   Plus,
   Route,
@@ -23,6 +26,7 @@ import {
   Sofa,
   Smartphone,
   Sparkles,
+  Store,
   User,
   UtensilsCrossed,
   WashingMachine,
@@ -62,12 +66,12 @@ export function CategoryTabs({ list, value, onChange }) {
   );
 }
 
-export function SortSelect({ value, onChange }) {
+export function SortSelect({ value, onChange, modes = sortModes }) {
   return (
     <div style={{ marginTop: 10 }}>
       <label className="label">Сортировка</label>
       <select className="select" value={value} onChange={(e) => onChange(e.target.value)}>
-        {sortModes.map(([v, l]) => (
+        {modes.map(([v, l]) => (
           <option value={v} key={v}>{l}</option>
         ))}
       </select>
@@ -159,10 +163,14 @@ export function Icon({ name }) {
     pie: Pizza,
     burger: Hamburger,
     route: Route,
+    time: Clock3,
+    delivery: Bike,
+    store: Store,
     "taxi-city": CarFront,
     "route-fw": MoveRight,
     "route-bw": MoveLeft,
     open: ExternalLink,
+    phone: Phone,
     heart: Heart,
     "heart-fill": Heart,
     telegram: Send,
