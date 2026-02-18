@@ -25,6 +25,18 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
         ? `Платная (${fmtRub.format(Number(item.deliveryPrice) || 0)})`
         : "Нет доставки"
     : "";
+  const restaurantPrepWindow = isRestaurantDetail
+    ? (() => {
+        const prepValues = (item.dishes || []).map((dish) => Number(dish.prep) || 0).filter((x) => x > 0);
+        if (!prepValues.length) return "20-40 мин";
+        const min = Math.max(10, Math.min(...prepValues));
+        const max = Math.max(min, Math.max(...prepValues));
+        return min === max ? `${min} мин` : `${min}-${max} мин`;
+      })()
+    : "";
+  const restaurantDescText = isRestaurantDetail ? String(item.desc || "").trim() : "";
+  const isCuisineOnlyDesc = /^Кухня:/i.test(restaurantDescText);
+  const hasRestaurantMeta = isRestaurantDetail && (Boolean(item.address) || (Boolean(restaurantDescText) && !isCuisineOnlyDesc));
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const [visibleReviewsCount, setVisibleReviewsCount] = useState(REVIEWS_STEP);
@@ -166,7 +178,38 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
 
   return (
     <>
-      <h3 style={{ marginBottom: 8 }}>{item.title || item.name}</h3>
+      {isRestaurantDetail ? (
+        <section className="restaurant-hero-card">
+          {photos[0] ? (
+            <img
+              className="restaurant-hero-bg"
+              src={photos[0]}
+              alt={item.title || "Заведение"}
+              loading="lazy"
+              onError={(e) => applyImageFallback(e, "food")}
+            />
+          ) : null}
+          <div className="restaurant-hero-overlay">
+            <h3 className="restaurant-hero-title">{item.title || "Заведение"}</h3>
+            <div className="restaurant-hero-facts">
+              <span className="restaurant-hero-fact">
+                <Icon name="star" />
+                {typeof item.ratingValue === "number" ? `${item.ratingValue.toFixed(1)} (${item.reviewsCount || 0})` : "Нет оценок"}
+              </span>
+              <span className="restaurant-hero-fact">
+                <Icon name="time" />
+                {restaurantPrepWindow}
+              </span>
+              <span className="restaurant-hero-fact">
+                <Icon name="delivery" />
+                {restaurantDeliveryText}
+              </span>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <h3 style={{ marginBottom: 8 }}>{item.title || item.name}</h3>
+      )}
       {!isRestaurantDetail ? (
         <Media
           photos={photos}
@@ -213,7 +256,7 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
         </section>
       ) : null}
       {type !== "food" && !isRestaurantDetail ? <p><b>Цена:</b> {fmtRub.format(item.price)}</p> : null}
-      {isRestaurantDetail ? (
+      {hasRestaurantMeta ? (
         <section className="detail-restaurant-meta">
           {item.address ? (
             <div className="detail-restaurant-address">
@@ -221,19 +264,7 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
               <span>{item.address}</span>
             </div>
           ) : null}
-          <div className="detail-restaurant-facts">
-            <span className="detail-restaurant-fact">
-              <Icon name="star" />
-              {typeof item.ratingValue === "number"
-                ? `${item.ratingValue.toFixed(1)} · ${item.reviewsCount || 0} отзыв(ов)`
-                : "Нет оценок"}
-            </span>
-            <span className="detail-restaurant-fact">
-              <Icon name="delivery" />
-              {restaurantDeliveryText}
-            </span>
-          </div>
-          {item.desc ? <p className="detail-restaurant-desc">{item.desc}</p> : null}
+          {restaurantDescText && !isCuisineOnlyDesc ? <p className="detail-restaurant-desc">{restaurantDescText}</p> : null}
         </section>
       ) : null}
       {type === "taxi" && item.when ? <p><b>Дата и время:</b> {item.when}</p> : null}

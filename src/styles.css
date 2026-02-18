@@ -1163,14 +1163,80 @@ button {
   color: #e57f86;
 }
 
+.restaurant-hero-card {
+  margin-bottom: 8px;
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  min-height: 190px;
+  border: 1px solid #2d3138;
+  background: radial-gradient(circle at top left, #2f343c, #1e2127 65%);
+}
+
+.restaurant-hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
+}
+
+.restaurant-hero-overlay {
+  position: relative;
+  z-index: 1;
+  padding: 14px;
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.25) 0%, rgba(17, 24, 39, 0.72) 100%);
+}
+
+.restaurant-hero-title {
+  margin: 0;
+  font-size: 33px;
+  line-height: 1;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.restaurant-hero-facts {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.restaurant-hero-fact {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.restaurant-hero-fact .icon {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 13px;
+}
+
 .detail-restaurant-meta {
-  margin-top: 8px;
-  padding: 8px 10px;
+  margin-top: 6px;
+  padding: 7px 9px;
   border: 1px solid #f1d5d8;
   border-radius: 12px;
   background: linear-gradient(180deg, #fff8f8, #fff);
   display: grid;
-  gap: 7px;
+  gap: 6px;
 }
 
 .detail-restaurant-address {
@@ -1188,33 +1254,6 @@ button {
   flex: 0 0 14px;
   margin-top: 2px;
   color: #e57f86;
-}
-
-.detail-restaurant-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.detail-restaurant-fact {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  border: 1px solid #f2d8db;
-  border-radius: 999px;
-  background: #fff;
-  padding: 4px 8px;
-  font-size: 11px;
-  color: #6b7280;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.detail-restaurant-fact .icon {
-  width: 13px;
-  height: 13px;
-  flex: 0 0 13px;
-  color: #b4535a;
 }
 
 .detail-restaurant-desc {
