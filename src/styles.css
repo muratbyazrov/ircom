@@ -1163,6 +1163,71 @@ button {
   color: #e57f86;
 }
 
+.detail-restaurant-meta {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid #f1d5d8;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fff8f8, #fff);
+  display: grid;
+  gap: 7px;
+}
+
+.detail-restaurant-address {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 13px;
+  color: #374151;
+  font-weight: 600;
+}
+
+.detail-restaurant-address .icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  margin-top: 2px;
+  color: #e57f86;
+}
+
+.detail-restaurant-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.detail-restaurant-fact {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #f2d8db;
+  border-radius: 999px;
+  background: #fff;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.detail-restaurant-fact .icon {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 13px;
+  color: #b4535a;
+}
+
+.detail-restaurant-desc {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .detail-contact-grid {
   display: grid;
   gap: 8px;

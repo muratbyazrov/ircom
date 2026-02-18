@@ -213,20 +213,33 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
         </section>
       ) : null}
       {type !== "food" && !isRestaurantDetail ? <p><b>Цена:</b> {fmtRub.format(item.price)}</p> : null}
-      {isRestaurantDetail && item.address ? <p><b>Адрес:</b> {item.address}</p> : null}
       {isRestaurantDetail ? (
-        <p>
-          <b>Рейтинг:</b>{" "}
-          {typeof item.ratingValue === "number"
-            ? `${item.ratingValue.toFixed(1)}/5 (${item.reviewsCount || 0} отзыв(ов))`
-            : "Пока нет оценок"}
-        </p>
+        <section className="detail-restaurant-meta">
+          {item.address ? (
+            <div className="detail-restaurant-address">
+              <Icon name="store" />
+              <span>{item.address}</span>
+            </div>
+          ) : null}
+          <div className="detail-restaurant-facts">
+            <span className="detail-restaurant-fact">
+              <Icon name="star" />
+              {typeof item.ratingValue === "number"
+                ? `${item.ratingValue.toFixed(1)} · ${item.reviewsCount || 0} отзыв(ов)`
+                : "Нет оценок"}
+            </span>
+            <span className="detail-restaurant-fact">
+              <Icon name="delivery" />
+              {restaurantDeliveryText}
+            </span>
+          </div>
+          {item.desc ? <p className="detail-restaurant-desc">{item.desc}</p> : null}
+        </section>
       ) : null}
-      {isRestaurantDetail ? <p><b>Доставка:</b> {restaurantDeliveryText}</p> : null}
       {type === "taxi" && item.when ? <p><b>Дата и время:</b> {item.when}</p> : null}
       {type === "taxi" && item.seats ? <p><b>Места:</b> {item.seats.free}/{item.seats.total}</p> : null}
       {type === "taxi" && item.isFilled ? <p><b>Статус:</b> Водитель заполнен</p> : null}
-      <p><b>Описание:</b> {item.desc || "Нет описания"}</p>
+      {!isRestaurantDetail ? <p><b>Описание:</b> {item.desc || "Нет описания"}</p> : null}
       {feedbackEnabled ? (
         <section className="reviews-block">
           <div className="reviews-header">
