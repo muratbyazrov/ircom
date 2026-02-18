@@ -223,7 +223,6 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
           <div className="detail-restaurant-meta-head">
             <div className="detail-restaurant-meta-title-wrap">
               <b>{item.title || "Заведение"}</b>
-              <span>О заведении</span>
             </div>
             {(item.dishes || []).length ? <span>{item.dishes.length} блюд в меню</span> : null}
           </div>
@@ -239,25 +238,27 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
                 </span>
               </div>
             ) : null}
-            {cuisineText ? (
+            <div className="detail-restaurant-info-row">
+              {cuisineText ? (
+                <div className="detail-restaurant-info-item">
+                  <span className="detail-restaurant-info-icon">
+                    <Icon name="foodall" />
+                  </span>
+                  <span className="detail-restaurant-info-content">
+                    <b>Кухня</b>
+                    <span>{cuisineText}</span>
+                  </span>
+                </div>
+              ) : null}
               <div className="detail-restaurant-info-item">
                 <span className="detail-restaurant-info-icon">
-                  <Icon name="foodall" />
+                  <Icon name="delivery" />
                 </span>
                 <span className="detail-restaurant-info-content">
-                  <b>Кухня</b>
-                  <span>{cuisineText}</span>
+                  <b>Доставка</b>
+                  <span>{restaurantDeliveryText}</span>
                 </span>
               </div>
-            ) : null}
-            <div className="detail-restaurant-info-item">
-              <span className="detail-restaurant-info-icon">
-                <Icon name="delivery" />
-              </span>
-              <span className="detail-restaurant-info-content">
-                <b>Доставка</b>
-                <span>{restaurantDeliveryText}</span>
-              </span>
             </div>
           </div>
           {contactButtons.length ? (
