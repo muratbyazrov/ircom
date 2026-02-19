@@ -270,16 +270,22 @@ export function ProfileTab({
               <span className="quick-action-icon"><Icon name="taxi" /></span>
               <span>{isTaxiDriver ? "Добавить поездку" : "Стать водителем такси"}</span>
             </button>
-            {!myServices.length ? (
-              <button
-                className="ghost-btn quick-action-btn"
-                type="button"
-                onClick={() => openCreate("service")}
-              >
-                <span className="quick-action-icon"><Icon name="services" /></span>
-                <span>Добавить свою услугу</span>
-              </button>
-            ) : null}
+            <button
+              className="ghost-btn quick-action-btn"
+              type="button"
+              onClick={() => openCreate("ad")}
+            >
+              <span className="quick-action-icon"><Icon name="ads" /></span>
+              <span>Разместить объявление</span>
+            </button>
+            <button
+              className="ghost-btn quick-action-btn"
+              type="button"
+              onClick={() => openCreate("service")}
+            >
+              <span className="quick-action-icon"><Icon name="services" /></span>
+              <span>Добавить услугу</span>
+            </button>
           </div>
         </Section>
 

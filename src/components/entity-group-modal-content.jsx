@@ -1,3 +1,5 @@
+import { Icon } from "./ui";
+
 export function EntityGroupModalContent({
   group,
   entityGroupData,
@@ -9,10 +11,55 @@ export function EntityGroupModalContent({
   onOpenTaxiTemplate,
   onSetTemplateStatus,
   onRemoveTemplate,
+  onCreateAd,
+  onCreateService,
+  onCreateRestaurant,
+  onCreateTaxi,
 }) {
+  const groupMeta = {
+    restaurant: {
+      title: "Мои заведения",
+      subtitle: "Управляйте заведением и обновляйте меню.",
+      actionLabel: "Добавить еще заведение",
+      action: onCreateRestaurant,
+      icon: "food",
+    },
+    ads: {
+      title: "Мои объявления",
+      subtitle: "Публикации в одном месте. Добавляйте новые объявления в пару кликов.",
+      actionLabel: "Разместить еще объявление",
+      action: onCreateAd,
+      icon: "ads",
+    },
+    services: {
+      title: "Мои услуги",
+      subtitle: "Держите услуги актуальными и добавляйте новые предложения.",
+      actionLabel: "Добавить еще услугу",
+      action: onCreateService,
+      icon: "services",
+    },
+    taxi: {
+      title: "Моё такси",
+      subtitle: "Управляйте активными поездками и статусами.",
+      actionLabel: "Создать поездку",
+      action: onCreateTaxi,
+      icon: "taxi",
+    },
+  };
+  const meta = groupMeta[group] || { title: entityGroupData.title, subtitle: "", actionLabel: "", action: null, icon: "ads" };
+
   return (
     <>
-      <h3 style={{ marginBottom: 8 }}>{entityGroupData.title}</h3>
+      <section className="entity-group-hero">
+        <div className="entity-group-hero-icon">
+          <Icon name={meta.icon} />
+        </div>
+        <h3>{meta.title}</h3>
+        {meta.subtitle ? <p className="small">{meta.subtitle}</p> : null}
+        {meta.actionLabel && typeof meta.action === "function" ? (
+          <button className="primary-btn" type="button" onClick={meta.action}>{meta.actionLabel}</button>
+        ) : null}
+      </section>
       {group !== "taxi" && entityGroupData.items.length ? (
         <div className="list">
           {group === "restaurant" ? entityGroupData.items.map((item) => (

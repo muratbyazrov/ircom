@@ -619,7 +619,13 @@ export default function App() {
     });
   };
 
-  const openCreate = (type) => ensureAuth(() => setModal({ type: "create", payload: { type } }));
+  const openCreate = (type, options = {}) => ensureAuth(() => setModal({
+    type: "create",
+    payload: {
+      type,
+      ...(options.returnTo ? { returnTo: options.returnTo } : {}),
+    },
+  }));
   const openEditEntity = (payload) => ensureAuth(() => setModal({ type: "editEntity", payload }));
   const openEntityGroup = (group) => ensureAuth(() => setModal({ type: "entityGroup", payload: { group } }));
   const openEditProfile = () => ensureAuth(() => setModal({ type: "profileEdit", payload: profile }));
@@ -923,6 +929,10 @@ export default function App() {
       setModal(modal.payload.returnTo);
       return;
     }
+    if (modal?.type === "create" && modal?.payload?.returnTo) {
+      setModal(modal.payload.returnTo);
+      return;
+    }
     if (modal?.type === "auth" && modal?.payload?.returnTo) {
       setModal(modal.payload.returnTo);
       return;
@@ -1054,13 +1064,13 @@ export default function App() {
     if (modal?.type !== "entityGroup") return null;
     const group = modal.payload?.group;
     if (group === "restaurant") {
-      return { title: "Заведения", items: hasRestaurant && restaurantEntity ? [restaurantEntity] : [] };
+      return { title: "Мои заведения", items: hasRestaurant && restaurantEntity ? [restaurantEntity] : [] };
     }
     if (group === "ads") {
-      return { title: "Объявления", items: myAds };
+      return { title: "Мои объявления", items: myAds };
     }
     if (group === "services") {
-      return { title: "Услуги", items: customServices };
+      return { title: "Мои услуги", items: customServices };
     }
     if (group === "taxi") {
       return {
@@ -1286,7 +1296,7 @@ export default function App() {
             type={modal.payload.type}
             initialValues={createInitialValues}
             onSubmit={submitMock}
-            onClose={() => setModal(null)}
+            onClose={closeModal}
             taxiCategories={mock.taxiCategories}
           />
         )}
@@ -1315,6 +1325,10 @@ export default function App() {
             onOpenTaxiTemplate={viewTaxiTemplate}
             onSetTemplateStatus={setTemplateStatus}
             onRemoveTemplate={removeTemplate}
+            onCreateAd={() => openCreate("ad", { returnTo: { type: "entityGroup", payload: { group: "ads" } } })}
+            onCreateService={() => openCreate("service", { returnTo: { type: "entityGroup", payload: { group: "services" } } })}
+            onCreateRestaurant={() => openCreate("restaurant", { returnTo: { type: "entityGroup", payload: { group: "restaurant" } } })}
+            onCreateTaxi={() => openCreate("taxi", { returnTo: { type: "entityGroup", payload: { group: "taxi" } } })}
           />
         )}
 

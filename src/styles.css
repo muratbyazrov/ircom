@@ -893,6 +893,46 @@ button {
   height: 16px;
 }
 
+.entity-group-hero {
+  margin-bottom: 10px;
+  padding: 14px 12px;
+  border: 1px solid #f6cfd3;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(227, 38, 46, 0.12), transparent 48%),
+    linear-gradient(180deg, #fff9fa, #ffffff);
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.entity-group-hero h3 {
+  margin: 0;
+}
+
+.entity-group-hero .small {
+  margin: 0;
+  max-width: 340px;
+}
+
+.entity-group-hero-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid #f7c5c9;
+  background: #fff;
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.entity-group-hero-icon .icon {
+  width: 19px;
+  height: 19px;
+}
+
 .food-group {
   padding: 10px;
 }
