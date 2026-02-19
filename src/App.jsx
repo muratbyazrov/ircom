@@ -747,18 +747,10 @@ export default function App() {
   const editDish = (id) => openEditEntity({ type: "dish", id, kind: "dish" });
   const removeDish = (id) => {
     const targetDish = userRestaurantDishes.find((dish) => dish.id === id);
-    const dishTitle = String(targetDish?.title || "это блюдо").trim();
-    const confirmed = window.confirm(`Точно удалить «${dishTitle}»?`);
-    if (!confirmed) return;
+    if (!targetDish) return;
+    const dishTitle = String(targetDish.title || "Блюдо").trim();
 
-    setUserRestaurantDishes((prev) => prev.filter((dish) => dish.id !== id));
-
-    if (modal?.type === "detail" && modal?.payload?.returnTo) {
-      setModal(modal.payload.returnTo);
-      return;
-    }
-
-    setModal({
+    const fallbackReturnTo = {
       type: "detail",
       payload: {
         type: "restaurant",
@@ -766,7 +758,33 @@ export default function App() {
         fromBusiness: true,
         returnTo: { type: "entityGroup", payload: { group: "restaurant" } },
       },
+    };
+    const returnTo = modal?.type === "detail" && modal?.payload?.returnTo ? modal.payload.returnTo : fallbackReturnTo;
+
+    setModal({
+      type: "confirmDishDelete",
+      payload: {
+        dishId: id,
+        dishTitle,
+        returnTo,
+      },
     });
+  };
+
+  const confirmRemoveDish = () => {
+    if (modal?.type !== "confirmDishDelete") return;
+    const dishId = modal?.payload?.dishId;
+    if (!dishId) {
+      closeModal();
+      return;
+    }
+
+    setUserRestaurantDishes((prev) => prev.filter((dish) => dish.id !== dishId));
+    if (modal?.payload?.returnTo) {
+      setModal(modal.payload.returnTo);
+      return;
+    }
+    setModal(null);
   };
   const toggleDishAvailability = (id) => {
     setUserRestaurantDishes((prev) => prev.map((dish) => (
@@ -1217,6 +1235,19 @@ export default function App() {
             }
             isOwnerView={Boolean(modal?.payload?.fromBusiness)}
           />
+        )}
+
+        {modal?.type === "confirmDishDelete" && (
+          <>
+            <h3>Удалить блюдо?</h3>
+            <p className="small">
+              Блюдо «{modal?.payload?.dishTitle || "Без названия"}» будет удалено без возможности восстановления.
+            </p>
+            <div className="actions" style={{ marginTop: 8 }}>
+              <button className="danger-btn" type="button" onClick={confirmRemoveDish}>Удалить</button>
+              <button className="ghost-btn" type="button" onClick={closeModal}>Отмена</button>
+            </div>
+          </>
         )}
 
         {modal?.type === "create" && (
