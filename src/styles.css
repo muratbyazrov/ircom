@@ -1504,26 +1504,98 @@ button {
   text-overflow: ellipsis;
 }
 
-.detail-taxi-contacts-block {
+.detail-taxi-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.detail-taxi-fav-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.detail-taxi-info-block {
+  margin-top: 8px;
   border: 1px solid #f6cfd3;
   border-radius: 14px;
   padding: 10px;
   background:
     radial-gradient(circle at 12% 0%, rgba(227, 38, 46, 0.1), transparent 48%),
     linear-gradient(180deg, #fff9fa, #ffffff);
+  display: grid;
+  gap: 10px;
+}
+
+.detail-taxi-media {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #f1d5d8;
+  background: #fff;
+}
+
+.detail-taxi-media .media {
+  min-height: 170px;
+  border-radius: 0;
+}
+
+.detail-taxi-media .media.media-has-image {
+  border-radius: 0;
+}
+
+.detail-taxi-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.detail-taxi-info-item {
+  border: 1px solid #f1d5d8;
+  border-radius: 10px;
+  background: #fff;
+  padding: 8px;
+  display: grid;
+  gap: 2px;
+}
+
+.detail-taxi-info-item span {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.detail-taxi-info-item b {
+  font-size: 13px;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.detail-taxi-desc {
+  margin: 0;
+  color: #374151;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .detail-taxi-contacts-title {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 13px;
   font-weight: 800;
   color: #9f1239;
   letter-spacing: 0.01em;
 }
 
-.detail-taxi-contacts-block .detail-contact-btn {
+.detail-taxi-info-block .detail-contact-btn {
   background: #fff;
   border-color: #f1d5d8;
+}
+
+.reviews-block-standalone {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px;
+  background: #fff;
 }
 
 .detail-restaurant-dishes-list {

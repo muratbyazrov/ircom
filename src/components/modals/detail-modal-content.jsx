@@ -189,8 +189,21 @@ export function DetailModalContent({
 
   return (
     <>
-      {!isRestaurantDetail ? <h3 style={{ marginBottom: 8 }}>{item.title || item.name}</h3> : null}
       {!isRestaurantDetail ? (
+        isTaxiDetail ? (
+          <div className="detail-taxi-head">
+            <h3 style={{ marginBottom: 8 }}>{item.title || item.name}</h3>
+            {!isOwnerView ? (
+              <button className="ghost-btn detail-taxi-fav-btn" type="button" onClick={() => onFav(item.id)}>
+                {isFav(item.id) ? <><Icon name="heart-fill" /> В избранном</> : <><Icon name="heart" /> В избранное</>}
+              </button>
+            ) : null}
+          </div>
+        ) : (
+          <h3 style={{ marginBottom: 8 }}>{item.title || item.name}</h3>
+        )
+      ) : null}
+      {!isRestaurantDetail && !isTaxiDetail ? (
         <Media
           photos={photos}
           emptyText="Нет фотографий"
@@ -235,7 +248,52 @@ export function DetailModalContent({
           </div>
         </section>
       ) : null}
-      {type !== "food" && !isRestaurantDetail ? <p><b>Цена:</b> {fmtRub.format(item.price)}</p> : null}
+      {type !== "food" && !isRestaurantDetail && !isTaxiDetail ? <p><b>Цена:</b> {fmtRub.format(item.price)}</p> : null}
+      {isTaxiDetail ? (
+        <section className="detail-taxi-info-block">
+          <div className="detail-taxi-media">
+            <Media
+              photos={photos}
+              emptyText="Нет фотографий"
+              section={type}
+              onOpen={(startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)}
+            />
+          </div>
+          <div className="detail-taxi-info-grid">
+            <div className="detail-taxi-info-item">
+              <span>Цена</span>
+              <b>{fmtRub.format(item.price)}</b>
+            </div>
+            <div className="detail-taxi-info-item">
+              <span>Направление</span>
+              <b>{item.category || "Не указано"}</b>
+            </div>
+            {item.when ? (
+              <div className="detail-taxi-info-item">
+                <span>Дата и время</span>
+                <b>{item.when}</b>
+              </div>
+            ) : null}
+            {item.seats ? (
+              <div className="detail-taxi-info-item">
+                <span>Места</span>
+                <b>{item.seats.free}/{item.seats.total}</b>
+              </div>
+            ) : null}
+            {item.isFilled ? (
+              <div className="detail-taxi-info-item">
+                <span>Статус</span>
+                <b>Водитель заполнен</b>
+              </div>
+            ) : null}
+          </div>
+          <p className="detail-taxi-desc"><b>Описание:</b> {item.desc || "Нет описания"}</p>
+          <div className="detail-taxi-contacts-title">Контакты водителя</div>
+          <div className="detail-contact-grid">
+            {contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}
+          </div>
+        </section>
+      ) : null}
       {hasRestaurantMeta ? (
         <section className="detail-restaurant-meta restaurant-list-card">
           <div className="detail-restaurant-photo-wrap restaurant-list-photo-wrap">
@@ -286,20 +344,9 @@ export function DetailModalContent({
           </div>
         </section>
       ) : null}
-      {type === "taxi" && item.when ? <p><b>Дата и время:</b> {item.when}</p> : null}
-      {type === "taxi" && item.seats ? <p><b>Места:</b> {item.seats.free}/{item.seats.total}</p> : null}
-      {type === "taxi" && item.isFilled ? <p><b>Статус:</b> Водитель заполнен</p> : null}
-      {!isRestaurantDetail ? <p><b>Описание:</b> {item.desc || "Нет описания"}</p> : null}
-      {isTaxiDetail ? (
-        <section className="detail-taxi-contacts-block" style={{ marginTop: 8 }}>
-          <div className="detail-taxi-contacts-title">Контакты водителя</div>
-          <div className="detail-contact-grid">
-            {contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}
-          </div>
-        </section>
-      ) : null}
+      {!isRestaurantDetail && !isTaxiDetail ? <p><b>Описание:</b> {item.desc || "Нет описания"}</p> : null}
       {feedbackEnabled ? (
-        <section className="reviews-block">
+        <section className={`reviews-block ${isTaxiDetail ? "reviews-block-standalone" : ""}`}>
           <div className="reviews-header">
             <b>Оценка и отзывы</b>
             <span className="small">
@@ -434,7 +481,7 @@ export function DetailModalContent({
           </section>
         </>
       ) : null}
-      {!isRestaurantDetail && !isOwnerView ? (
+      {!isRestaurantDetail && !isOwnerView && !isTaxiDetail ? (
         <div className="actions" style={{ marginTop: 8 }}>
           <button className="primary-btn" type="button" onClick={() => onFav(item.id)}>{isFav(item.id) ? <><Icon name="heart-fill" /> Убрать из избранного</> : <><Icon name="heart" /> В избранное</>}</button>
           {typeof onEdit === "function" ? <button className="ghost-btn" type="button" onClick={onEdit}>Редактировать</button> : null}
