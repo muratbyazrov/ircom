@@ -531,6 +531,10 @@ export default function App() {
 
     if (hasRestaurant && restaurantEntity) {
       const ownReviews = Array.isArray(feedbackByItem["my-restaurant"]) ? feedbackByItem["my-restaurant"] : [];
+      const ownRestaurantTitle = String(restaurantEntity.title || "").trim();
+      const ownDishes = ownRestaurantTitle
+        ? mock.food.filter((dish) => String(dish.restaurant || "").trim() === ownRestaurantTitle)
+        : [];
       fromFood.unshift({
         id: "my-restaurant",
         title: restaurantEntity.title || "Моё заведение",
@@ -545,7 +549,7 @@ export default function App() {
           ...(restaurantEntity.whatsapp ? { wa: restaurantEntity.whatsapp } : {}),
         },
         photos: Array.isArray(restaurantEntity.photos) ? restaurantEntity.photos : [],
-        dishes: [],
+        dishes: ownDishes,
         reviews: ownReviews,
         reviewsCount: ownReviews.length,
         ratingValue: getFeedbackRating(ownReviews),

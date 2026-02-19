@@ -275,6 +275,14 @@ export function DetailModalContent({
             </div>
           ) : null}
           {restaurantAboutText ? <p className="detail-restaurant-desc">{restaurantAboutText}</p> : null}
+          <div className="actions" style={{ marginTop: 8 }}>
+            {typeof onAddDish === "function" ? (
+              <button className="primary-btn" type="button" onClick={onAddDish}>Добавить блюдо</button>
+            ) : null}
+            {typeof onEdit === "function" ? (
+              <button className="primary-btn" type="button" onClick={onEdit}>Редактировать</button>
+            ) : null}
+          </div>
         </section>
       ) : null}
       {type === "taxi" && item.when ? <p><b>Дата и время:</b> {item.when}</p> : null}
@@ -408,14 +416,6 @@ export function DetailModalContent({
           ) : (
             <p className="small" style={{ marginTop: 6 }}>В этом заведении пока нет добавленных блюд.</p>
           )}
-          <div className="actions" style={{ marginTop: 8 }}>
-            {typeof onAddDish === "function" ? (
-              <button className="primary-btn" type="button" onClick={onAddDish}>Добавить блюдо</button>
-            ) : null}
-            {typeof onEdit === "function" ? (
-              <button className="primary-btn" type="button" onClick={onEdit}>Редактировать</button>
-            ) : null}
-          </div>
         </>
       ) : null}
       {!isRestaurantDetail && !isOwnerView ? (

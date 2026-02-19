@@ -6,6 +6,7 @@ export const mock = {
   foodCategories: ["Все", "Кавказская кухня", "Суши и роллы", "Осетинские пироги", "Бургеры", "Другое"],
   taxiCategories: ["Такси по Цхинвалу", "Цхинвал -> Владикавказ", "Владикавказ -> Цхинвал"],
   foodRestaurantAddresses: {
+    "Кафе Тест": "г. Цхинвал, ул. Тестовая, 10",
     "Пекарня Дарьял": "г. Цхинвал, ул. Мира, 14",
     "Sakura Roll": "г. Цхинвал, ул. Исака Харебова, 7",
     "Кавказ Двор": "г. Цхинвал, пр-т Алана Джиоева, 22",
@@ -17,6 +18,7 @@ export const mock = {
     "Green Bowl": "г. Цхинвал, ул. Московская, 3",
   },
   foodRestaurantLogos: {
+    "Кафе Тест": img("cafe,test,logo", 800),
     "Пекарня Дарьял": img("bakery,logo,sign", 801),
     "Sakura Roll": img("sushi,restaurant,logo", 802),
     "Кавказ Двор": img("caucasus,restaurant,logo", 803),
@@ -57,6 +59,8 @@ export const mock = {
     { id: "t8", category: "Владикавказ -> Цхинвал", name: "Коста", price: 1400, rating: 4.1, date: 6, seats: { total: 6, free: 4 }, when: "Пн 07:30", desc: "Минивэн, много места для багажа.", contacts: { phone: "+7(929)500-01-00" }, photos: [img("minivan,travel", 306), img("van,road", 318), img("vehicle,trip", 319)] },
   ],
   food: [
+    { id: "f-test-1", category: "Кавказская кухня", restaurant: "Кафе Тест", title: "Суп харчо", price: 390, prep: 18, always: true, delivery: true, desc: "Наваристый суп с говядиной и рисом.", contacts: { phone: "+7(929)111-22-33", wa: "+7(929)111-22-33" }, photos: [img("kharcho,soup", 490), img("soup,beef", 491)] },
+    { id: "f-test-2", category: "Осетинские пироги", restaurant: "Кафе Тест", title: "Пирог с мясом и сыром", price: 520, prep: 32, always: false, delivery: true, desc: "Сытный пирог с сочной начинкой.", contacts: { phone: "+7(929)111-22-33", tg: "@cafe_test" }, photos: [img("ossetian,pie,meat,cheese", 492), img("pie,meat,cheese", 493)] },
     { id: "f1", category: "Осетинские пироги", restaurant: "Пекарня Дарьял", title: "Пирог с сыром", price: 450, prep: 35, always: false, delivery: true, desc: "Тонкое тесто, свежий сыр, 30см.", contacts: { phone: "+7(929)444-10-10" }, photos: [img("pie,food", 401), img("pie,cheese", 408), img("baked,pie", 409)] },
     { id: "f3", category: "Суши и роллы", restaurant: "Sakura Roll", title: "Филадельфия", price: 620, prep: 30, always: false, delivery: true, desc: "Классический ролл с лососем.", contacts: { phone: "+7(929)333-90-90" }, photos: [img("sushi,roll", 403), img("sushi,salmon", 412)] },
     { id: "f4", category: "Кавказская кухня", restaurant: "Кавказ Двор", title: "Шашлык из телятины", price: 780, prep: 45, always: false, delivery: true, desc: "Маринад по фирменному рецепту.", contacts: { tg: "@kavkaz_food" }, photos: [img("barbecue,meat", 404), img("grill,kebab", 413), img("meat,bbq", 414)] },
