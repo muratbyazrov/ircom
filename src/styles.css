@@ -1219,18 +1219,27 @@ button {
   gap: 8px;
 }
 
+.detail-main-title {
+  margin-bottom: 8px;
+  font-size: 30px;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+
 .detail-food-meta {
   margin-top: 8px;
-  padding: 10px;
-  border: 1px solid #f1d5d8;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fff7f8, #fff);
+  padding: 12px;
+  border: 1px solid #f0d0d4;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at top right, rgba(190, 24, 93, 0.11), transparent 45%),
+    linear-gradient(180deg, #fff9fa, #fff);
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .detail-food-price {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 800;
   line-height: 1;
   color: #9f1239;
@@ -1238,16 +1247,23 @@ button {
 
 .detail-food-info-list {
   display: grid;
-  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .detail-food-info-item {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 7px;
-  color: #4b5563;
+  gap: 6px;
+  color: #374151;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  border: 1px solid #f1d5d8;
+  border-radius: 11px;
+  background: #fff;
+  padding: 7px 8px;
+  min-width: 0;
 }
 
 .detail-food-info-item .icon {
@@ -1255,6 +1271,94 @@ button {
   height: 15px;
   flex: 0 0 15px;
   color: #e57f86;
+}
+
+.detail-food-info-item span {
+  min-width: 0;
+}
+
+.detail-content-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #9f1239;
+  letter-spacing: 0.01em;
+}
+
+.detail-food-desc-card,
+.detail-basic-desc-card {
+  margin-top: 8px;
+  padding: 11px;
+  border-radius: 13px;
+  background: #fff;
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 6px;
+}
+
+.detail-food-desc-card {
+  border-color: #f0d0d4;
+  background: linear-gradient(180deg, #fff, #fffafb);
+}
+
+.detail-food-desc-card p,
+.detail-basic-desc-card p {
+  margin: 0;
+  color: #374151;
+  line-height: 1.45;
+}
+
+.detail-basic-meta {
+  margin-top: 8px;
+  border: 1px solid #f0d0d4;
+  border-radius: 14px;
+  padding: 11px;
+  background:
+    radial-gradient(circle at top right, rgba(190, 24, 93, 0.11), transparent 45%),
+    linear-gradient(180deg, #fff9fa, #fff);
+  display: grid;
+  gap: 10px;
+}
+
+.detail-basic-meta-price {
+  display: grid;
+  gap: 2px;
+}
+
+.detail-basic-meta-price span {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.detail-basic-meta-price b {
+  font-size: 24px;
+  color: #9f1239;
+  line-height: 1.1;
+}
+
+.detail-basic-meta-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.detail-basic-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid #f0d2d6;
+  background: #fff;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.detail-basic-meta-item .icon {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 13px;
+  color: #be123c;
 }
 
 .restaurant-hero-card {
@@ -1442,6 +1546,32 @@ button {
 .detail-contact-grid {
   display: grid;
   gap: 8px;
+}
+
+.detail-contacts-block {
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 10px;
+  background: #fff;
+  display: grid;
+  gap: 8px;
+}
+
+.detail-contacts-block-food {
+  border-color: #f0d0d4;
+  background: linear-gradient(180deg, #fff, #fffafb);
+}
+
+.detail-contacts-block-basic {
+  border-color: #f0d0d4;
+  background: linear-gradient(180deg, #fff, #fff9fa);
+}
+
+.detail-contacts-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #374151;
 }
 
 .detail-contact-btn {
@@ -1632,6 +1762,14 @@ button {
 }
 
 @media (max-width: 480px) {
+  .detail-main-title {
+    font-size: 27px;
+  }
+
+  .detail-food-info-list {
+    grid-template-columns: 1fr;
+  }
+
   .detail-taxi-head {
     flex-direction: row;
     align-items: flex-end;

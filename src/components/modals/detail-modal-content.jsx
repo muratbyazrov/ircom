@@ -36,6 +36,7 @@ export function DetailModalContent({
   const foodDeliveryText = type === "food" ? (item.delivery ? "Есть доставка" : "Только самовывоз") : "";
   const isFoodDetail = type === "food";
   const isTaxiDetail = type === "taxi";
+  const isBasicDetail = !isRestaurantDetail && !isTaxiDetail && !isFoodDetail;
   const restaurantDeliveryText = isRestaurantDetail
     ? item.deliveryMode === "free"
       ? "Бесплатно"
@@ -200,7 +201,7 @@ export function DetailModalContent({
             ) : null}
           </div>
         ) : (
-          <h3 style={{ marginBottom: 8 }}>{item.title || item.name}</h3>
+          <h3 className="detail-main-title">{item.title || item.name}</h3>
         )
       ) : null}
       {!isRestaurantDetail && !isTaxiDetail ? (
@@ -252,7 +253,34 @@ export function DetailModalContent({
           </div>
         </section>
       ) : null}
-      {type !== "food" && !isRestaurantDetail && !isTaxiDetail ? <p><b>Цена:</b> {fmtRub.format(item.price)}</p> : null}
+      {isBasicDetail ? (
+        <section className="detail-basic-meta">
+          <div className="detail-basic-meta-price">
+            <span>Стоимость</span>
+            <b>{fmtRub.format(item.price)}</b>
+          </div>
+          <div className="detail-basic-meta-list">
+            {item.category ? (
+              <div className="detail-basic-meta-item">
+                <Icon name="route" />
+                <span>{item.category}</span>
+              </div>
+            ) : null}
+            {typeof item.date === "number" ? (
+              <div className="detail-basic-meta-item">
+                <Icon name="time" />
+                <span>{item.date} дн. назад</span>
+              </div>
+            ) : null}
+            {ratingValue !== null ? (
+              <div className="detail-basic-meta-item">
+                <Icon name="star" />
+                <span>{ratingValue.toFixed(1)} / 5</span>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
       {isTaxiDetail ? (
         <section className="detail-taxi-info-block">
           <div className="detail-taxi-media">
@@ -355,7 +383,18 @@ export function DetailModalContent({
           </div>
         </section>
       ) : null}
-      {!isRestaurantDetail && !isTaxiDetail ? <p><b>Описание:</b> {item.desc || "Нет описания"}</p> : null}
+      {isFoodDetail ? (
+        <section className="detail-food-desc-card">
+          <div className="detail-content-title">Описание блюда</div>
+          <p>{item.desc || "Нет описания"}</p>
+        </section>
+      ) : null}
+      {isBasicDetail ? (
+        <section className="detail-basic-desc-card">
+          <div className="detail-content-title">Описание</div>
+          <p>{item.desc || "Нет описания"}</p>
+        </section>
+      ) : null}
       {feedbackEnabled ? (
         <section className={`reviews-block ${isTaxiDetail ? "reviews-block-standalone" : ""}`}>
           <div className="reviews-header">
@@ -440,7 +479,10 @@ export function DetailModalContent({
         </section>
       ) : null}
       {!isRestaurantDetail && !isTaxiDetail && !(isFoodDetail && isOwnerView) ? (
-        <div className="detail-contact-grid" style={{ marginTop: 8 }}>{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
+        <section className={`detail-contacts-block ${isFoodDetail ? "detail-contacts-block-food" : "detail-contacts-block-basic"}`}>
+          <div className="detail-contacts-title">{isFoodDetail ? "Контакты заведения" : "Контакты"}</div>
+          <div className="detail-contact-grid">{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
+        </section>
       ) : null}
       {isRestaurantDetail ? (
         <>
