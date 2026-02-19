@@ -301,6 +301,7 @@ export default function App() {
   const [customAds, setCustomAds] = useState([]);
   const [customTaxiItems, setCustomTaxiItems] = useState([]);
   const [customServices, setCustomServices] = useState([]);
+  const [userRestaurantDishes, setUserRestaurantDishes] = useState([]);
   const [taxiTemplates, setTaxiTemplates] = useState([]);
   const [feedbackByItem, setFeedbackByItem] = useState(() => buildInitialFeedback());
   const [isTaxiDriver, setIsTaxiDriver] = useState(false);
@@ -411,6 +412,7 @@ export default function App() {
       setProfile({ name: "Гость", phone: "-", telegram: "-", whatsapp: "-", about: "Авторизуйтесь, чтобы управлять профилем." });
       setHasRestaurant(false);
       setRestaurantEntity(null);
+      setUserRestaurantDishes([]);
       setCustomServices([]);
       setCustomAds([]);
       setCustomTaxiItems([]);
@@ -429,6 +431,11 @@ export default function App() {
     setProfile(deepCopy(data.profile));
     setHasRestaurant(Boolean(data.hasRestaurant));
     setRestaurantEntity(deepCopy(data.restaurantEntity));
+    const restaurantTitle = String(data.restaurantEntity?.title || "").trim();
+    const defaultDishes = data.hasRestaurant && restaurantTitle
+      ? mock.food.filter((dish) => String(dish.restaurant || "").trim() === restaurantTitle)
+      : [];
+    setUserRestaurantDishes(deepCopy(data.dishes) || deepCopy(defaultDishes) || []);
     setCustomServices(deepCopy(data.services) || []);
     setCustomAds(deepCopy(data.ads) || []);
     setCustomTaxiItems(deepCopy(data.taxiItems) || []);
@@ -531,10 +538,7 @@ export default function App() {
 
     if (hasRestaurant && restaurantEntity) {
       const ownReviews = Array.isArray(feedbackByItem["my-restaurant"]) ? feedbackByItem["my-restaurant"] : [];
-      const ownRestaurantTitle = String(restaurantEntity.title || "").trim();
-      const ownDishes = ownRestaurantTitle
-        ? mock.food.filter((dish) => String(dish.restaurant || "").trim() === ownRestaurantTitle)
-        : [];
+      const ownDishes = Array.isArray(userRestaurantDishes) ? userRestaurantDishes : [];
       fromFood.unshift({
         id: "my-restaurant",
         title: restaurantEntity.title || "Моё заведение",
@@ -557,7 +561,7 @@ export default function App() {
     }
 
     return fromFood;
-  }, [hasRestaurant, restaurantEntity, feedbackByItem]);
+  }, [hasRestaurant, restaurantEntity, feedbackByItem, userRestaurantDishes]);
 
   const visibleFoodRestaurants = useMemo(
     () => foodRestaurants
@@ -604,7 +608,13 @@ export default function App() {
       setModal({ type: "detail", payload: { type: "restaurant", id: restaurant.id } });
       return;
     }
-    const source = type === "ads" ? adsCatalog : type === "services" ? servicesCatalog : type === "food" ? mock.food : taxiCatalog;
+    const source = type === "ads"
+      ? adsCatalog
+      : type === "services"
+        ? servicesCatalog
+        : type === "food"
+          ? [...userRestaurantDishes, ...mock.food]
+          : taxiCatalog;
     const item = source.find((x) => x.id === id);
     if (!item) return;
     setModal({ type: "detail", payload: { type, id } });
@@ -758,6 +768,48 @@ export default function App() {
         ]);
       }
     }
+    if (type === "dish") {
+      const nextPhotos = toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx));
+      const ownRestaurantTitle = String(restaurantEntity?.title || "Моё заведение").trim();
+      const ownContacts = {
+        ...(restaurantEntity?.phone ? { phone: restaurantEntity.phone } : {}),
+        ...(restaurantEntity?.whatsapp ? { wa: restaurantEntity.whatsapp } : {}),
+        ...(restaurantEntity?.telegram ? { tg: restaurantEntity.telegram } : {}),
+      };
+
+      if (isEdit && editEntityId && editEntityKind === "dish") {
+        setUserRestaurantDishes((prev) => prev.map((dish) => {
+          if (dish.id !== editEntityId) return dish;
+          return {
+            ...dish,
+            category: payload.category || dish.category,
+            title: payload.title || dish.title,
+            price: Number(payload.price) || dish.price || 0,
+            desc: payload.desc || dish.desc || "",
+            photos: nextPhotos.length ? nextPhotos : dish.photos || [],
+            restaurant: ownRestaurantTitle,
+          };
+        }));
+      } else {
+        setUserRestaurantDishes((prev) => [
+          {
+            id: `dish-custom-${Date.now()}-${randomSuffix()}`,
+            category: payload.category || "Другое",
+            restaurant: ownRestaurantTitle,
+            title: payload.title || "Новое блюдо",
+            price: Number(payload.price) || 0,
+            prep: 25,
+            always: true,
+            unavailable: false,
+            delivery: restaurantEntity?.deliveryMode === "free" || restaurantEntity?.deliveryMode === "paid",
+            desc: payload.desc || "",
+            contacts: ownContacts,
+            photos: nextPhotos,
+          },
+          ...prev,
+        ]);
+      }
+    }
     if (type === "profile") {
       setProfile({
         name: payload.name || "-",
@@ -874,6 +926,15 @@ export default function App() {
 
   const editService = (id) => openEditEntity({ type: "service", id, kind: "service" });
   const editAd = (id) => openEditEntity({ type: "ad", id, kind: "ad" });
+  const editDish = (id) => openEditEntity({ type: "dish", id, kind: "dish" });
+  const removeDish = (id) => {
+    setUserRestaurantDishes((prev) => prev.filter((dish) => dish.id !== id));
+  };
+  const toggleDishAvailability = (id) => {
+    setUserRestaurantDishes((prev) => prev.map((dish) => (
+      dish.id === id ? { ...dish, unavailable: !dish.unavailable } : dish
+    )));
+  };
 
   const editRestaurant = () => openEditEntity({ type: "restaurant", kind: "restaurant" });
   const viewRestaurant = () => openBusinessDetail("restaurant", "my-restaurant", "restaurant");
@@ -958,7 +1019,7 @@ export default function App() {
       : detailType === "services"
         ? servicesCatalog
         : detailType === "food"
-          ? mock.food
+          ? [...userRestaurantDishes, ...mock.food]
           : taxiCatalog;
     const item = source.find((x) => x.id === detailId);
     if (!item && detailType === "taxi" && typeof detailId === "string" && detailId.startsWith("template-preview-")) {
@@ -980,7 +1041,7 @@ export default function App() {
     }
     if (!item) return null;
     return { type: detailType, item };
-  }, [modal, adsCatalog, servicesCatalog, taxiCatalog, taxiTemplates, foodRestaurants]);
+  }, [modal, adsCatalog, servicesCatalog, taxiCatalog, taxiTemplates, foodRestaurants, userRestaurantDishes]);
 
   const createInitialValues = useMemo(() => {
     if (modal?.type !== "create") return null;
@@ -1042,6 +1103,16 @@ export default function App() {
       };
     }
 
+    if (editType === "dish") {
+      const item = userRestaurantDishes.find((x) => x.id === editId);
+      if (!item) return null;
+      return {
+        type: "dish",
+        initialValues: item,
+        editMeta: { id: item.id, kind: editKind || "dish" },
+      };
+    }
+
     if (editType === "taxi") {
       if (editKind === "taxi-template") {
         const item = taxiTemplates.find((x) => x.id === editId);
@@ -1062,7 +1133,7 @@ export default function App() {
     }
 
     return null;
-  }, [modal, restaurantEntity, customServices, customAds, taxiTemplates, customTaxiItems]);
+  }, [modal, restaurantEntity, customServices, customAds, taxiTemplates, customTaxiItems, userRestaurantDishes]);
 
   const entityGroupData = useMemo(() => {
     if (modal?.type !== "entityGroup") return null;
@@ -1251,6 +1322,7 @@ export default function App() {
                 payload: {
                   type: "food",
                   id: dishId,
+                  fromBusiness: Boolean(modal?.payload?.fromBusiness),
                   returnTo: restaurantId
                     ? {
                       type: "detail",
@@ -1280,6 +1352,10 @@ export default function App() {
                     editService(detailData.item.id);
                     return;
                   }
+                  if (detailData.type === "food") {
+                    editDish(detailData.item.id);
+                    return;
+                  }
                   if (detailData.type === "taxi") {
                     if (typeof detailData.item.id === "string" && detailData.item.id.startsWith("template-preview-")) {
                       editTemplate(detailData.item.id.slice("template-preview-".length));
@@ -1291,6 +1367,24 @@ export default function App() {
                 : null
             }
             onAddDish={detailData.type === "restaurant" && detailData.item.id === "my-restaurant" ? () => openCreate("dish") : null}
+            onEditDish={
+              (detailData.type === "restaurant" && detailData.item.id === "my-restaurant")
+              || (detailData.type === "food" && userRestaurantDishes.some((dish) => dish.id === detailData.item.id))
+                ? editDish
+                : null
+            }
+            onDeleteDish={
+              (detailData.type === "restaurant" && detailData.item.id === "my-restaurant")
+              || (detailData.type === "food" && userRestaurantDishes.some((dish) => dish.id === detailData.item.id))
+                ? removeDish
+                : null
+            }
+            onToggleDishAvailability={
+              (detailData.type === "restaurant" && detailData.item.id === "my-restaurant")
+              || (detailData.type === "food" && userRestaurantDishes.some((dish) => dish.id === detailData.item.id))
+                ? toggleDishAvailability
+                : null
+            }
             isOwnerView={Boolean(modal?.payload?.fromBusiness)}
           />
         )}

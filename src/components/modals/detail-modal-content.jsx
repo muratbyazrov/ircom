@@ -16,6 +16,9 @@ export function DetailModalContent({
   onEdit,
   onAddDish,
   isOwnerView = false,
+  onEditDish,
+  onDeleteDish,
+  onToggleDishAvailability,
 }) {
   const { item, type } = data;
   const photos = item.photos || [];
@@ -31,6 +34,7 @@ export function DetailModalContent({
   const ratingValue = typeof item.ratingValue === "number" ? item.ratingValue : null;
   const foodPrepText = type === "food" ? (item.always ? "Всегда в наличии" : `${item.prep} минут`) : "";
   const foodDeliveryText = type === "food" ? (item.delivery ? "Есть доставка" : "Только самовывоз") : "";
+  const isFoodDetail = type === "food";
   const restaurantDeliveryText = isRestaurantDetail
     ? item.deliveryMode === "free"
       ? "Бесплатно"
@@ -372,7 +376,7 @@ export function DetailModalContent({
           )}
         </section>
       ) : null}
-      {!isRestaurantDetail ? (
+      {!isRestaurantDetail && !(isFoodDetail && isOwnerView) ? (
         <div className="detail-contact-grid" style={{ marginTop: 8 }}>{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
       ) : null}
       {isRestaurantDetail ? (
@@ -409,6 +413,7 @@ export function DetailModalContent({
                     <span>{dish.prep ? `${dish.prep} минут` : "Время не указано"}</span>
                     <span>{dish.delivery ? "Есть доставка" : "Только самовывоз"}</span>
                     {dish.always ? <span>Всегда в наличии</span> : null}
+                    {dish.unavailable ? <span>Нет в наличии</span> : null}
                   </div>
                 </article>
               ))}
@@ -424,7 +429,16 @@ export function DetailModalContent({
           {typeof onEdit === "function" ? <button className="ghost-btn" type="button" onClick={onEdit}>Редактировать</button> : null}
         </div>
       ) : null}
-      {!isRestaurantDetail && isOwnerView ? (
+      {isFoodDetail && isOwnerView ? (
+        <div className="actions" style={{ marginTop: 8 }}>
+          <button className="primary-btn" type="button" onClick={() => onEditDish?.(item.id)}>Редактировать</button>
+          <button className={item.unavailable ? "primary-btn" : "ghost-btn"} type="button" onClick={() => onToggleDishAvailability?.(item.id)}>
+            {item.unavailable ? "В наличии" : "Нет в наличии"}
+          </button>
+          <button className="danger-btn" type="button" onClick={() => onDeleteDish?.(item.id)}>Удалить</button>
+        </div>
+      ) : null}
+      {!isRestaurantDetail && isOwnerView && type !== "food" ? (
         <div className="actions" style={{ marginTop: 8 }}>
           {typeof onEdit === "function" ? <button className="primary-btn" type="button" onClick={onEdit}>Редактировать</button> : null}
         </div>
