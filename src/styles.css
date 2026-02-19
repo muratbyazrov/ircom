@@ -933,6 +933,30 @@ button {
   height: 19px;
 }
 
+.entity-group-preview-wrap {
+  margin: -4px -4px 8px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.entity-group-preview {
+  width: 100%;
+  aspect-ratio: 16 / 8;
+  object-fit: cover;
+  display: block;
+}
+
+.entity-group-preview-empty {
+  width: 100%;
+  aspect-ratio: 16 / 8;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+
 .food-group {
   padding: 10px;
 }

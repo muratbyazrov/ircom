@@ -1,4 +1,5 @@
 import { Icon } from "./ui";
+import { applyImageFallback } from "../utils/images";
 
 export function EntityGroupModalContent({
   group,
@@ -35,6 +36,7 @@ export function EntityGroupModalContent({
     },
   };
   const meta = groupMeta[group] || { title: entityGroupData.title, subtitle: "", icon: "ads" };
+  const getFirstPhoto = (photos) => (Array.isArray(photos) ? photos.find((photo) => Boolean(String(photo || "").trim())) : "");
 
   return (
     <>
@@ -59,6 +61,19 @@ export function EntityGroupModalContent({
               }}
             >
               <div className="card-body">
+                <div className="entity-group-preview-wrap">
+                  {item.logo ? (
+                    <img
+                      className="entity-group-preview"
+                      src={item.logo}
+                      alt={item.title || "Логотип заведения"}
+                      loading="lazy"
+                      onError={(e) => applyImageFallback(e, "food")}
+                    />
+                  ) : (
+                    <div className="entity-group-preview-empty">Нет логотипа</div>
+                  )}
+                </div>
                 <div className="card-title">{item.title || "Заведение"}</div>
                 <p className="small">{item.address || "Адрес не указан"}</p>
                 <div className="actions">
@@ -89,6 +104,19 @@ export function EntityGroupModalContent({
               }}
             >
               <div className="card-body">
+                <div className="entity-group-preview-wrap">
+                  {getFirstPhoto(item.photos) ? (
+                    <img
+                      className="entity-group-preview"
+                      src={getFirstPhoto(item.photos)}
+                      alt={item.title || "Объявление"}
+                      loading="lazy"
+                      onError={(e) => applyImageFallback(e, "ads")}
+                    />
+                  ) : (
+                    <div className="entity-group-preview-empty">Нет фото</div>
+                  )}
+                </div>
                 <div className="card-title">{item.title}</div>
                 <p className="small">{item.category} · {item.price} ₽</p>
                 <div className="actions">
@@ -119,6 +147,19 @@ export function EntityGroupModalContent({
               }}
             >
               <div className="card-body">
+                <div className="entity-group-preview-wrap">
+                  {getFirstPhoto(item.photos) ? (
+                    <img
+                      className="entity-group-preview"
+                      src={getFirstPhoto(item.photos)}
+                      alt={item.title || "Услуга"}
+                      loading="lazy"
+                      onError={(e) => applyImageFallback(e, "services")}
+                    />
+                  ) : (
+                    <div className="entity-group-preview-empty">Нет фото</div>
+                  )}
+                </div>
                 <div className="card-title">{item.title}</div>
                 <p className="small">{item.category} · {item.price} ₽</p>
                 <div className="actions">
