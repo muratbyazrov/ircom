@@ -82,11 +82,14 @@ const toArray = (value) => (Array.isArray(value) ? value : value ? [value] : [])
 const buildUserPhoto = (name, idx) => `https://picsum.photos/seed/${encodeURIComponent(`user-taxi-${name}-${idx}`)}/900/600`;
 const randomSuffix = () => Math.random().toString(36).slice(2, 8);
 const normalizeRating = (value) => Math.max(1, Math.min(5, Number(value) || 1));
-const normalizeSinglePhoto = (photos) => {
+const normalizePhotos = (photos, limit = 1) => {
   if (!Array.isArray(photos)) return [];
-  const firstPhoto = photos.find((photo) => Boolean(String(photo || "").trim()));
-  return firstPhoto ? [firstPhoto] : [];
+  return photos
+    .filter((photo) => Boolean(String(photo || "").trim()))
+    .slice(0, limit);
 };
+const normalizeSinglePhoto = (photos) => normalizePhotos(photos, 1);
+const normalizeFivePhotos = (photos) => normalizePhotos(photos, 5);
 const normalizeEntityPhotos = (item) => ({
   ...item,
   photos: normalizeSinglePhoto(item?.photos),
@@ -279,7 +282,10 @@ export default function App() {
     });
   };
 
-  const adsCatalog = useMemo(() => [...customAds, ...mock.ads].map((item) => normalizeEntityPhotos(item)), [customAds]);
+  const adsCatalog = useMemo(
+    () => [...customAds, ...mock.ads].map((item) => ({ ...item, photos: normalizeFivePhotos(item?.photos) })),
+    [customAds]
+  );
   const myAds = useMemo(
     () => (currentOwner ? adsCatalog.filter((x) => x.owner === currentOwner) : []),
     [adsCatalog, currentOwner]
@@ -311,7 +317,7 @@ export default function App() {
 
   const servicesCatalog = useMemo(
     () => [...customServices, ...mock.services]
-      .map((item) => normalizeEntityPhotos(item))
+      .map((item) => ({ ...item, photos: normalizeFivePhotos(item?.photos) }))
       .map((item) => decorateWithFeedback(item)),
     [feedbackByItem, customServices]
   );
@@ -549,8 +555,8 @@ export default function App() {
         setCustomAds((prev) => prev.map((ad) => {
           if (ad.id !== editEntityId) return ad;
           const nextPhotos = toArray(payload.images).length
-            ? toArray(payload.images).slice(0, 1).map((name, idx) => buildUserPhoto(String(name), idx))
-            : normalizeSinglePhoto(ad.photos);
+            ? toArray(payload.images).slice(0, 5).map((name, idx) => buildUserPhoto(String(name), idx))
+            : normalizeFivePhotos(ad.photos);
           return {
             ...ad,
             category: payload.category || ad.category,
@@ -575,7 +581,7 @@ export default function App() {
               ...(profile.whatsapp && profile.whatsapp !== "-" ? { wa: profile.whatsapp } : {}),
               ...(profile.telegram && profile.telegram !== "-" ? { tg: profile.telegram } : {}),
             },
-            photos: toArray(payload.images).slice(0, 1).map((name, idx) => buildUserPhoto(String(name), idx)),
+            photos: toArray(payload.images).slice(0, 5).map((name, idx) => buildUserPhoto(String(name), idx)),
           },
           ...prev,
         ]);
@@ -586,8 +592,8 @@ export default function App() {
         setCustomServices((prev) => prev.map((service) => {
           if (service.id !== editEntityId) return service;
           const nextPhotos = toArray(payload.images).length
-            ? toArray(payload.images).slice(0, 1).map((name, idx) => buildUserPhoto(String(name), idx))
-            : normalizeSinglePhoto(service.photos);
+            ? toArray(payload.images).slice(0, 5).map((name, idx) => buildUserPhoto(String(name), idx))
+            : normalizeFivePhotos(service.photos);
           return {
             ...service,
             category: payload.category || service.category,
@@ -612,7 +618,7 @@ export default function App() {
               ...(profile.whatsapp && profile.whatsapp !== "-" ? { wa: profile.whatsapp } : {}),
               ...(profile.telegram && profile.telegram !== "-" ? { tg: profile.telegram } : {}),
             },
-            photos: toArray(payload.images).slice(0, 1).map((name, idx) => buildUserPhoto(String(name), idx)),
+            photos: toArray(payload.images).slice(0, 5).map((name, idx) => buildUserPhoto(String(name), idx)),
           },
           ...prev,
         ]);

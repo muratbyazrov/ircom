@@ -57,7 +57,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
   const [isTimeDragging, setIsTimeDragging] = useState(false);
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
-  const maxPhotos = 1;
+  const maxPhotos = type === "ad" || type === "service" ? 5 : 1;
 
   useEffect(() => {
     return () => {

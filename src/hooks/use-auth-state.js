@@ -23,6 +23,12 @@ const normalizeSinglePhoto = (photos) => {
   const firstPhoto = photos.find((photo) => Boolean(String(photo || "").trim()));
   return firstPhoto ? [firstPhoto] : [];
 };
+const normalizeFivePhotos = (photos) => {
+  if (!Array.isArray(photos)) return [];
+  return photos
+    .filter((photo) => Boolean(String(photo || "").trim()))
+    .slice(0, 5);
+};
 const normalizeEntityPhotos = (item) => ({
   ...item,
   photos: normalizeSinglePhoto(item?.photos),
@@ -76,8 +82,8 @@ export function useAuthState({ testUsers, mock, deepCopy }) {
       : [];
     const sourceDishes = deepCopy(data.dishes) || deepCopy(defaultDishes) || [];
     setUserRestaurantDishes(sourceDishes.map(normalizeDish));
-    setCustomServices((deepCopy(data.services) || []).map(normalizeEntityPhotos));
-    setCustomAds((deepCopy(data.ads) || []).map(normalizeEntityPhotos));
+    setCustomServices((deepCopy(data.services) || []).map((item) => ({ ...item, photos: normalizeFivePhotos(item?.photos) })));
+    setCustomAds((deepCopy(data.ads) || []).map((item) => ({ ...item, photos: normalizeFivePhotos(item?.photos) })));
     setCustomTaxiItems((deepCopy(data.taxiItems) || []).map(normalizeEntityPhotos));
     setTaxiTemplates((deepCopy(data.taxiTemplates) || []).map(normalizeEntityPhotos));
     setIsTaxiDriver(Boolean(data.isTaxiDriver) || Boolean((data.taxiItems || []).length) || Boolean((data.taxiTemplates || []).length));
