@@ -175,7 +175,7 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
   );
 }
 
-export function Media({ photos, emptyText, compact = false, onOpen, bleed = false, section = "ads", className = "", blockParentClick = false }) {
+export function Media({ photos, emptyText, compact = false, onOpen, bleed = false, section = "ads", className = "", blockParentClick = false, overlay = null }) {
   const items = Array.isArray(photos) ? photos.filter(Boolean) : [];
   const hasPhotos = items.length > 0;
   const [index, setIndex] = useState(0);
@@ -272,6 +272,7 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
       ) : (
         <div className="media-empty">{emptyText}</div>
       )}
+      {overlay ? <div className="media-overlay">{overlay}</div> : null}
     </div>
   );
 }

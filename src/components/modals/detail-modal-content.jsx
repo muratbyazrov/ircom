@@ -38,7 +38,6 @@ export function DetailModalContent({
   const isTaxiDetail = type === "taxi";
   const isServicesDetail = type === "services";
   const isAdsDetail = type === "ads";
-  const isTopFavDetail = isServicesDetail || isAdsDetail || isFoodDetail;
   const isBasicDetail = !isRestaurantDetail && !isTaxiDetail && !isFoodDetail;
   const restaurantDeliveryText = isRestaurantDetail
     ? item.deliveryMode === "free"
@@ -95,6 +94,22 @@ export function DetailModalContent({
         </button>
       );
     });
+
+  const favoriteButton = !isRestaurantDetail && !isOwnerView ? (
+    <button
+      className={`ghost-btn detail-taxi-fav-btn detail-media-fav-btn ${isFav(item.id) ? "active" : ""}`}
+      type="button"
+      onPointerDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onFav(item.id);
+      }}
+    >
+      {isFav(item.id) ? <><Icon name="heart-fill" /> В избранном</> : <><Icon name="heart" /> В избранное</>}
+    </button>
+  ) : null;
 
   const showPrev = () => setViewerIndex((prev) => Math.max(0, prev - 1));
   const showNext = () => setViewerIndex((prev) => Math.min(photos.length - 1, prev + 1));
@@ -197,20 +212,6 @@ export function DetailModalContent({
         isTaxiDetail ? (
           <div className="detail-taxi-head">
             <h3 className="detail-taxi-title" style={{ marginBottom: 0 }}>{item.title || item.name}</h3>
-            {!isOwnerView ? (
-              <button className="ghost-btn detail-taxi-fav-btn" type="button" onClick={() => onFav(item.id)}>
-                {isFav(item.id) ? <><Icon name="heart-fill" /> В избранном</> : <><Icon name="heart" /> В избранное</>}
-              </button>
-            ) : null}
-          </div>
-        ) : isTopFavDetail ? (
-          <div className="detail-top-fav-head">
-            <h3 className="detail-main-title" style={{ marginBottom: 0 }}>{item.title || item.name}</h3>
-            {!isOwnerView ? (
-              <button className="ghost-btn detail-taxi-fav-btn" type="button" onClick={() => onFav(item.id)}>
-                {isFav(item.id) ? <><Icon name="heart-fill" /> В избранном</> : <><Icon name="heart" /> В избранное</>}
-              </button>
-            ) : null}
           </div>
         ) : (
           <h3 className="detail-main-title">{item.title || item.name}</h3>
@@ -221,6 +222,7 @@ export function DetailModalContent({
           photos={photos}
           emptyText="Нет фотографий"
           section={type}
+          overlay={favoriteButton}
           onOpen={
             type !== "food"
               ? (startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)
@@ -299,6 +301,7 @@ export function DetailModalContent({
             photos={photos}
             emptyText="Нет фотографий"
             section={type}
+            overlay={favoriteButton}
             onOpen={(startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)}
           />
           {photos.length > 1 ? (
@@ -355,6 +358,7 @@ export function DetailModalContent({
             photos={photos}
             emptyText="Нет фотографий"
             section={type}
+            overlay={favoriteButton}
             onOpen={(startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)}
           />
           {photos.length > 1 ? (
@@ -412,6 +416,7 @@ export function DetailModalContent({
               photos={photos}
               emptyText="Нет фотографий"
               section={type}
+              overlay={favoriteButton}
             />
           </div>
           <div className="detail-taxi-highlight">

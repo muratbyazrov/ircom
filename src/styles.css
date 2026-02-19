@@ -591,6 +591,13 @@ body {
   cursor: zoom-in;
 }
 
+.media-overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+
 .meta {
   color: var(--muted);
   font-size: 12px;
@@ -1154,7 +1161,7 @@ button {
   max-height: none;
   border-radius: 0;
   border: none;
-  padding: calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 14px);
+  padding: calc(env(safe-area-inset-top) + 2px) 14px calc(env(safe-area-inset-bottom) + 14px);
 }
 
 .modal-close-inline {
@@ -1186,8 +1193,8 @@ button {
   position: sticky;
   top: 0;
   z-index: 3;
-  margin-bottom: 10px;
-  padding-top: 2px;
+  margin-bottom: 6px;
+  padding-top: 0;
   display: flex;
   justify-content: flex-end;
 }
@@ -1221,8 +1228,8 @@ button {
 
 .detail-main-title {
   margin-bottom: 8px;
-  font-size: 30px;
-  line-height: 1.04;
+  font-size: 24px;
+  line-height: 1.1;
   letter-spacing: -0.02em;
 }
 
@@ -1703,45 +1710,43 @@ button {
 }
 
 .detail-taxi-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.detail-top-fav-head {
-  position: relative;
-  padding-right: 154px;
-  min-height: 44px;
+  display: block;
   margin-bottom: 8px;
 }
 
-.detail-top-fav-head .detail-main-title {
-  margin-bottom: 0;
-}
-
 .detail-taxi-title {
-  font-size: 34px;
-  line-height: 1.05;
+  font-size: 24px;
+  line-height: 1.1;
   font-weight: 800;
 }
 
 .detail-taxi-fav-btn {
   flex: 0 0 auto;
   white-space: nowrap;
+  color: #334155;
+  border-color: #d7dee8;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  padding: 7px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.detail-taxi-fav-btn .icon {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  color: currentColor;
+}
+
+.detail-taxi-fav-btn.active {
   color: #fff;
   border-color: transparent;
   background: var(--primary);
 }
 
-.detail-taxi-fav-btn .icon {
-  color: #fff;
-}
-
-.detail-top-fav-head .detail-taxi-fav-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
+.detail-media-fav-btn {
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
 }
 
 .detail-taxi-info-block {
@@ -1848,7 +1853,7 @@ button {
 
 @media (max-width: 480px) {
   .detail-main-title {
-    font-size: 27px;
+    font-size: 22px;
   }
 
   .detail-food-info-list {
@@ -1856,12 +1861,11 @@ button {
   }
 
   .detail-taxi-head {
-    flex-direction: row;
-    align-items: flex-end;
+    display: block;
   }
 
   .detail-taxi-title {
-    font-size: 30px;
+    font-size: 22px;
   }
 
   .detail-taxi-fav-btn {
