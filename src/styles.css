@@ -593,7 +593,7 @@ body {
 
 .media-overlay {
   position: absolute;
-  top: 8px;
+  top: 6px;
   right: 8px;
   z-index: 2;
 }
@@ -1746,7 +1746,26 @@ button {
 }
 
 .detail-media-fav-btn {
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
+  padding: 6px 9px;
+  border-radius: 11px;
+  font-size: 13px;
+  border-color: rgba(203, 213, 225, 0.95);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.detail-media-fav-btn .icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+
+.detail-media-fav-btn.active {
+  color: #fff;
+  border-color: transparent;
+  background: rgba(227, 38, 46, 0.94);
 }
 
 .detail-taxi-info-block {
