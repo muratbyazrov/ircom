@@ -1504,6 +1504,28 @@ button {
   text-overflow: ellipsis;
 }
 
+.detail-taxi-contacts-block {
+  border: 1px solid #f6cfd3;
+  border-radius: 14px;
+  padding: 10px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(227, 38, 46, 0.1), transparent 48%),
+    linear-gradient(180deg, #fff9fa, #ffffff);
+}
+
+.detail-taxi-contacts-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #9f1239;
+  letter-spacing: 0.01em;
+}
+
+.detail-taxi-contacts-block .detail-contact-btn {
+  background: #fff;
+  border-color: #f1d5d8;
+}
+
 .detail-restaurant-dishes-list {
   margin-top: 8px;
   display: grid;

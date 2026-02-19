@@ -35,6 +35,7 @@ export function DetailModalContent({
   const foodPrepText = type === "food" ? (item.always ? "Всегда в наличии" : `${item.prep} минут`) : "";
   const foodDeliveryText = type === "food" ? (item.delivery ? "Есть доставка" : "Только самовывоз") : "";
   const isFoodDetail = type === "food";
+  const isTaxiDetail = type === "taxi";
   const restaurantDeliveryText = isRestaurantDetail
     ? item.deliveryMode === "free"
       ? "Бесплатно"
@@ -289,6 +290,14 @@ export function DetailModalContent({
       {type === "taxi" && item.seats ? <p><b>Места:</b> {item.seats.free}/{item.seats.total}</p> : null}
       {type === "taxi" && item.isFilled ? <p><b>Статус:</b> Водитель заполнен</p> : null}
       {!isRestaurantDetail ? <p><b>Описание:</b> {item.desc || "Нет описания"}</p> : null}
+      {isTaxiDetail ? (
+        <section className="detail-taxi-contacts-block" style={{ marginTop: 8 }}>
+          <div className="detail-taxi-contacts-title">Контакты водителя</div>
+          <div className="detail-contact-grid">
+            {contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}
+          </div>
+        </section>
+      ) : null}
       {feedbackEnabled ? (
         <section className="reviews-block">
           <div className="reviews-header">
@@ -372,7 +381,7 @@ export function DetailModalContent({
           )}
         </section>
       ) : null}
-      {!isRestaurantDetail && !(isFoodDetail && isOwnerView) ? (
+      {!isRestaurantDetail && !isTaxiDetail && !(isFoodDetail && isOwnerView) ? (
         <div className="detail-contact-grid" style={{ marginTop: 8 }}>{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
       ) : null}
       {isRestaurantDetail ? (
