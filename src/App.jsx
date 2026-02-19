@@ -606,6 +606,19 @@ export default function App() {
     setModal({ type: "detail", payload: { type, id } });
   };
 
+  const openBusinessDetail = (type, id, group) => {
+    if (!id) return;
+    setModal({
+      type: "detail",
+      payload: {
+        type,
+        id,
+        fromBusiness: true,
+        returnTo: group ? { type: "entityGroup", payload: { group } } : null,
+      },
+    });
+  };
+
   const openCreate = (type) => ensureAuth(() => setModal({ type: "create", payload: { type } }));
   const openEditEntity = (payload) => ensureAuth(() => setModal({ type: "editEntity", payload }));
   const openEntityGroup = (group) => ensureAuth(() => setModal({ type: "entityGroup", payload: { group } }));
@@ -853,10 +866,18 @@ export default function App() {
   const editAd = (id) => openEditEntity({ type: "ad", id, kind: "ad" });
 
   const editRestaurant = () => openEditEntity({ type: "restaurant", kind: "restaurant" });
-  const viewRestaurant = () => openDetail("restaurant", "my-restaurant");
+  const viewRestaurant = () => openBusinessDetail("restaurant", "my-restaurant", "restaurant");
   const viewTaxiTemplate = (id) => {
     if (!id) return;
-    setModal({ type: "detail", payload: { type: "taxi", id: `template-preview-${id}` } });
+    setModal({
+      type: "detail",
+      payload: {
+        type: "taxi",
+        id: `template-preview-${id}`,
+        fromBusiness: true,
+        returnTo: { type: "entityGroup", payload: { group: "taxi" } },
+      },
+    });
   };
 
   const addFeedback = ({ itemId, rating, text }) => {
@@ -899,11 +920,11 @@ export default function App() {
 
   const closeModal = () => {
     if (modal?.type === "detail" && modal?.payload?.returnTo) {
-      setModal({ type: "detail", payload: modal.payload.returnTo });
+      setModal(modal.payload.returnTo);
       return;
     }
     if (modal?.type === "auth" && modal?.payload?.returnTo) {
-      setModal({ type: "detail", payload: modal.payload.returnTo });
+      setModal(modal.payload.returnTo);
       return;
     }
     setModal(null);
@@ -1187,7 +1208,7 @@ export default function App() {
                 onClick={() => {
                   applyAuthUser(selectedAuthUser);
                   if (modal?.payload?.returnTo) {
-                    setModal({ type: "detail", payload: modal.payload.returnTo });
+                    setModal(modal.payload.returnTo);
                   } else {
                     setModal(null);
                   }
@@ -1216,10 +1237,47 @@ export default function App() {
                 payload: {
                   type: "food",
                   id: dishId,
-                  returnTo: restaurantId ? { type: "restaurant", id: restaurantId } : null,
+                  returnTo: restaurantId
+                    ? {
+                      type: "detail",
+                      payload: {
+                        type: "restaurant",
+                        id: restaurantId,
+                        fromBusiness: Boolean(modal?.payload?.fromBusiness),
+                        returnTo: modal?.payload?.returnTo || null,
+                      },
+                    }
+                    : null,
                 },
               });
             }}
+            onEdit={
+              modal?.payload?.fromBusiness
+                ? () => {
+                  if (detailData.type === "restaurant") {
+                    editRestaurant();
+                    return;
+                  }
+                  if (detailData.type === "ads") {
+                    editAd(detailData.item.id);
+                    return;
+                  }
+                  if (detailData.type === "services") {
+                    editService(detailData.item.id);
+                    return;
+                  }
+                  if (detailData.type === "taxi") {
+                    if (typeof detailData.item.id === "string" && detailData.item.id.startsWith("template-preview-")) {
+                      editTemplate(detailData.item.id.slice("template-preview-".length));
+                    } else {
+                      editTaxiOffer(detailData.item.id);
+                    }
+                  }
+                }
+                : null
+            }
+            onAddDish={detailData.type === "restaurant" && detailData.item.id === "my-restaurant" ? () => openCreate("dish") : null}
+            isOwnerView={Boolean(modal?.payload?.fromBusiness)}
           />
         )}
 
@@ -1249,18 +1307,13 @@ export default function App() {
           <EntityGroupModalContent
             group={modal.payload?.group}
             entityGroupData={entityGroupData}
-            onViewRestaurant={viewRestaurant}
-            onEditRestaurant={editRestaurant}
-            onViewAd={(id) => openDetail("ads", id)}
-            onEditAd={editAd}
-            onViewService={(id) => openDetail("services", id)}
-            onEditService={editService}
-            onViewTaxi={(id) => openDetail("taxi", id)}
-            onEditTaxi={editTaxiOffer}
+            onOpenRestaurant={viewRestaurant}
+            onOpenAd={(id) => openBusinessDetail("ads", id, "ads")}
+            onOpenService={(id) => openBusinessDetail("services", id, "services")}
+            onOpenTaxi={(id) => openBusinessDetail("taxi", id, "taxi")}
             onToggleTaxiFilled={toggleTaxiFilled}
-            onViewTaxiTemplate={viewTaxiTemplate}
+            onOpenTaxiTemplate={viewTaxiTemplate}
             onSetTemplateStatus={setTemplateStatus}
-            onEditTemplate={editTemplate}
             onRemoveTemplate={removeTemplate}
           />
         )}

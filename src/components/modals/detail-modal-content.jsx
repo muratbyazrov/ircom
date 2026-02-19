@@ -4,10 +4,22 @@ import { applyImageFallback } from "../../utils/images";
 import { Icon, Field } from "../ui";
 import { Media } from "../cards";
 
-export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, onRequireAuth, currentUserName, onOpenDish }) {
+export function DetailModalContent({
+  data,
+  onFav,
+  isFav,
+  isAuth,
+  onAddFeedback,
+  onRequireAuth,
+  currentUserName,
+  onOpenDish,
+  onEdit,
+  onAddDish,
+  isOwnerView = false,
+}) {
   const { item, type } = data;
   const photos = item.photos || [];
-  const feedbackEnabled = type === "taxi" || type === "services";
+  const feedbackEnabled = !isOwnerView && (type === "taxi" || type === "services");
   const isRestaurantDetail = type === "restaurant";
   const restaurantLogo = isRestaurantDetail ? String(item.logo || "").trim() : "";
   const reviews = Array.isArray(item.reviews) ? item.reviews : [];
@@ -396,11 +408,25 @@ export function DetailModalContent({ data, onFav, isFav, isAuth, onAddFeedback, 
           ) : (
             <p className="small" style={{ marginTop: 6 }}>В этом заведении пока нет добавленных блюд.</p>
           )}
+          <div className="actions" style={{ marginTop: 8 }}>
+            {typeof onAddDish === "function" ? (
+              <button className="primary-btn" type="button" onClick={onAddDish}>Добавить блюдо</button>
+            ) : null}
+            {typeof onEdit === "function" ? (
+              <button className="ghost-btn" type="button" onClick={onEdit}>Редактировать</button>
+            ) : null}
+          </div>
         </>
       ) : null}
-      {!isRestaurantDetail ? (
+      {!isRestaurantDetail && !isOwnerView ? (
         <div className="actions" style={{ marginTop: 8 }}>
           <button className="primary-btn" type="button" onClick={() => onFav(item.id)}>{isFav(item.id) ? <><Icon name="heart-fill" /> Убрать из избранного</> : <><Icon name="heart" /> В избранное</>}</button>
+          {typeof onEdit === "function" ? <button className="ghost-btn" type="button" onClick={onEdit}>Редактировать</button> : null}
+        </div>
+      ) : null}
+      {!isRestaurantDetail && isOwnerView ? (
+        <div className="actions" style={{ marginTop: 8 }}>
+          {typeof onEdit === "function" ? <button className="ghost-btn" type="button" onClick={onEdit}>Редактировать</button> : null}
         </div>
       ) : null}
 
