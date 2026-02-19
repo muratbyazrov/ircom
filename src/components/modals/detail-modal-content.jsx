@@ -75,15 +75,40 @@ export function DetailModalContent({
   const lastTapAt = useRef(0);
   const activeImageRef = useRef(null);
   const closeTimerRef = useRef(null);
+  const normalizePhoneDigits = (value) => {
+    let digits = String(value || "").replace(/\D/g, "");
+    if (digits.length === 11 && digits.startsWith("8")) digits = `7${digits.slice(1)}`;
+    return digits;
+  };
+  const buildContactHref = (type, value) => {
+    const raw = String(value || "").trim();
+    if (!raw) return null;
+
+    if (type === "phone") return `tel:${raw.replace(/\s+/g, "")}`;
+
+    if (type === "whatsapp") {
+      const digits = normalizePhoneDigits(raw);
+      return digits ? `https://wa.me/${digits}` : null;
+    }
+
+    if (type === "telegram") {
+      const withoutAt = raw.replace(/^@/, "");
+      return withoutAt ? `https://t.me/${withoutAt}` : null;
+    }
+
+    return null;
+  };
 
   const contactButtons = Object.entries(item.contacts || {})
     .filter(([, value]) => Boolean(String(value || "").trim()))
     .map(([k, v]) => {
       const contactType = k === "tg" ? "telegram" : k === "wa" ? "whatsapp" : "phone";
       const contactLabel = k === "tg" ? "Telegram" : k === "wa" ? "WhatsApp" : "Телефон";
+      const href = buildContactHref(contactType, v);
+      if (!href) return null;
 
       return (
-        <button className="detail-contact-btn" key={`${k}-${v}`} type="button" onClick={() => alert(`Откроем контакт: ${v}`)}>
+        <a className="detail-contact-btn" key={`${k}-${v}`} href={href} target="_blank" rel="noopener noreferrer">
           <span className={`detail-contact-icon detail-contact-icon-${contactType}`}>
             <Icon name={contactType} />
           </span>
@@ -91,9 +116,10 @@ export function DetailModalContent({
             <b>{contactLabel}</b>
             <span>{v}</span>
           </span>
-        </button>
+        </a>
       );
-    });
+    })
+    .filter(Boolean);
 
   const favoriteButton = !isRestaurantDetail && !isOwnerView ? (
     <button

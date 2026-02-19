@@ -1771,6 +1771,15 @@ button {
   align-items: center;
   gap: 8px;
   text-align: left;
+  color: inherit;
+  text-decoration: none;
+}
+
+.detail-contact-btn:visited,
+.detail-contact-btn:hover,
+.detail-contact-btn:active {
+  color: inherit;
+  text-decoration: none;
 }
 
 .detail-contact-icon {
