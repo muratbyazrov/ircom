@@ -200,7 +200,6 @@ export function ProfileTab({
 
       <div className="profile-stack">
         <Section>
-          <h4 className="profile-section-title">Контакты</h4>
           <div className="profile-contact-list">
             {contactRows.map((entry) => (
               <div className="profile-contact-row" key={entry.key}>
