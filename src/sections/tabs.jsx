@@ -185,17 +185,17 @@ export function ProfileTab({
       <p className="small">{isAuth ? "Аккаунт активен" : "Войдите для публикации, лайков и редактирования"}</p>
 
       <div className="profile-stack">
-        <div className="grid-2 profile-grid">
+        <div className="profile-grid">
           <StatCard title={profile.name} caption="Имя" />
           <StatCard title={profile.phone} caption="Телефон" />
-          <div className="section stat-card" style={{ padding: 10 }}>
+          <div className="section stat-card profile-contact-card">
             <div className="profile-contact-head">
               <Icon name="telegram" />
               <p className="small">Telegram</p>
             </div>
             <h4>{profile.telegram}</h4>
           </div>
-          <div className="section stat-card" style={{ padding: 10 }}>
+          <div className="section stat-card profile-contact-card">
             <div className="profile-contact-head">
               <Icon name="whatsapp" />
               <p className="small">WhatsApp</p>

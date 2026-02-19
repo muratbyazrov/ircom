@@ -67,13 +67,13 @@ body {
 }
 
 .topbar-status {
-  border: 1px solid var(--line);
-  background: #fff;
-  color: var(--muted);
+  border: 1px solid #e3e8ef;
+  background: rgba(255, 255, 255, 0.82);
+  color: #7b8696;
   border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 700;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 650;
   line-height: 1;
 }
 
@@ -84,8 +84,8 @@ body {
 }
 
 .topbar-auth-btn {
-  padding: 7px 10px;
-  font-size: 13px;
+  padding: 6px 9px;
+  font-size: 12px;
 }
 
 .screen {
@@ -699,20 +699,20 @@ button {
   bottom: 0;
   z-index: var(--z-bottom-nav);
   width: min(100vw, 560px);
-  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
+  gap: 5px;
   background: rgba(247, 248, 252, 0.96);
   border-top: 1px solid var(--line);
   backdrop-filter: blur(10px);
 }
 
 .tab-btn {
-  padding: 6px 2px;
-  border-radius: 12px;
+  padding: 5px 2px;
+  border-radius: 11px;
   background: #fff;
-  border: 1px solid var(--line);
+  border: 1px solid #dde3eb;
   font-size: 10px;
   font-weight: 700;
   color: #334155;
@@ -721,13 +721,13 @@ button {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  min-height: 56px;
+  min-height: 52px;
 }
 
 .tab-btn .icon {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
 }
 
 .tab-btn.active {
@@ -748,17 +748,40 @@ button {
 }
 
 .profile-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
   align-items: stretch;
 }
 
 .profile-stack {
   display: grid;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 12px;
+  margin-top: 4px;
 }
 
 .profile-grid .section {
   min-width: 0;
+}
+
+.profile-grid .stat-card {
+  min-height: 64px;
+  padding: 7px 8px;
+  gap: 2px;
+}
+
+.profile-grid .stat-card h4 {
+  font-size: 20px;
+  line-height: 1.14;
+}
+
+.profile-grid .stat-card .small {
+  font-size: 11px;
+}
+
+.profile-contact-card h4 {
+  font-size: 15px;
+  line-height: 1.2;
 }
 
 .profile-actions {
@@ -832,7 +855,7 @@ button {
 }
 
 .entity-groups-compact {
-  margin-top: 10px;
+  margin-top: 8px;
   display: grid;
   gap: 8px;
 }
@@ -997,19 +1020,25 @@ button {
 
 .stat-card h4 {
   line-height: 1.2;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: anywhere;
 }
 
 .profile-contact-head {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--primary);
+  color: #6b7280;
   margin-bottom: 4px;
 }
 
 .profile-contact-head .small {
   color: inherit;
+  font-size: 10px;
+}
+
+.profile-contact-head .icon {
+  color: #64748b;
 }
 
 .field {
