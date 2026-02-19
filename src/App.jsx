@@ -1,12 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { mock } from "./data/mock";
 import { CreateForm, DetailModalContent, ProfileEditForm } from "./components/modals";
 import { EntityGroupModalContent } from "./components/entity-group-modal-content";
 import { Icon, Modal } from "./components/ui";
+import { useAuthState } from "./hooks/use-auth-state";
+import { useGestureGuard } from "./hooks/use-gesture-guard";
+import { useNavHistory } from "./hooks/use-nav-history";
+import { useTaxiCatalog } from "./hooks/use-taxi-catalog";
 import { AdsTab, FoodTab, ProfileTab, ServicesTab, TaxiTab } from "./sections/tabs";
 import { tabConfig } from "./utils/constants";
 import { sortItems } from "./utils/helpers";
-import { formatDateRu, INDEX_TO_WEEKDAY, normalizeWeekdays, parseTaxiWhenValue } from "./utils/taxi";
+import { normalizeWeekdays } from "./utils/taxi";
 
 const FEEDBACK_SEED = {
   t1: [
@@ -193,55 +197,8 @@ const TEST_USERS = {
     isTaxiDriver: false,
   },
 };
-function buildRecurringTaxiOccurrences(templates, horizonDays = 14) {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const result = [];
-
-  for (const template of templates) {
-    if (template.status === "paused") continue;
-    const weekdays = Array.isArray(template.weekdays) ? template.weekdays : [];
-    for (let offset = 0; offset <= horizonDays; offset += 1) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + offset);
-      const weekday = INDEX_TO_WEEKDAY[date.getDay()];
-      if (!weekdays.includes(weekday)) continue;
-
-      result.push({
-        ...template,
-        id: `${template.id}-${date.toISOString().slice(0, 10)}`,
-        when: `${weekday} (${formatDateRu(date)}) ${template.time}`,
-        date: offset,
-      });
-    }
-  }
-
-  return result;
-}
-
-const isValidTab = (value) => tabConfig.some(([key]) => key === value);
-const normalizeNavState = (value) => {
-  const source = value && typeof value === "object" ? value : {};
-  const nextTab = isValidTab(source.tab) ? source.tab : "ads";
-  const nextModal = source.modal && typeof source.modal === "object" && typeof source.modal.type === "string" ? source.modal : null;
-  return { tab: nextTab, modal: nextModal };
-};
-const serializeNavState = (value) => JSON.stringify(normalizeNavState(value));
-
 export default function App() {
   const [tab, setTab] = useState("ads");
-  const [isAuth, setIsAuth] = useState(false);
-  const [currentOwner, setCurrentOwner] = useState(null);
-  const [selectedAuthUser, setSelectedAuthUser] = useState("user_with_entities");
-  const [profile, setProfile] = useState({
-    name: "Гость",
-    phone: "-",
-    telegram: "-",
-    whatsapp: "-",
-    about: "Авторизуйтесь, чтобы управлять профилем.",
-  });
-  const [hasRestaurant, setHasRestaurant] = useState(false);
-  const [restaurantEntity, setRestaurantEntity] = useState(null);
   const [favorites, setFavorites] = useState(new Set());
   const [adsCategory, setAdsCategory] = useState("Все");
   const [serviceCategory, setServiceCategory] = useState("Все");
@@ -251,15 +208,34 @@ export default function App() {
   const [servicesSort, setServicesSort] = useState("date");
   const [taxiSort, setTaxiSort] = useState("rating");
   const [taxiRequestedAt, setTaxiRequestedAt] = useState("");
-  const [customAds, setCustomAds] = useState([]);
-  const [customTaxiItems, setCustomTaxiItems] = useState([]);
-  const [customServices, setCustomServices] = useState([]);
-  const [userRestaurantDishes, setUserRestaurantDishes] = useState([]);
-  const [taxiTemplates, setTaxiTemplates] = useState([]);
   const [feedbackByItem, setFeedbackByItem] = useState(() => buildInitialFeedback());
-  const [isTaxiDriver, setIsTaxiDriver] = useState(false);
   const [modal, setModal] = useState(null);
-  const navHistoryRef = useRef({ ready: false, applyingPop: false, lastSerialized: "" });
+  const {
+    isAuth,
+    currentOwner,
+    selectedAuthUser,
+    setSelectedAuthUser,
+    profile,
+    setProfile,
+    hasRestaurant,
+    setHasRestaurant,
+    restaurantEntity,
+    setRestaurantEntity,
+    customTaxiItems,
+    setCustomTaxiItems,
+    customServices,
+    setCustomServices,
+    customAds,
+    setCustomAds,
+    userRestaurantDishes,
+    setUserRestaurantDishes,
+    taxiTemplates,
+    setTaxiTemplates,
+    isTaxiDriver,
+    setIsTaxiDriver,
+    toggleAuth,
+    applyAuthUser,
+  } = useAuthState({ testUsers: TEST_USERS, mock, deepCopy });
 
   const adsCategoriesVisible = isAuth ? mock.adsCategories : mock.adsCategories.filter((x) => x !== "Мои объявления");
 
@@ -270,131 +246,9 @@ export default function App() {
     tg.expand();
   }, []);
 
-  useEffect(() => {
-    const normalizeHistoryState = (historyState, navState) => {
-      const base = historyState && typeof historyState === "object" ? historyState : {};
-      return { ...base, [APP_HISTORY_KEY]: normalizeNavState(navState) };
-    };
-    const readNavStateFromHistory = (historyState) => normalizeNavState(historyState?.[APP_HISTORY_KEY]);
-
-    const initialNavState = readNavStateFromHistory(window.history.state);
-    const initialSerialized = serializeNavState(initialNavState);
-    navHistoryRef.current.lastSerialized = initialSerialized;
-    window.history.replaceState(normalizeHistoryState(window.history.state, initialNavState), "");
-    if (initialNavState.tab !== tab) setTab(initialNavState.tab);
-    if (serializeNavState({ tab, modal }) !== initialSerialized) setModal(initialNavState.modal);
-    navHistoryRef.current.ready = true;
-
-    const onPopState = (event) => {
-      const nextNavState = readNavStateFromHistory(event.state);
-      navHistoryRef.current.applyingPop = true;
-      navHistoryRef.current.lastSerialized = serializeNavState(nextNavState);
-      setTab(nextNavState.tab);
-      setModal(nextNavState.modal);
-      setTimeout(() => {
-        navHistoryRef.current.applyingPop = false;
-      }, 0);
-    };
-
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
-  }, []);
-
-  useEffect(() => {
-    const sync = navHistoryRef.current;
-    if (!sync.ready || sync.applyingPop) return;
-    const nextNavState = { tab, modal };
-    const serialized = serializeNavState(nextNavState);
-    if (serialized === sync.lastSerialized) return;
-    sync.lastSerialized = serialized;
-    const base = window.history.state && typeof window.history.state === "object" ? window.history.state : {};
-    window.history.pushState({ ...base, [APP_HISTORY_KEY]: normalizeNavState(nextNavState) }, "");
-  }, [tab, modal]);
-
-  useEffect(() => {
-    const tg = window.Telegram?.WebApp;
-    const backButton = tg?.BackButton;
-    if (!backButton) return;
-
-    const canGoBackInsideApp = Boolean(modal) || tab !== "ads";
-    if (canGoBackInsideApp) backButton.show();
-    else backButton.hide();
-
-    const onBackClick = () => window.history.back();
-    backButton.onClick(onBackClick);
-    return () => backButton.offClick(onBackClick);
-  }, [tab, modal]);
-
-  useEffect(() => {
-    let lastTouchEnd = 0;
-
-    const preventGesture = (e) => {
-      if (e.target?.closest?.(".viewer-content")) return;
-      e.preventDefault();
-    };
-
-    const preventMultiTouchZoom = (e) => {
-      if (e.target?.closest?.(".viewer-content")) return;
-      if (e.touches && e.touches.length > 1) e.preventDefault();
-    };
-
-    const preventDoubleTapZoom = (e) => {
-      if (e.target?.closest?.(".viewer-content")) return;
-      const now = Date.now();
-      if (now - lastTouchEnd <= 300) e.preventDefault();
-      lastTouchEnd = now;
-    };
-
-    document.addEventListener("gesturestart", preventGesture, { passive: false });
-    document.addEventListener("gesturechange", preventGesture, { passive: false });
-    document.addEventListener("touchmove", preventMultiTouchZoom, { passive: false });
-    document.addEventListener("touchend", preventDoubleTapZoom, { passive: false });
-
-    return () => {
-      document.removeEventListener("gesturestart", preventGesture);
-      document.removeEventListener("gesturechange", preventGesture);
-      document.removeEventListener("touchmove", preventMultiTouchZoom);
-      document.removeEventListener("touchend", preventDoubleTapZoom);
-    };
-  }, []);
-
-  const toggleAuth = () => {
-    if (isAuth) {
-      setIsAuth(false);
-      setCurrentOwner(null);
-      setProfile({ name: "Гость", phone: "-", telegram: "-", whatsapp: "-", about: "Авторизуйтесь, чтобы управлять профилем." });
-      setHasRestaurant(false);
-      setRestaurantEntity(null);
-      setUserRestaurantDishes([]);
-      setCustomServices([]);
-      setCustomAds([]);
-      setCustomTaxiItems([]);
-      setTaxiTemplates([]);
-      setIsTaxiDriver(false);
-      return;
-    }
-
-    setModal({ type: "auth", payload: {} });
-  };
-
-  const applyAuthUser = (userKey) => {
-    const data = TEST_USERS[userKey] || TEST_USERS.user_empty;
-    setIsAuth(true);
-    setCurrentOwner(data.owner || null);
-    setProfile(deepCopy(data.profile));
-    setHasRestaurant(Boolean(data.hasRestaurant));
-    setRestaurantEntity(deepCopy(data.restaurantEntity));
-    const restaurantTitle = String(data.restaurantEntity?.title || "").trim();
-    const defaultDishes = data.hasRestaurant && restaurantTitle
-      ? mock.food.filter((dish) => String(dish.restaurant || "").trim() === restaurantTitle)
-      : [];
-    setUserRestaurantDishes(deepCopy(data.dishes) || deepCopy(defaultDishes) || []);
-    setCustomServices(deepCopy(data.services) || []);
-    setCustomAds(deepCopy(data.ads) || []);
-    setCustomTaxiItems(deepCopy(data.taxiItems) || []);
-    setTaxiTemplates(deepCopy(data.taxiTemplates) || []);
-    setIsTaxiDriver(Boolean(data.isTaxiDriver) || Boolean((data.taxiItems || []).length) || Boolean((data.taxiTemplates || []).length));
-  };
+  useNavHistory({ appHistoryKey: APP_HISTORY_KEY, tab, setTab, modal, setModal });
+  useGestureGuard();
+  const toggleAuthModal = () => toggleAuth(() => setModal({ type: "auth", payload: {} }));
 
   const ensureAuth = (fn, options = {}) => {
     if (isAuth) return fn();
@@ -526,32 +380,18 @@ export default function App() {
     [foodRestaurants, foodCategory]
   );
 
-  const recurringTaxiItems = useMemo(() => buildRecurringTaxiOccurrences(taxiTemplates, 14), [taxiTemplates]);
-  const allTaxiItems = useMemo(() => [...customTaxiItems, ...recurringTaxiItems, ...mock.taxi], [customTaxiItems, recurringTaxiItems]);
-  const taxiCatalog = useMemo(() => allTaxiItems.map((item) => decorateWithFeedback(item)), [allTaxiItems, feedbackByItem]);
-  const taxiRequestTime = useMemo(() => {
-    if (!taxiRequestedAt) return null;
-    const parsed = new Date(taxiRequestedAt);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }, [taxiRequestedAt]);
-  const taxiItems = useMemo(
-    () => {
-      const byCategory = taxiCatalog.filter((x) => x.category === taxiCategory);
-      if (!taxiRequestTime || taxiCategory === "Такси по Цхинвалу") return sortItems(byCategory, taxiSort, favorites);
-
-      const filteredByTime = byCategory.filter((item) => {
-        const rideDate = parseTaxiWhenValue(item.when);
-        if (!rideDate) return false;
-        return rideDate.getTime() >= taxiRequestTime.getTime();
-      });
-      return sortItems(filteredByTime, taxiSort, favorites);
-    },
-    [taxiCatalog, taxiCategory, taxiSort, favorites, taxiRequestTime]
-  );
-
-  useEffect(() => {
-    if (taxiCategory === "Такси по Цхинвалу" && taxiRequestedAt) setTaxiRequestedAt("");
-  }, [taxiCategory, taxiRequestedAt]);
+  const { taxiCatalog, taxiItems } = useTaxiCatalog({
+    customTaxiItems,
+    taxiTemplates,
+    mockTaxi: mock.taxi,
+    feedbackByItem,
+    decorateWithFeedback,
+    taxiRequestedAt,
+    setTaxiRequestedAt,
+    taxiCategory,
+    taxiSort,
+    favorites,
+  });
 
   const openDetail = (type, id) => {
     if (type === "restaurant") {
@@ -586,16 +426,37 @@ export default function App() {
     });
   };
 
-  const openCreate = (type, options = {}) => ensureAuth(() => setModal({
-    type: "create",
-    payload: {
-      type,
-      ...(options.returnTo ? { returnTo: options.returnTo } : {}),
-    },
-  }));
-  const openEditEntity = (payload) => ensureAuth(() => setModal({ type: "editEntity", payload }));
+  const openCreate = (type, options = {}) => ensureAuth(() => {
+    const fallbackReturnTo = modal ? { type: modal.type, payload: modal.payload } : null;
+    setModal({
+      type: "create",
+      payload: {
+        type,
+        ...(options.returnTo ? { returnTo: options.returnTo } : fallbackReturnTo ? { returnTo: fallbackReturnTo } : {}),
+      },
+    });
+  });
+  const openEditEntity = (payload) => ensureAuth(() => {
+    const fallbackReturnTo = modal ? { type: modal.type, payload: modal.payload } : null;
+    setModal({
+      type: "editEntity",
+      payload: {
+        ...payload,
+        ...(payload?.returnTo ? {} : fallbackReturnTo ? { returnTo: fallbackReturnTo } : {}),
+      },
+    });
+  });
   const openEntityGroup = (group) => ensureAuth(() => setModal({ type: "entityGroup", payload: { group } }));
-  const openEditProfile = () => ensureAuth(() => setModal({ type: "profileEdit", payload: profile }));
+  const openEditProfile = () => ensureAuth(() => {
+    const fallbackReturnTo = modal ? { type: modal.type, payload: modal.payload } : null;
+    setModal({
+      type: "profileEdit",
+      payload: {
+        ...profile,
+        ...(fallbackReturnTo ? { returnTo: fallbackReturnTo } : {}),
+      },
+    });
+  });
   const createType = modal?.type === "create" || modal?.type === "editEntity" ? modal.payload?.type : null;
   const fullScreenCreate = createType === "ad" || createType === "service" || createType === "taxi" || createType === "restaurant";
   const fullScreenModal = modal?.type === "detail" || modal?.type === "profileEdit" || modal?.type === "entityGroup" || fullScreenCreate;
@@ -858,6 +719,10 @@ export default function App() {
     }
 
     alert(`Мок-отправка (${type})\n${JSON.stringify(payload, null, 2)}`);
+    if (modal?.payload?.returnTo) {
+      setModal(modal.payload.returnTo);
+      return;
+    }
     setModal(null);
   };
 
@@ -881,7 +746,27 @@ export default function App() {
   const editAd = (id) => openEditEntity({ type: "ad", id, kind: "ad" });
   const editDish = (id) => openEditEntity({ type: "dish", id, kind: "dish" });
   const removeDish = (id) => {
+    const targetDish = userRestaurantDishes.find((dish) => dish.id === id);
+    const dishTitle = String(targetDish?.title || "это блюдо").trim();
+    const confirmed = window.confirm(`Точно удалить «${dishTitle}»?`);
+    if (!confirmed) return;
+
     setUserRestaurantDishes((prev) => prev.filter((dish) => dish.id !== id));
+
+    if (modal?.type === "detail" && modal?.payload?.returnTo) {
+      setModal(modal.payload.returnTo);
+      return;
+    }
+
+    setModal({
+      type: "detail",
+      payload: {
+        type: "restaurant",
+        id: "my-restaurant",
+        fromBusiness: true,
+        returnTo: { type: "entityGroup", payload: { group: "restaurant" } },
+      },
+    });
   };
   const toggleDishAvailability = (id) => {
     setUserRestaurantDishes((prev) => prev.map((dish) => (
@@ -943,15 +828,7 @@ export default function App() {
   };
 
   const closeModal = () => {
-    if (modal?.type === "detail" && modal?.payload?.returnTo) {
-      setModal(modal.payload.returnTo);
-      return;
-    }
-    if (modal?.type === "create" && modal?.payload?.returnTo) {
-      setModal(modal.payload.returnTo);
-      return;
-    }
-    if (modal?.type === "auth" && modal?.payload?.returnTo) {
+    if (modal?.payload?.returnTo) {
       setModal(modal.payload.returnTo);
       return;
     }
@@ -1120,7 +997,7 @@ export default function App() {
         </div>
         <div className="topbar-actions">
           <span className="topbar-status">{isAuth ? "Онлайн" : "Гость"}</span>
-          <button className="ghost-btn topbar-auth-btn" onClick={toggleAuth} type="button">
+          <button className="ghost-btn topbar-auth-btn" onClick={toggleAuthModal} type="button">
             {isAuth ? "Выйти" : "Войти"}
           </button>
         </div>
@@ -1202,7 +1079,7 @@ export default function App() {
             onOpenEntityGroup={openEntityGroup}
             openCreate={openCreate}
             openEditProfile={openEditProfile}
-            toggleAuth={toggleAuth}
+            toggleAuth={toggleAuthModal}
           />
         )}
       </main>
@@ -1359,7 +1236,7 @@ export default function App() {
             initialValues={editEntityData.initialValues}
             editMeta={editEntityData.editMeta}
             onSubmit={submitMock}
-            onClose={() => setModal(null)}
+            onClose={closeModal}
             taxiCategories={mock.taxiCategories}
           />
         )}
@@ -1379,7 +1256,7 @@ export default function App() {
           />
         )}
 
-        {modal?.type === "profileEdit" && <ProfileEditForm profile={profile} onSubmit={submitMock} onClose={() => setModal(null)} />}
+        {modal?.type === "profileEdit" && <ProfileEditForm profile={profile} onSubmit={submitMock} onClose={closeModal} />}
       </Modal>
     </div>
   );
