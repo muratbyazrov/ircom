@@ -6,6 +6,7 @@ import {
   CarFront,
   Circle,
   Clock3,
+  X,
   ExternalLink,
   FileText,
   Fish,
@@ -82,12 +83,15 @@ export function SortSelect({ value, onChange, modes = sortModes }) {
 
 export function Modal({ open, onClose, children, variant = "sheet", closeOnBackdrop = true }) {
   if (!open) return null;
+  const isSheetModal = variant === "sheet";
+  const actionLabel = isSheetModal ? "Закрыть" : "Назад";
+  const actionIcon = isSheetModal ? "close" : "route-bw";
 
   const closeButton = (
     <div className="modal-close-wrap">
-      <button className="modal-close-inline" type="button" onClick={onClose} aria-label="Назад">
-        <span className="modal-close-inline-icon" aria-hidden="true"><Icon name="route-bw" /></span>
-        <span>Назад</span>
+      <button className="modal-close-inline" type="button" onClick={onClose} aria-label={actionLabel}>
+        <span className="modal-close-inline-icon" aria-hidden="true"><Icon name={actionIcon} /></span>
+        <span>{actionLabel}</span>
       </button>
     </div>
   );
@@ -180,6 +184,7 @@ export function Icon({ name }) {
     "taxi-city": CarFront,
     "route-fw": MoveRight,
     "route-bw": MoveLeft,
+    close: X,
     open: ExternalLink,
     phone: Phone,
     heart: Heart,
