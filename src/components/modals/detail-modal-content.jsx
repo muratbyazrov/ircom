@@ -36,6 +36,9 @@ export function DetailModalContent({
   const foodDeliveryText = type === "food" ? (item.delivery ? "Есть доставка" : "Только самовывоз") : "";
   const isFoodDetail = type === "food";
   const isTaxiDetail = type === "taxi";
+  const isServicesDetail = type === "services";
+  const isAdsDetail = type === "ads";
+  const isTopFavDetail = isServicesDetail || isAdsDetail;
   const isBasicDetail = !isRestaurantDetail && !isTaxiDetail && !isFoodDetail;
   const restaurantDeliveryText = isRestaurantDetail
     ? item.deliveryMode === "free"
@@ -200,11 +203,20 @@ export function DetailModalContent({
               </button>
             ) : null}
           </div>
+        ) : isTopFavDetail ? (
+          <div className="detail-top-fav-head">
+            <h3 className="detail-main-title" style={{ marginBottom: 0 }}>{item.title || item.name}</h3>
+            {!isOwnerView ? (
+              <button className="ghost-btn detail-top-fav-btn" type="button" onClick={() => onFav(item.id)}>
+                {isFav(item.id) ? <><Icon name="heart-fill" /> В избранном</> : <><Icon name="heart" /> В избранное</>}
+              </button>
+            ) : null}
+          </div>
         ) : (
           <h3 className="detail-main-title">{item.title || item.name}</h3>
         )
       ) : null}
-      {!isRestaurantDetail && !isTaxiDetail ? (
+      {!isRestaurantDetail && !isTaxiDetail && !isServicesDetail && !isAdsDetail ? (
         <Media
           photos={photos}
           emptyText="Нет фотографий"
@@ -216,7 +228,7 @@ export function DetailModalContent({
           }
         />
       ) : null}
-      {!isRestaurantDetail && !isTaxiDetail && !isFoodDetail && photos.length > 1 ? (
+      {!isRestaurantDetail && !isTaxiDetail && !isFoodDetail && !isServicesDetail && !isAdsDetail && photos.length > 1 ? (
         <div className="gallery" style={{ marginTop: 8 }}>
           {photos.slice(1).map((photo, thumbIndex) => {
             const index = thumbIndex + 1;
@@ -253,7 +265,7 @@ export function DetailModalContent({
           </div>
         </section>
       ) : null}
-      {isBasicDetail ? (
+      {isBasicDetail && !isServicesDetail && !isAdsDetail ? (
         <section className="detail-basic-meta">
           <div className="detail-basic-meta-price">
             <span>Стоимость</span>
@@ -278,6 +290,118 @@ export function DetailModalContent({
                 <span>{ratingValue.toFixed(1)} / 5</span>
               </div>
             ) : null}
+          </div>
+        </section>
+      ) : null}
+      {isServicesDetail ? (
+        <section className="detail-service-unified-block">
+          <Media
+            photos={photos}
+            emptyText="Нет фотографий"
+            section={type}
+            onOpen={(startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)}
+          />
+          {photos.length > 1 ? (
+            <div className="gallery detail-service-gallery">
+              {photos.slice(1).map((photo, thumbIndex) => {
+                const index = thumbIndex + 1;
+                return (
+                  <button key={photo} className="gallery-btn" type="button" onClick={() => setViewerIndex(index)}>
+                    <img className="gallery-img" src={photo} alt="gallery" loading="lazy" onError={(e) => applyImageFallback(e, type)} />
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          <div className="detail-basic-meta">
+            <div className="detail-basic-meta-price">
+              <span>Стоимость</span>
+              <b>{fmtRub.format(item.price)}</b>
+            </div>
+            <div className="detail-basic-meta-list">
+              {item.category ? (
+                <div className="detail-basic-meta-item">
+                  <Icon name="route" />
+                  <span>{item.category}</span>
+                </div>
+              ) : null}
+              {typeof item.date === "number" ? (
+                <div className="detail-basic-meta-item">
+                  <Icon name="time" />
+                  <span>{item.date} дн. назад</span>
+                </div>
+              ) : null}
+              {ratingValue !== null ? (
+                <div className="detail-basic-meta-item">
+                  <Icon name="star" />
+                  <span>{ratingValue.toFixed(1)} / 5</span>
+                </div>
+              ) : null}
+            </div>
+          </div>
+          <div className="detail-basic-desc-card">
+            <div className="detail-content-title">Описание</div>
+            <p>{item.desc || "Нет описания"}</p>
+          </div>
+          <div className="detail-contacts-block detail-contacts-block-basic detail-service-contacts">
+            <div className="detail-contacts-title">Контакты</div>
+            <div className="detail-contact-grid">{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
+          </div>
+        </section>
+      ) : null}
+      {isAdsDetail ? (
+        <section className="detail-ad-unified-block">
+          <Media
+            photos={photos}
+            emptyText="Нет фотографий"
+            section={type}
+            onOpen={(startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)}
+          />
+          {photos.length > 1 ? (
+            <div className="gallery detail-ad-gallery">
+              {photos.slice(1).map((photo, thumbIndex) => {
+                const index = thumbIndex + 1;
+                return (
+                  <button key={photo} className="gallery-btn" type="button" onClick={() => setViewerIndex(index)}>
+                    <img className="gallery-img" src={photo} alt="gallery" loading="lazy" onError={(e) => applyImageFallback(e, type)} />
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          <div className="detail-basic-meta">
+            <div className="detail-basic-meta-price">
+              <span>Стоимость</span>
+              <b>{fmtRub.format(item.price)}</b>
+            </div>
+            <div className="detail-basic-meta-list">
+              {item.category ? (
+                <div className="detail-basic-meta-item">
+                  <Icon name="route" />
+                  <span>{item.category}</span>
+                </div>
+              ) : null}
+              {typeof item.date === "number" ? (
+                <div className="detail-basic-meta-item">
+                  <Icon name="time" />
+                  <span>{item.date} дн. назад</span>
+                </div>
+              ) : null}
+              {ratingValue !== null ? (
+                <div className="detail-basic-meta-item">
+                  <Icon name="star" />
+                  <span>{ratingValue.toFixed(1)} / 5</span>
+                </div>
+              ) : null}
+            </div>
+          </div>
+          <div className="detail-basic-desc-card">
+            <div className="detail-content-title">Описание</div>
+            <p>{item.desc || "Нет описания"}</p>
+          </div>
+          <div className="detail-contacts-block detail-contacts-block-basic detail-ad-contacts">
+            <div className="detail-contacts-title">Контакты</div>
+            <div className="detail-contact-grid">{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
           </div>
         </section>
       ) : null}
@@ -389,7 +513,7 @@ export function DetailModalContent({
           <p>{item.desc || "Нет описания"}</p>
         </section>
       ) : null}
-      {isBasicDetail ? (
+      {isBasicDetail && !isServicesDetail && !isAdsDetail ? (
         <section className="detail-basic-desc-card">
           <div className="detail-content-title">Описание</div>
           <p>{item.desc || "Нет описания"}</p>
@@ -478,7 +602,7 @@ export function DetailModalContent({
           )}
         </section>
       ) : null}
-      {!isRestaurantDetail && !isTaxiDetail && !(isFoodDetail && isOwnerView) ? (
+      {!isRestaurantDetail && !isTaxiDetail && !isServicesDetail && !isAdsDetail && !(isFoodDetail && isOwnerView) ? (
         <section className={`detail-contacts-block ${isFoodDetail ? "detail-contacts-block-food" : "detail-contacts-block-basic"}`}>
           <div className="detail-contacts-title">{isFoodDetail ? "Контакты заведения" : "Контакты"}</div>
           <div className="detail-contact-grid">{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
@@ -534,7 +658,7 @@ export function DetailModalContent({
           </section>
         </>
       ) : null}
-      {!isRestaurantDetail && !isOwnerView && !isTaxiDetail ? (
+      {!isRestaurantDetail && !isOwnerView && !isTaxiDetail && !isServicesDetail && !isAdsDetail ? (
         <div className="actions" style={{ marginTop: 8 }}>
           <button className="primary-btn" type="button" onClick={() => onFav(item.id)}>{isFav(item.id) ? <><Icon name="heart-fill" /> Убрать из избранного</> : <><Icon name="heart" /> В избранное</>}</button>
           {typeof onEdit === "function" ? <button className="ghost-btn" type="button" onClick={onEdit}>Редактировать</button> : null}

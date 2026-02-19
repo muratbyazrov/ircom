@@ -1319,6 +1319,74 @@ button {
   gap: 10px;
 }
 
+.detail-service-unified-block,
+.detail-ad-unified-block {
+  margin-top: 8px;
+  border: 1px solid #f0d0d4;
+  border-radius: 14px;
+  padding: 10px;
+  background: linear-gradient(180deg, #fff, #fff9fa);
+  display: grid;
+  gap: 8px;
+}
+
+.detail-service-unified-block .media,
+.detail-ad-unified-block .media {
+  min-height: 180px;
+}
+
+.detail-service-unified-block .media.media-has-image,
+.detail-service-unified-block .media-slide,
+.detail-service-unified-block .media-img,
+.detail-ad-unified-block .media.media-has-image,
+.detail-ad-unified-block .media-slide,
+.detail-ad-unified-block .media-img {
+  border-radius: 12px;
+}
+
+.detail-service-unified-block .detail-basic-meta,
+.detail-service-unified-block .detail-basic-desc-card,
+.detail-service-unified-block .detail-contacts-block,
+.detail-ad-unified-block .detail-basic-meta,
+.detail-ad-unified-block .detail-basic-desc-card,
+.detail-ad-unified-block .detail-contacts-block {
+  margin-top: 0;
+}
+
+.detail-service-unified-block .detail-basic-meta,
+.detail-service-unified-block .detail-basic-desc-card,
+.detail-service-unified-block .detail-contacts-block-basic,
+.detail-ad-unified-block .detail-basic-meta,
+.detail-ad-unified-block .detail-basic-desc-card,
+.detail-ad-unified-block .detail-contacts-block-basic {
+  border-color: #f1d5d8;
+  background: #fff;
+}
+
+.detail-service-gallery {
+  margin-top: 0;
+}
+
+.detail-service-gallery .gallery-img {
+  border-radius: 12px;
+}
+
+.detail-ad-gallery {
+  margin-top: 0;
+}
+
+.detail-ad-gallery .gallery-img {
+  border-radius: 12px;
+}
+
+.detail-service-contacts {
+  padding: 10px;
+}
+
+.detail-ad-contacts {
+  padding: 10px;
+}
+
 .detail-basic-meta-price {
   display: grid;
   gap: 2px;
@@ -1639,6 +1707,24 @@ button {
   align-items: flex-end;
   justify-content: space-between;
   gap: 8px;
+}
+
+.detail-top-fav-head {
+  position: relative;
+  padding-right: 154px;
+  min-height: 44px;
+  margin-bottom: 8px;
+}
+
+.detail-top-fav-head .detail-main-title {
+  margin-bottom: 0;
+}
+
+.detail-top-fav-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  white-space: nowrap;
 }
 
 .detail-taxi-title {
