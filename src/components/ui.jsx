@@ -37,8 +37,9 @@ import {
   Wrench,
 } from "lucide-react";
 
-export function Section({ children }) {
-  return <section className="section">{children}</section>;
+export function Section({ children, className = "" }) {
+  const classes = className ? `section ${className}` : "section";
+  return <section className={classes}>{children}</section>;
 }
 
 export function SectionHeader({ title, subtitle, actionLabel, onAction }) {

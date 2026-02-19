@@ -699,35 +699,35 @@ button {
   bottom: 0;
   z-index: var(--z-bottom-nav);
   width: min(100vw, 560px);
-  padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+  padding: 5px 6px calc(4px + env(safe-area-inset-bottom));
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 5px;
-  background: rgba(247, 248, 252, 0.96);
+  gap: 4px;
+  background: rgba(247, 248, 252, 0.93);
   border-top: 1px solid var(--line);
   backdrop-filter: blur(10px);
 }
 
 .tab-btn {
-  padding: 5px 2px;
+  padding: 4px 2px;
   border-radius: 11px;
   background: #fff;
-  border: 1px solid #dde3eb;
-  font-size: 10px;
-  font-weight: 700;
-  color: #334155;
+  border: 1px solid #e4e8ef;
+  font-size: 9px;
+  font-weight: 650;
+  color: #64748b;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
-  min-height: 52px;
+  min-height: 46px;
 }
 
 .tab-btn .icon {
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
 }
 
 .tab-btn.active {
@@ -756,8 +756,84 @@ button {
 
 .profile-stack {
   display: grid;
-  gap: 12px;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.profile-title {
+  font-size: 32px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.profile-status-line {
   margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--success);
+}
+
+.profile-section-title {
+  font-size: 20px;
+  line-height: 1.15;
+  margin-bottom: 8px;
+}
+
+.profile-contact-list {
+  display: grid;
+  gap: 2px;
+}
+
+.profile-contact-row {
+  min-height: 42px;
+  padding: 8px 0;
+  border-bottom: 1px solid #edf0f4;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+}
+
+.profile-contact-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.profile-contact-label-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7280;
+}
+
+.profile-contact-label-wrap .icon {
+  width: 14px;
+  height: 14px;
+  color: #6b7280;
+}
+
+.profile-contact-label-wrap .small {
+  font-size: 11px;
+  color: inherit;
+}
+
+.profile-contact-value {
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}
+
+.profile-about-text {
+  font-size: 14px;
+  line-height: 1.35;
 }
 
 .profile-grid .section {
@@ -771,17 +847,18 @@ button {
 }
 
 .profile-grid .stat-card h4 {
-  font-size: 20px;
-  line-height: 1.14;
+  font-size: 16px;
+  line-height: 1.2;
 }
 
 .profile-grid .stat-card .small {
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .profile-contact-card h4 {
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.2;
+  font-weight: 700;
 }
 
 .profile-actions {
@@ -864,11 +941,11 @@ button {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: linear-gradient(180deg, #fff, #fcfcff);
-  padding: 10px;
+  padding: 9px;
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
 }
 
@@ -880,8 +957,8 @@ button {
 }
 
 .entity-compact-title {
-  font-weight: 800;
-  font-size: 14px;
+  font-weight: 750;
+  font-size: 13px;
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -1034,11 +1111,16 @@ button {
 
 .profile-contact-head .small {
   color: inherit;
-  font-size: 10px;
+  font-size: 9px;
 }
 
 .profile-contact-head .icon {
   color: #64748b;
+}
+
+.profile-field-head {
+  gap: 0;
+  margin-bottom: 2px;
 }
 
 .field {

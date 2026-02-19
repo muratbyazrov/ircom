@@ -1,4 +1,4 @@
-import { CategoryTabs, Empty, Field, Icon, Section, SectionHeader, SortSelect, StatCard } from "../components/ui";
+import { CategoryTabs, Empty, Field, Icon, Section, SectionHeader, SortSelect } from "../components/ui";
 import { ItemCard, TaxiCard } from "../components/cards";
 import { sectionSortModes } from "../utils/constants";
 import { applyImageFallback } from "../utils/images";
@@ -172,6 +172,20 @@ export function ProfileTab({
   openEditProfile,
   toggleAuth,
 }) {
+  const contactRows = [
+    { key: "name", label: "Имя", value: profile.name, icon: null },
+    { key: "phone", label: "Телефон", value: profile.phone, icon: "phone" },
+    { key: "telegram", label: "Telegram", value: profile.telegram, icon: "telegram" },
+    { key: "whatsapp", label: "WhatsApp", value: profile.whatsapp, icon: "whatsapp" },
+  ].filter((entry) => String(entry.value || "").trim());
+
+  const openLabelByGroup = {
+    restaurant: "К заведениям",
+    ads: "К объявлениям",
+    services: "К услугам",
+    taxi: "К такси",
+  };
+
   const entityGroups = [
     { key: "restaurant", label: "Заведения", count: hasRestaurant ? 1 : 0, icon: "food" },
     { key: "ads", label: "Объявления", count: myAds.length, icon: "ads" },
@@ -180,38 +194,41 @@ export function ProfileTab({
   ].filter((entry) => entry.count > 0);
 
   return (
-    <Section>
-      <h2>Профиль</h2>
-      <p className="small">{isAuth ? "Аккаунт активен" : "Войдите для публикации, лайков и редактирования"}</p>
+    <Section className="profile-root">
+      <h2 className="profile-title">Профиль</h2>
+      <p className="small profile-status-line">
+        {isAuth ? (
+          <>
+            <span className="profile-status-dot" aria-hidden="true" />
+            Аккаунт активен
+          </>
+        ) : "Войдите для публикации, лайков и редактирования"}
+      </p>
 
       <div className="profile-stack">
-        <div className="profile-grid">
-          <StatCard title={profile.name} caption="Имя" />
-          <StatCard title={profile.phone} caption="Телефон" />
-          <div className="section stat-card profile-contact-card">
-            <div className="profile-contact-head">
-              <Icon name="telegram" />
-              <p className="small">Telegram</p>
-            </div>
-            <h4>{profile.telegram}</h4>
+        <Section>
+          <h4 className="profile-section-title">Контакты</h4>
+          <div className="profile-contact-list">
+            {contactRows.map((entry) => (
+              <div className="profile-contact-row" key={entry.key}>
+                <div className="profile-contact-label-wrap">
+                  {entry.icon ? <Icon name={entry.icon} /> : null}
+                  <p className="small">{entry.label}</p>
+                </div>
+                <div className="profile-contact-value">{entry.value}</div>
+              </div>
+            ))}
           </div>
-          <div className="section stat-card profile-contact-card">
-            <div className="profile-contact-head">
-              <Icon name="whatsapp" />
-              <p className="small">WhatsApp</p>
-            </div>
-            <h4>{profile.whatsapp}</h4>
-          </div>
-        </div>
+        </Section>
 
         <Section>
-          <h4>О себе</h4>
-          <p className="small">{profile.about}</p>
+          <h4 className="profile-section-title">О себе</h4>
+          <p className="small profile-about-text">{profile.about}</p>
         </Section>
 
         {isAuth ? (
           <Section>
-            <h4>Мой бизнес</h4>
+            <h4 className="profile-section-title">Мой бизнес</h4>
             <div className="entity-groups-compact">
               {entityGroups.map((entry) => (
                 <article
@@ -238,7 +255,7 @@ export function ProfileTab({
                       onOpenEntityGroup(entry.key);
                     }}
                   >
-                    Открыть
+                    {openLabelByGroup[entry.key] || "К разделу"}
                   </button>
                 </article>
               ))}
@@ -250,7 +267,7 @@ export function ProfileTab({
         ) : null}
 
         <Section>
-          <h4>Быстрые действия</h4>
+          <h4 className="profile-section-title">Быстрые действия</h4>
           <div className="quick-actions" style={{ marginTop: 8 }}>
             <button
               className="ghost-btn quick-action-btn"
