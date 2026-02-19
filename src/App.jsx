@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { mock } from "./data/mock";
 import { CreateForm, DetailModalContent, ProfileEditForm } from "./components/modals";
 import { EntityGroupModalContent } from "./components/entity-group-modal-content";
@@ -73,6 +73,7 @@ const FEEDBACK_SEED = {
     { id: "r-s5-6", author: "Георг", rating: 4, text: "Стабильное качество.", createdAt: "2026-02-15T17:59:00.000Z" },
   ],
 };
+const APP_HISTORY_KEY = "__ircomNavState";
 
 const toArray = (value) => (Array.isArray(value) ? value : value ? [value] : []);
 const dayStart = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -265,6 +266,15 @@ function buildRecurringTaxiOccurrences(templates, horizonDays = 14) {
   return result;
 }
 
+const isValidTab = (value) => tabConfig.some(([key]) => key === value);
+const normalizeNavState = (value) => {
+  const source = value && typeof value === "object" ? value : {};
+  const nextTab = isValidTab(source.tab) ? source.tab : "ads";
+  const nextModal = source.modal && typeof source.modal === "object" && typeof source.modal.type === "string" ? source.modal : null;
+  return { tab: nextTab, modal: nextModal };
+};
+const serializeNavState = (value) => JSON.stringify(normalizeNavState(value));
+
 export default function App() {
   const [tab, setTab] = useState("ads");
   const [isAuth, setIsAuth] = useState(false);
@@ -295,6 +305,7 @@ export default function App() {
   const [feedbackByItem, setFeedbackByItem] = useState(() => buildInitialFeedback());
   const [isTaxiDriver, setIsTaxiDriver] = useState(false);
   const [modal, setModal] = useState(null);
+  const navHistoryRef = useRef({ ready: false, applyingPop: false, lastSerialized: "" });
 
   const adsCategoriesVisible = isAuth ? mock.adsCategories : mock.adsCategories.filter((x) => x !== "Мои объявления");
 
@@ -304,6 +315,61 @@ export default function App() {
     tg.ready();
     tg.expand();
   }, []);
+
+  useEffect(() => {
+    const normalizeHistoryState = (historyState, navState) => {
+      const base = historyState && typeof historyState === "object" ? historyState : {};
+      return { ...base, [APP_HISTORY_KEY]: normalizeNavState(navState) };
+    };
+    const readNavStateFromHistory = (historyState) => normalizeNavState(historyState?.[APP_HISTORY_KEY]);
+
+    const initialNavState = readNavStateFromHistory(window.history.state);
+    const initialSerialized = serializeNavState(initialNavState);
+    navHistoryRef.current.lastSerialized = initialSerialized;
+    window.history.replaceState(normalizeHistoryState(window.history.state, initialNavState), "");
+    if (initialNavState.tab !== tab) setTab(initialNavState.tab);
+    if (serializeNavState({ tab, modal }) !== initialSerialized) setModal(initialNavState.modal);
+    navHistoryRef.current.ready = true;
+
+    const onPopState = (event) => {
+      const nextNavState = readNavStateFromHistory(event.state);
+      navHistoryRef.current.applyingPop = true;
+      navHistoryRef.current.lastSerialized = serializeNavState(nextNavState);
+      setTab(nextNavState.tab);
+      setModal(nextNavState.modal);
+      setTimeout(() => {
+        navHistoryRef.current.applyingPop = false;
+      }, 0);
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  useEffect(() => {
+    const sync = navHistoryRef.current;
+    if (!sync.ready || sync.applyingPop) return;
+    const nextNavState = { tab, modal };
+    const serialized = serializeNavState(nextNavState);
+    if (serialized === sync.lastSerialized) return;
+    sync.lastSerialized = serialized;
+    const base = window.history.state && typeof window.history.state === "object" ? window.history.state : {};
+    window.history.pushState({ ...base, [APP_HISTORY_KEY]: normalizeNavState(nextNavState) }, "");
+  }, [tab, modal]);
+
+  useEffect(() => {
+    const tg = window.Telegram?.WebApp;
+    const backButton = tg?.BackButton;
+    if (!backButton) return;
+
+    const canGoBackInsideApp = Boolean(modal) || tab !== "ads";
+    if (canGoBackInsideApp) backButton.show();
+    else backButton.hide();
+
+    const onBackClick = () => window.history.back();
+    backButton.onClick(onBackClick);
+    return () => backButton.offClick(onBackClick);
+  }, [tab, modal]);
 
   useEffect(() => {
     let lastTouchEnd = 0;
