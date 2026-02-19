@@ -192,7 +192,7 @@ export function DetailModalContent({
       {!isRestaurantDetail ? (
         isTaxiDetail ? (
           <div className="detail-taxi-head">
-            <h3 style={{ marginBottom: 8 }}>{item.title || item.name}</h3>
+            <h3 className="detail-taxi-title" style={{ marginBottom: 0 }}>{item.title || item.name}</h3>
             {!isOwnerView ? (
               <button className="ghost-btn detail-taxi-fav-btn" type="button" onClick={() => onFav(item.id)}>
                 {isFav(item.id) ? <><Icon name="heart-fill" /> В избранном</> : <><Icon name="heart" /> В избранное</>}
@@ -208,10 +208,14 @@ export function DetailModalContent({
           photos={photos}
           emptyText="Нет фотографий"
           section={type}
-          onOpen={(startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)}
+          onOpen={
+            type !== "food"
+              ? (startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)
+              : undefined
+          }
         />
       ) : null}
-      {!isRestaurantDetail && photos.length > 1 ? (
+      {!isRestaurantDetail && !isTaxiDetail && !isFoodDetail && photos.length > 1 ? (
         <div className="gallery" style={{ marginTop: 8 }}>
           {photos.slice(1).map((photo, thumbIndex) => {
             const index = thumbIndex + 1;
@@ -256,14 +260,21 @@ export function DetailModalContent({
               photos={photos}
               emptyText="Нет фотографий"
               section={type}
-              onOpen={(startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)}
             />
           </div>
-          <div className="detail-taxi-info-grid">
-            <div className="detail-taxi-info-item">
-              <span>Цена</span>
+          <div className="detail-taxi-highlight">
+            <div className="detail-taxi-price-pill">
+              <span>Стоимость поездки</span>
               <b>{fmtRub.format(item.price)}</b>
             </div>
+          </div>
+          <div className="detail-taxi-info-grid">
+            {ratingValue !== null ? (
+              <div className="detail-taxi-info-item">
+                <span>Оценка</span>
+                <b>{ratingValue.toFixed(1)} / 5</b>
+              </div>
+            ) : null}
             <div className="detail-taxi-info-item">
               <span>Направление</span>
               <b>{item.category || "Не указано"}</b>

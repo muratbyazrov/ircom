@@ -1506,14 +1506,27 @@ button {
 
 .detail-taxi-head {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 8px;
+}
+
+.detail-taxi-title {
+  font-size: 34px;
+  line-height: 1.05;
+  font-weight: 800;
 }
 
 .detail-taxi-fav-btn {
   flex: 0 0 auto;
   white-space: nowrap;
+  color: #fff;
+  border-color: transparent;
+  background: var(--primary);
+}
+
+.detail-taxi-fav-btn .icon {
+  color: #fff;
 }
 
 .detail-taxi-info-block {
@@ -1526,6 +1539,34 @@ button {
     linear-gradient(180deg, #fff9fa, #ffffff);
   display: grid;
   gap: 10px;
+}
+
+.detail-taxi-highlight {
+  border: 1px solid #efc3c9;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(190, 24, 93, 0.12), transparent 48%),
+    linear-gradient(135deg, #fff7f8, #ffffff);
+  padding: 9px;
+  display: grid;
+  gap: 8px;
+}
+
+.detail-taxi-price-pill {
+  display: grid;
+  gap: 2px;
+}
+
+.detail-taxi-price-pill span {
+  font-size: 11px;
+  color: #9ca3af;
+  letter-spacing: 0.01em;
+}
+
+.detail-taxi-price-pill b {
+  font-size: 18px;
+  color: #9f1239;
+  line-height: 1.1;
 }
 
 .detail-taxi-media {
@@ -1588,6 +1629,21 @@ button {
 .detail-taxi-info-block .detail-contact-btn {
   background: #fff;
   border-color: #f1d5d8;
+}
+
+@media (max-width: 480px) {
+  .detail-taxi-head {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .detail-taxi-title {
+    font-size: 30px;
+  }
+
+  .detail-taxi-fav-btn {
+    align-self: auto;
+  }
 }
 
 .reviews-block-standalone {

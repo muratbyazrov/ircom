@@ -88,7 +88,7 @@ export function TaxiCard({ item, onOpen, onFav, activeFav }) {
           <span>{activeFav ? "В избранном" : "В избранное"}</span>
         </button>
         <div className="taxi-card-layout">
-          <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full" />
+          <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full" blockParentClick />
           <div className="taxi-card-content">
             <div className="taxi-card-head">
               <div className="card-title">{item.name}</div>
@@ -140,7 +140,7 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
           <Icon name={activeFav ? "heart-fill" : "heart"} />
           <span>{activeFav ? "В избранном" : "В избранное"}</span>
         </button>
-        <Media photos={item.photos} emptyText="Нет фотографий" bleed section="food" />
+        <Media photos={item.photos} emptyText="Нет фотографий" bleed section="food" blockParentClick />
         <div className="food-card-head">
           <div className="food-card-main">
             <div className="row wrap">
@@ -175,7 +175,7 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
   );
 }
 
-export function Media({ photos, emptyText, compact = false, onOpen, bleed = false, section = "ads", className = "" }) {
+export function Media({ photos, emptyText, compact = false, onOpen, bleed = false, section = "ads", className = "", blockParentClick = false }) {
   const items = Array.isArray(photos) ? photos.filter(Boolean) : [];
   const hasPhotos = items.length > 0;
   const [index, setIndex] = useState(0);
@@ -220,16 +220,21 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
       role={hasPhotos && onOpen ? "button" : undefined}
       tabIndex={hasPhotos && onOpen ? 0 : undefined}
       onClick={
-        hasPhotos && onOpen
+        blockParentClick
           ? (e) => {
-              if (suppressClickRef.current) {
-                e.preventDefault();
-                e.stopPropagation();
-                return;
-              }
-              onOpen(index);
+              e.preventDefault();
+              e.stopPropagation();
             }
-          : undefined
+          : hasPhotos && onOpen
+            ? (e) => {
+                if (suppressClickRef.current) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return;
+                }
+                onOpen(index);
+              }
+            : undefined
       }
       onKeyDown={(e) => {
         if (hasPhotos && onOpen && (e.key === "Enter" || e.key === " ")) onOpen(index);
