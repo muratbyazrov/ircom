@@ -85,9 +85,9 @@ export function Modal({ open, onClose, children, variant = "sheet", closeOnBackd
 
   const closeButton = (
     <div className="modal-close-wrap">
-      <button className="modal-close-inline" type="button" onClick={onClose} aria-label="Закрыть окно">
-        <span className="modal-close-inline-icon" aria-hidden="true">✕</span>
-        <span>Закрыть</span>
+      <button className="modal-close-inline" type="button" onClick={onClose} aria-label="Назад">
+        <span className="modal-close-inline-icon" aria-hidden="true"><Icon name="route-bw" /></span>
+        <span>Назад</span>
       </button>
     </div>
   );
