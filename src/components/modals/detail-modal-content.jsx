@@ -413,7 +413,7 @@ export function DetailModalContent({
               <button className="primary-btn" type="button" onClick={onAddDish}>Добавить блюдо</button>
             ) : null}
             {typeof onEdit === "function" ? (
-              <button className="ghost-btn" type="button" onClick={onEdit}>Редактировать</button>
+              <button className="primary-btn" type="button" onClick={onEdit}>Редактировать</button>
             ) : null}
           </div>
         </>
@@ -426,7 +426,7 @@ export function DetailModalContent({
       ) : null}
       {!isRestaurantDetail && isOwnerView ? (
         <div className="actions" style={{ marginTop: 8 }}>
-          {typeof onEdit === "function" ? <button className="ghost-btn" type="button" onClick={onEdit}>Редактировать</button> : null}
+          {typeof onEdit === "function" ? <button className="primary-btn" type="button" onClick={onEdit}>Редактировать</button> : null}
         </div>
       ) : null}
 
