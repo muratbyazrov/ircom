@@ -143,10 +143,6 @@ export function FoodTab({
               <div className="restaurant-list-address">{restaurant.address || "Адрес не указан"}</div>
               <div className="restaurant-list-meta">
                 <span className="food-meta-chip">
-                  <Icon name="star" />
-                  {typeof restaurant.ratingValue === "number" ? `${restaurant.ratingValue.toFixed(1)} (${restaurant.reviewsCount || 0})` : "Нет оценок"}
-                </span>
-                <span className="food-meta-chip">
                   <Icon name="delivery" />
                   {restaurant.deliveryMode === "none" ? "Нет доставки" : "Есть доставка"}
                 </span>

@@ -264,10 +264,6 @@ export function DetailModalContent({
                 </span>
               ) : null}
               <span className="food-meta-chip">
-                <Icon name="star" />
-                {ratingValue !== null ? `${ratingValue.toFixed(1)} (${item.reviewsCount || 0})` : "Нет оценок"}
-              </span>
-              <span className="food-meta-chip">
                 <Icon name="delivery" />
                 {restaurantDeliveryText}
               </span>
