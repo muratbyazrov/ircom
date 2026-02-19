@@ -256,16 +256,14 @@ export function ProfileTab({
         <Section>
           <h4>Быстрые действия</h4>
           <div className="quick-actions" style={{ marginTop: 8 }}>
-            {!hasRestaurant ? (
-              <button
-                className="ghost-btn quick-action-btn"
-                type="button"
-                onClick={() => openCreate("restaurant")}
-              >
-                <span className="quick-action-icon"><Icon name="food" /></span>
-                <span>Создать заведение</span>
-              </button>
-            ) : null}
+            <button
+              className="ghost-btn quick-action-btn"
+              type="button"
+              onClick={() => openCreate("restaurant")}
+            >
+              <span className="quick-action-icon"><Icon name="food" /></span>
+              <span>Добавить заведение</span>
+            </button>
             <button className="ghost-btn quick-action-btn" type="button" onClick={() => openCreate("taxi")}>
               <span className="quick-action-icon"><Icon name="taxi" /></span>
               <span>{isTaxiDriver ? "Добавить поездку" : "Стать водителем такси"}</span>

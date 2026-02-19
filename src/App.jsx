@@ -1329,10 +1329,6 @@ export default function App() {
             onOpenTaxiTemplate={viewTaxiTemplate}
             onSetTemplateStatus={setTemplateStatus}
             onRemoveTemplate={removeTemplate}
-            onCreateAd={() => openCreate("ad", { returnTo: { type: "entityGroup", payload: { group: "ads" } } })}
-            onCreateService={() => openCreate("service", { returnTo: { type: "entityGroup", payload: { group: "services" } } })}
-            onCreateRestaurant={() => openCreate("restaurant", { returnTo: { type: "entityGroup", payload: { group: "restaurant" } } })}
-            onCreateTaxi={() => openCreate("taxi", { returnTo: { type: "entityGroup", payload: { group: "taxi" } } })}
           />
         )}
 
