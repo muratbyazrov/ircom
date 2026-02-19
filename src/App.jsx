@@ -82,14 +82,17 @@ const toArray = (value) => (Array.isArray(value) ? value : value ? [value] : [])
 const buildUserPhoto = (name, idx) => `https://picsum.photos/seed/${encodeURIComponent(`user-taxi-${name}-${idx}`)}/900/600`;
 const randomSuffix = () => Math.random().toString(36).slice(2, 8);
 const normalizeRating = (value) => Math.max(1, Math.min(5, Number(value) || 1));
-const normalizeDishPhotos = (photos) => {
+const normalizeSinglePhoto = (photos) => {
   if (!Array.isArray(photos)) return [];
   const firstPhoto = photos.find((photo) => Boolean(String(photo || "").trim()));
   return firstPhoto ? [firstPhoto] : [];
 };
+const normalizeEntityPhotos = (item) => ({
+  ...item,
+  photos: normalizeSinglePhoto(item?.photos),
+});
 const normalizeDish = (dish) => ({
-  ...dish,
-  photos: normalizeDishPhotos(dish?.photos),
+  ...normalizeEntityPhotos(dish),
 });
 const buildRestaurantId = (name) => {
   const normalized = String(name || "")
@@ -276,7 +279,7 @@ export default function App() {
     });
   };
 
-  const adsCatalog = useMemo(() => [...customAds, ...mock.ads], [customAds]);
+  const adsCatalog = useMemo(() => [...customAds, ...mock.ads].map((item) => normalizeEntityPhotos(item)), [customAds]);
   const myAds = useMemo(
     () => (currentOwner ? adsCatalog.filter((x) => x.owner === currentOwner) : []),
     [adsCatalog, currentOwner]
@@ -306,7 +309,12 @@ export default function App() {
     };
   };
 
-  const servicesCatalog = useMemo(() => [...customServices, ...mock.services].map((item) => decorateWithFeedback(item)), [feedbackByItem, customServices]);
+  const servicesCatalog = useMemo(
+    () => [...customServices, ...mock.services]
+      .map((item) => normalizeEntityPhotos(item))
+      .map((item) => decorateWithFeedback(item)),
+    [feedbackByItem, customServices]
+  );
 
   const servicesItems = useMemo(
     () => sortItems(servicesCatalog.filter((x) => serviceCategory === "Все" || x.category === serviceCategory), servicesSort, favorites),
@@ -353,7 +361,7 @@ export default function App() {
         deliveryMode: dishes.some((x) => x.delivery) ? "free" : "none",
         deliveryPrice: 0,
         contacts,
-        photos: [...new Set(dishes.flatMap((x) => (Array.isArray(x.photos) ? x.photos : [])))].slice(0, 10),
+        photos: [...new Set(dishes.flatMap((x) => (Array.isArray(x.photos) ? x.photos : [])))].slice(0, 1),
         dishes,
         reviews,
         reviewsCount: reviews.length,
@@ -377,7 +385,7 @@ export default function App() {
           ...(restaurantEntity.telegram ? { tg: restaurantEntity.telegram } : {}),
           ...(restaurantEntity.whatsapp ? { wa: restaurantEntity.whatsapp } : {}),
         },
-        photos: Array.isArray(restaurantEntity.photos) ? restaurantEntity.photos : [],
+        photos: normalizeSinglePhoto(restaurantEntity.photos),
         dishes: ownDishes,
         reviews: ownReviews,
         reviewsCount: ownReviews.length,
@@ -398,10 +406,20 @@ export default function App() {
     [foodRestaurants, foodCategory]
   );
 
+  const normalizedCustomTaxiItems = useMemo(
+    () => customTaxiItems.map((item) => normalizeEntityPhotos(item)),
+    [customTaxiItems]
+  );
+  const normalizedTaxiTemplates = useMemo(
+    () => taxiTemplates.map((item) => normalizeEntityPhotos(item)),
+    [taxiTemplates]
+  );
+  const normalizedMockTaxi = useMemo(() => mock.taxi.map((item) => normalizeEntityPhotos(item)), []);
+
   const { taxiCatalog, taxiItems } = useTaxiCatalog({
-    customTaxiItems,
-    taxiTemplates,
-    mockTaxi: mock.taxi,
+    customTaxiItems: normalizedCustomTaxiItems,
+    taxiTemplates: normalizedTaxiTemplates,
+    mockTaxi: normalizedMockTaxi,
     feedbackByItem,
     decorateWithFeedback,
     taxiRequestedAt,
@@ -531,8 +549,8 @@ export default function App() {
         setCustomAds((prev) => prev.map((ad) => {
           if (ad.id !== editEntityId) return ad;
           const nextPhotos = toArray(payload.images).length
-            ? toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx))
-            : ad.photos || [];
+            ? toArray(payload.images).slice(0, 1).map((name, idx) => buildUserPhoto(String(name), idx))
+            : normalizeSinglePhoto(ad.photos);
           return {
             ...ad,
             category: payload.category || ad.category,
@@ -557,7 +575,7 @@ export default function App() {
               ...(profile.whatsapp && profile.whatsapp !== "-" ? { wa: profile.whatsapp } : {}),
               ...(profile.telegram && profile.telegram !== "-" ? { tg: profile.telegram } : {}),
             },
-            photos: toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx)),
+            photos: toArray(payload.images).slice(0, 1).map((name, idx) => buildUserPhoto(String(name), idx)),
           },
           ...prev,
         ]);
@@ -568,8 +586,8 @@ export default function App() {
         setCustomServices((prev) => prev.map((service) => {
           if (service.id !== editEntityId) return service;
           const nextPhotos = toArray(payload.images).length
-            ? toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx))
-            : service.photos || [];
+            ? toArray(payload.images).slice(0, 1).map((name, idx) => buildUserPhoto(String(name), idx))
+            : normalizeSinglePhoto(service.photos);
           return {
             ...service,
             category: payload.category || service.category,
@@ -594,7 +612,7 @@ export default function App() {
               ...(profile.whatsapp && profile.whatsapp !== "-" ? { wa: profile.whatsapp } : {}),
               ...(profile.telegram && profile.telegram !== "-" ? { tg: profile.telegram } : {}),
             },
-            photos: toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx)),
+            photos: toArray(payload.images).slice(0, 1).map((name, idx) => buildUserPhoto(String(name), idx)),
           },
           ...prev,
         ]);
@@ -620,7 +638,7 @@ export default function App() {
             title: payload.title || dish.title,
             price: Number(payload.price) || dish.price || 0,
             desc: payload.desc || dish.desc || "",
-            photos: nextPhoto.length ? nextPhoto : normalizeDishPhotos(dish.photos),
+            photos: nextPhoto.length ? nextPhoto : normalizeSinglePhoto(dish.photos),
             restaurant: ownRestaurantTitle,
           };
         }));
@@ -660,7 +678,7 @@ export default function App() {
       const scheduleHour = typeof payload.scheduleHour === "string" ? payload.scheduleHour : "08:00";
       const seatsValue = Number(payload.seats);
       const seats = Number.isFinite(seatsValue) && seatsValue > 0 ? { total: seatsValue, free: seatsValue } : null;
-      const photos = toArray(payload.images).map((name, idx) => buildUserPhoto(String(name), idx));
+      const photos = toArray(payload.images).slice(0, 1).map((name, idx) => buildUserPhoto(String(name), idx));
       const contacts = {
         ...(payload.phone ? { phone: payload.phone } : {}),
         ...(payload.wa ? { wa: payload.wa } : {}),
@@ -679,7 +697,7 @@ export default function App() {
             when: payload.when || item.when || null,
             desc: payload.desc || item.desc || "",
             contacts,
-            photos: photos.length ? photos : item.photos || [],
+            photos: photos.length ? photos : normalizeSinglePhoto(item.photos),
           };
         }));
         setIsTaxiDriver(true);
@@ -694,7 +712,7 @@ export default function App() {
             seats,
             desc: payload.desc || template.desc || "",
             contacts,
-            photos: photos.length ? photos : template.photos || [],
+            photos: photos.length ? photos : normalizeSinglePhoto(template.photos),
             weekdays: scheduleDays.length ? scheduleDays : template.weekdays || [],
             time: scheduleHour || template.time,
           };
@@ -892,7 +910,7 @@ export default function App() {
     const item = source.find((x) => x.id === detailId);
     if (!item && detailType === "taxi" && typeof detailId === "string" && detailId.startsWith("template-preview-")) {
       const templateId = detailId.slice("template-preview-".length);
-      const template = taxiTemplates.find((x) => x.id === templateId);
+      const template = normalizedTaxiTemplates.find((x) => x.id === templateId);
       if (!template) return null;
       return {
         type: "taxi",
@@ -909,7 +927,7 @@ export default function App() {
     }
     if (!item) return null;
     return { type: detailType, item };
-  }, [modal, adsCatalog, servicesCatalog, foodCatalog, taxiCatalog, taxiTemplates, foodRestaurants]);
+  }, [modal, adsCatalog, servicesCatalog, foodCatalog, taxiCatalog, normalizedTaxiTemplates, foodRestaurants]);
 
   const createInitialValues = useMemo(() => {
     if (modal?.type !== "create") return null;
@@ -983,7 +1001,7 @@ export default function App() {
 
     if (editType === "taxi") {
       if (editKind === "taxi-template") {
-        const item = taxiTemplates.find((x) => x.id === editId);
+        const item = normalizedTaxiTemplates.find((x) => x.id === editId);
         if (!item) return null;
         return {
           type: "taxi",
@@ -991,7 +1009,7 @@ export default function App() {
           editMeta: { id: item.id, kind: "taxi-template" },
         };
       }
-      const item = customTaxiItems.find((x) => x.id === editId);
+      const item = normalizedCustomTaxiItems.find((x) => x.id === editId);
       if (!item) return null;
       return {
         type: "taxi",
@@ -1001,7 +1019,7 @@ export default function App() {
     }
 
     return null;
-  }, [modal, restaurantEntity, customServices, customAds, taxiTemplates, customTaxiItems, userRestaurantDishes]);
+  }, [modal, restaurantEntity, customServices, customAds, normalizedTaxiTemplates, normalizedCustomTaxiItems, userRestaurantDishes]);
 
   const entityGroupData = useMemo(() => {
     if (modal?.type !== "entityGroup") return null;
@@ -1019,13 +1037,13 @@ export default function App() {
       return {
         title: "Моё такси",
         items: {
-          oneTime: customTaxiItems.filter((x) => x.mode === "one-time" && x.category !== "Такси по Цхинвалу"),
-          regular: taxiTemplates,
+          oneTime: normalizedCustomTaxiItems.filter((x) => x.mode === "one-time" && x.category !== "Такси по Цхинвалу"),
+          regular: normalizedTaxiTemplates,
         },
       };
     }
     return null;
-  }, [modal, hasRestaurant, restaurantEntity, myAds, customServices, customTaxiItems, taxiTemplates]);
+  }, [modal, hasRestaurant, restaurantEntity, myAds, customServices, normalizedCustomTaxiItems, normalizedTaxiTemplates]);
 
   return (
     <div className="app-shell">

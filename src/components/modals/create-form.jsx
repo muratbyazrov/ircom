@@ -57,7 +57,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
   const [isTimeDragging, setIsTimeDragging] = useState(false);
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
-  const maxPhotos = type === "taxi" ? 3 : type === "restaurant" || type === "dish" ? 1 : 10;
+  const maxPhotos = 1;
 
   useEffect(() => {
     return () => {
@@ -478,7 +478,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
           </Field>
           <Field label="Telegram"><input name="tg" defaultValue={initialValues?.contacts?.tg || ""} className="input" /></Field>
           <Field label="Описание"><textarea name="desc" defaultValue={initialValues?.desc || ""} className="textarea" maxLength={2000} /></Field>
-          <Field label="Фото авто или водителя (до 3)">
+          <Field label="Фото авто или водителя (1 фото)">
             <div className="input-with-clear">
               <input
                 type="file"
