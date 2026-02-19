@@ -57,7 +57,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
   const [isTimeDragging, setIsTimeDragging] = useState(false);
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
-  const maxPhotos = type === "taxi" ? 3 : type === "restaurant" ? 1 : 10;
+  const maxPhotos = type === "taxi" ? 3 : type === "restaurant" || type === "dish" ? 1 : 10;
 
   useEffect(() => {
     return () => {
@@ -484,7 +484,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
                 type="file"
                 name="images"
                 className={`input ${selectedPhotoCount > 0 ? "input-has-clear" : ""}`}
-                multiple
+                multiple={maxPhotos > 1}
                 accept="image/*"
                 ref={imagesInputRef}
                 onChange={handleImagesChange}
@@ -576,7 +576,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
               type="file"
               name="images"
               className={`input ${selectedPhotoCount > 0 ? "input-has-clear" : ""}`}
-              multiple
+              multiple={maxPhotos > 1}
               accept="image/*"
               ref={imagesInputRef}
               onChange={handleImagesChange}

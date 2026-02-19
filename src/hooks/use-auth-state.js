@@ -8,6 +8,17 @@ const GUEST_PROFILE = {
   about: "Авторизуйтесь, чтобы управлять профилем.",
 };
 
+const normalizeDishPhotos = (photos) => {
+  if (!Array.isArray(photos)) return [];
+  const firstPhoto = photos.find((photo) => Boolean(String(photo || "").trim()));
+  return firstPhoto ? [firstPhoto] : [];
+};
+
+const normalizeDish = (dish) => ({
+  ...dish,
+  photos: normalizeDishPhotos(dish?.photos),
+});
+
 export function useAuthState({ testUsers, mock, deepCopy }) {
   const [isAuth, setIsAuth] = useState(false);
   const [currentOwner, setCurrentOwner] = useState(null);
@@ -50,9 +61,12 @@ export function useAuthState({ testUsers, mock, deepCopy }) {
     setRestaurantEntity(deepCopy(data.restaurantEntity));
     const restaurantTitle = String(data.restaurantEntity?.title || "").trim();
     const defaultDishes = data.hasRestaurant && restaurantTitle
-      ? mock.food.filter((dish) => String(dish.restaurant || "").trim() === restaurantTitle)
+      ? mock.food
+        .filter((dish) => String(dish.restaurant || "").trim() === restaurantTitle)
+        .map(normalizeDish)
       : [];
-    setUserRestaurantDishes(deepCopy(data.dishes) || deepCopy(defaultDishes) || []);
+    const sourceDishes = deepCopy(data.dishes) || deepCopy(defaultDishes) || [];
+    setUserRestaurantDishes(sourceDishes.map(normalizeDish));
     setCustomServices(deepCopy(data.services) || []);
     setCustomAds(deepCopy(data.ads) || []);
     setCustomTaxiItems(deepCopy(data.taxiItems) || []);
