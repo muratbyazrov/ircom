@@ -218,18 +218,29 @@ export function ProfileTab({
             <h4>Мой бизнес</h4>
             <div className="entity-groups-compact">
               {entityGroups.map((entry) => (
-                <article className="entity-compact-card" key={entry.key}>
+                <article
+                  className="entity-compact-card card-clickable"
+                  key={entry.key}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onOpenEntityGroup(entry.key)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") onOpenEntityGroup(entry.key);
+                  }}
+                >
                   <div className="entity-compact-main">
                     <div className="entity-compact-icon-wrap">
                       <Icon name={entry.icon} />
                     </div>
-                    <div className="entity-compact-title">{entry.label}</div>
-                    <span className="entity-compact-count-badge">{entry.count}</span>
+                    <div className="entity-compact-title">{entry.label} ({entry.count})</div>
                   </div>
                   <button
                     className="ghost-btn"
                     type="button"
-                    onClick={() => onOpenEntityGroup(entry.key)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenEntityGroup(entry.key);
+                    }}
                   >
                     Открыть
                   </button>

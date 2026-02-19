@@ -29,6 +29,18 @@ export function EntityGroupModalContent({
               <div className="card-body">
                 <div className="card-title">{item.title || "Заведение"}</div>
                 <p className="small">{item.address || "Адрес не указан"}</p>
+                <div className="actions">
+                  <button
+                    className="primary-btn"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenRestaurant();
+                    }}
+                  >
+                    Посмотреть
+                  </button>
+                </div>
               </div>
             </article>
           )) : null}
@@ -47,6 +59,18 @@ export function EntityGroupModalContent({
               <div className="card-body">
                 <div className="card-title">{item.title}</div>
                 <p className="small">{item.category} · {item.price} ₽</p>
+                <div className="actions">
+                  <button
+                    className="primary-btn"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenAd(item.id);
+                    }}
+                  >
+                    Посмотреть
+                  </button>
+                </div>
               </div>
             </article>
           )) : null}
@@ -65,6 +89,18 @@ export function EntityGroupModalContent({
               <div className="card-body">
                 <div className="card-title">{item.title}</div>
                 <p className="small">{item.category} · {item.price} ₽</p>
+                <div className="actions">
+                  <button
+                    className="primary-btn"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenService(item.id);
+                    }}
+                  >
+                    Посмотреть
+                  </button>
+                </div>
               </div>
             </article>
           )) : null}
@@ -90,6 +126,16 @@ export function EntityGroupModalContent({
                       <div className="card-title">{item.category}</div>
                       <p className="small">{item.when || "Дата не указана"} · {item.price} ₽</p>
                       <div className="actions">
+                        <button
+                          className="primary-btn"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenTaxi(item.id);
+                          }}
+                        >
+                          Посмотреть
+                        </button>
                         <button
                           className={item.isFilled ? "primary-btn" : "ghost-btn"}
                           type="button"
@@ -132,6 +178,16 @@ export function EntityGroupModalContent({
                         <span className="badge">{item.status === "paused" ? "На паузе" : "Активна"}</span>
                       </div>
                       <div className="actions">
+                        <button
+                          className="primary-btn"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenTaxiTemplate(item.id);
+                          }}
+                        >
+                          Посмотреть
+                        </button>
                         {item.status === "paused" ? (
                           <button
                             className="ghost-btn"
