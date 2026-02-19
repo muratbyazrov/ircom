@@ -179,13 +179,6 @@ export function ProfileTab({
     { key: "whatsapp", label: "WhatsApp", value: profile.whatsapp, icon: "whatsapp" },
   ].filter((entry) => String(entry.value || "").trim());
 
-  const openLabelByGroup = {
-    restaurant: "К заведениям",
-    ads: "К объявлениям",
-    services: "К услугам",
-    taxi: "К такси",
-  };
-
   const entityGroups = [
     { key: "restaurant", label: "Заведения", count: hasRestaurant ? 1 : 0, icon: "food" },
     { key: "ads", label: "Объявления", count: myAds.length, icon: "ads" },
@@ -247,16 +240,6 @@ export function ProfileTab({
                     </div>
                     <div className="entity-compact-title">{entry.label} ({entry.count})</div>
                   </div>
-                  <button
-                    className="ghost-btn"
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenEntityGroup(entry.key);
-                    }}
-                  >
-                    {openLabelByGroup[entry.key] || "К разделу"}
-                  </button>
                 </article>
               ))}
               {!hasRestaurant && !myAds.length && !myServices.length && !oneTimeIntercityOffers.length && !taxiTemplates.length ? (
