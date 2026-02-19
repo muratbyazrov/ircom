@@ -6,9 +6,8 @@ import { Icon, Modal } from "./components/ui";
 import { AdsTab, FoodTab, ProfileTab, ServicesTab, TaxiTab } from "./sections/tabs";
 import { tabConfig } from "./utils/constants";
 import { sortItems } from "./utils/helpers";
+import { formatDateRu, INDEX_TO_WEEKDAY, normalizeWeekdays, parseTaxiWhenValue } from "./utils/taxi";
 
-const WEEKDAY_TO_INDEX = { Вс: 0, Пн: 1, Вт: 2, Ср: 3, Чт: 4, Пт: 5, Сб: 6 };
-const INDEX_TO_WEEKDAY = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 const FEEDBACK_SEED = {
   t1: [
     { id: "r-t1-1", author: "Ацамаз", rating: 5, text: "Доехали быстро, водитель вежливый.", createdAt: "2026-02-01T10:20:00.000Z" },
@@ -76,8 +75,6 @@ const FEEDBACK_SEED = {
 const APP_HISTORY_KEY = "__ircomNavState";
 
 const toArray = (value) => (Array.isArray(value) ? value : value ? [value] : []);
-const dayStart = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
-const formatDateRu = (date) => new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }).format(date);
 const buildUserPhoto = (name, idx) => `https://picsum.photos/seed/${encodeURIComponent(`user-taxi-${name}-${idx}`)}/900/600`;
 const randomSuffix = () => Math.random().toString(36).slice(2, 8);
 const normalizeRating = (value) => Math.max(1, Math.min(5, Number(value) || 1));
@@ -196,53 +193,9 @@ const TEST_USERS = {
     isTaxiDriver: false,
   },
 };
-const normalizeWeekdays = (value) => {
-  const source = Array.isArray(value) ? value : String(value || "").split(",");
-  return source.map((x) => String(x).trim()).filter((x) => x in WEEKDAY_TO_INDEX);
-};
-const nextWeekdayDate = (targetWeekday, now) => {
-  const date = dayStart(now);
-  const diff = (targetWeekday - now.getDay() + 7) % 7;
-  date.setDate(date.getDate() + diff);
-  return date;
-};
-const parseTaxiWhenValue = (whenValue) => {
-  const text = String(whenValue || "").trim();
-  if (!text) return null;
-
-  const timeMatch = text.match(/(\d{1,2}):(\d{2})/);
-  if (!timeMatch) return null;
-  const hour = Number(timeMatch[1]);
-  const minute = Number(timeMatch[2]);
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
-
-  const now = new Date();
-  let datePart = dayStart(now);
-
-  const dateInBrackets = text.match(/\((\d{2})\.(\d{2})\.(\d{4})\)/);
-  if (dateInBrackets) {
-    const day = Number(dateInBrackets[1]);
-    const month = Number(dateInBrackets[2]) - 1;
-    const year = Number(dateInBrackets[3]);
-    datePart = new Date(year, month, day);
-  } else if (text.startsWith("Сегодня")) {
-    datePart = dayStart(now);
-  } else if (text.startsWith("Завтра")) {
-    datePart = dayStart(now);
-    datePart.setDate(datePart.getDate() + 1);
-  } else {
-    const weekdayMatch = text.match(/^(Вс|Пн|Вт|Ср|Чт|Пт|Сб)\b/);
-    if (weekdayMatch) {
-      datePart = nextWeekdayDate(WEEKDAY_TO_INDEX[weekdayMatch[1]], now);
-    }
-  }
-
-  datePart.setHours(hour, minute, 0, 0);
-  return datePart;
-};
-
 function buildRecurringTaxiOccurrences(templates, horizonDays = 14) {
-  const today = dayStart(new Date());
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const result = [];
 
   for (const template of templates) {

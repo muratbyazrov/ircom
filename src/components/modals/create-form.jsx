@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { mock } from "../../data/mock";
 import { applyImageFallback } from "../../utils/images";
 import { formatPhoneValue, handlePhoneInput, PHONE_PATTERN, PHONE_PLACEHOLDER, syncPhonePrev } from "../../utils/phone";
+import { getTaxiDateByPreset, TAXI_DAY_PRESETS, TAXI_RECURRING_WEEKDAYS } from "../../utils/taxi";
 import { FormActions, Field } from "../ui";
 import restaurantHero from "../../assets/restaurant-hero.svg";
 import taxiHero from "../../assets/taxi-hero.svg";
@@ -107,36 +108,9 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
     });
   };
   const isIntercitySelected = selectedTaxiCategories.some((x) => x !== cityCategory);
-  const taxiDayPresets = ["Сегодня", "Завтра", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-  const recurringWeekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
   const formatTaxiHour = (hour) => `${hour % 24}`.padStart(2, "0") + ":00";
   const taxiTimePreset = formatTaxiHour(taxiHourPreset);
   const recurringTimePreset = formatTaxiHour(recurringHourPreset);
-  const getTaxiDateByPreset = (preset) => {
-    if (!preset) return "";
-
-    const now = new Date();
-    const date = new Date(now);
-    const weekdays = { Вс: 0, Пн: 1, Вт: 2, Ср: 3, Чт: 4, Пт: 5, Сб: 6 };
-
-    if (preset === "Сегодня") {
-      // keep current date
-    } else if (preset === "Завтра") {
-      date.setDate(now.getDate() + 1);
-    } else {
-      const target = weekdays[preset];
-      if (typeof target === "number") {
-        const diff = (target - now.getDay() + 7) % 7;
-        date.setDate(now.getDate() + diff);
-      }
-    }
-
-    return new Intl.DateTimeFormat("ru-RU", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(date);
-  };
   const taxiDateValue = getTaxiDateByPreset(taxiDayPreset);
   const taxiWhenValue = taxiDayPreset && taxiDateValue
     ? `${taxiDayPreset} (${taxiDateValue})${taxiTimePreset ? ` ${taxiTimePreset}` : ""}`
@@ -397,7 +371,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
               {isRecurring ? (
                 <Field label={`Регулярные выезды (${recurringDays.join(", ") || "выберите дни"} · ${recurringTimePreset})`}>
                   <div className="multi-select-buttons">
-                    {recurringWeekdays.map((x) => (
+                    {TAXI_RECURRING_WEEKDAYS.map((x) => (
                       <button
                         key={x}
                         type="button"
@@ -434,7 +408,7 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
               ) : (
                 <Field label={taxiDateValue ? `Дата и время (${taxiDateValue} ${taxiTimePreset})` : "Дата и время"}>
                   <div className="multi-select-buttons">
-                    {taxiDayPresets.map((x) => (
+                    {TAXI_DAY_PRESETS.map((x) => (
                       <button
                         key={x}
                         type="button"
