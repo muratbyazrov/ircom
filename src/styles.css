@@ -1487,6 +1487,27 @@ button {
   gap: 10px;
 }
 
+.detail-restaurant-dishes-block {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #fcfcfd;
+}
+
+.detail-restaurant-dishes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.detail-restaurant-dishes-head h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+
 .detail-restaurant-dish-item {
   border: none;
   border-radius: 16px;

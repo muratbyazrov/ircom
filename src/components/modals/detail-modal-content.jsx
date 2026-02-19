@@ -381,46 +381,52 @@ export function DetailModalContent({
       ) : null}
       {isRestaurantDetail ? (
         <>
-          {(item.dishes || []).length ? (
-            <div className="detail-restaurant-dishes-list">
-              {item.dishes.map((dish) => (
-                <article
-                  className="detail-restaurant-dish-item card-clickable"
-                  key={dish.id || `${dish.title}-${dish.price}`}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onOpenDish?.(dish.id, item.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") onOpenDish?.(dish.id, item.id);
-                  }}
-                >
-                  <div className="detail-restaurant-dish-photo-wrap">
-                    {dish.photos?.[0] ? (
-                      <img
-                        className="detail-restaurant-dish-photo"
-                        src={dish.photos[0]}
-                        alt={dish.title || "Блюдо"}
-                        loading="lazy"
-                        onError={(e) => applyImageFallback(e, "food")}
-                      />
-                    ) : (
-                      <div className="detail-restaurant-dish-photo-empty">Нет фото</div>
-                    )}
-                  </div>
-                  <div className="detail-restaurant-dish-price">{fmtRub.format(Number(dish.price) || 0)}</div>
-                  <div className="detail-restaurant-dish-title">{dish.title || "Блюдо"}</div>
-                  <div className="detail-restaurant-dish-submeta">
-                    <span>{dish.prep ? `${dish.prep} минут` : "Время не указано"}</span>
-                    <span>{dish.delivery ? "Есть доставка" : "Только самовывоз"}</span>
-                    {dish.always ? <span>Всегда в наличии</span> : null}
-                    {dish.unavailable ? <span>Нет в наличии</span> : null}
-                  </div>
-                </article>
-              ))}
+          <section className="detail-restaurant-dishes-block">
+            <div className="detail-restaurant-dishes-head">
+              <h4>Список блюд</h4>
+              <span className="badge">{(item.dishes || []).length}</span>
             </div>
-          ) : (
-            <p className="small" style={{ marginTop: 6 }}>В этом заведении пока нет добавленных блюд.</p>
-          )}
+            {(item.dishes || []).length ? (
+              <div className="detail-restaurant-dishes-list">
+                {item.dishes.map((dish) => (
+                  <article
+                    className="detail-restaurant-dish-item card-clickable"
+                    key={dish.id || `${dish.title}-${dish.price}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onOpenDish?.(dish.id, item.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") onOpenDish?.(dish.id, item.id);
+                    }}
+                  >
+                    <div className="detail-restaurant-dish-photo-wrap">
+                      {dish.photos?.[0] ? (
+                        <img
+                          className="detail-restaurant-dish-photo"
+                          src={dish.photos[0]}
+                          alt={dish.title || "Блюдо"}
+                          loading="lazy"
+                          onError={(e) => applyImageFallback(e, "food")}
+                        />
+                      ) : (
+                        <div className="detail-restaurant-dish-photo-empty">Нет фото</div>
+                      )}
+                    </div>
+                    <div className="detail-restaurant-dish-price">{fmtRub.format(Number(dish.price) || 0)}</div>
+                    <div className="detail-restaurant-dish-title">{dish.title || "Блюдо"}</div>
+                    <div className="detail-restaurant-dish-submeta">
+                      <span>{dish.prep ? `${dish.prep} минут` : "Время не указано"}</span>
+                      <span>{dish.delivery ? "Есть доставка" : "Только самовывоз"}</span>
+                      {dish.always ? <span>Всегда в наличии</span> : null}
+                      {dish.unavailable ? <span>Нет в наличии</span> : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="small" style={{ marginTop: 6 }}>В этом заведении пока нет добавленных блюд.</p>
+            )}
+          </section>
         </>
       ) : null}
       {!isRestaurantDetail && !isOwnerView ? (
