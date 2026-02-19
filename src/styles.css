@@ -1720,13 +1720,6 @@ button {
   margin-bottom: 0;
 }
 
-.detail-top-fav-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
-  white-space: nowrap;
-}
-
 .detail-taxi-title {
   font-size: 34px;
   line-height: 1.05;
@@ -1743,6 +1736,12 @@ button {
 
 .detail-taxi-fav-btn .icon {
   color: #fff;
+}
+
+.detail-top-fav-head .detail-taxi-fav-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 .detail-taxi-info-block {

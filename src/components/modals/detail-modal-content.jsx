@@ -38,7 +38,7 @@ export function DetailModalContent({
   const isTaxiDetail = type === "taxi";
   const isServicesDetail = type === "services";
   const isAdsDetail = type === "ads";
-  const isTopFavDetail = isServicesDetail || isAdsDetail;
+  const isTopFavDetail = isServicesDetail || isAdsDetail || isFoodDetail;
   const isBasicDetail = !isRestaurantDetail && !isTaxiDetail && !isFoodDetail;
   const restaurantDeliveryText = isRestaurantDetail
     ? item.deliveryMode === "free"
@@ -207,7 +207,7 @@ export function DetailModalContent({
           <div className="detail-top-fav-head">
             <h3 className="detail-main-title" style={{ marginBottom: 0 }}>{item.title || item.name}</h3>
             {!isOwnerView ? (
-              <button className="ghost-btn detail-top-fav-btn" type="button" onClick={() => onFav(item.id)}>
+              <button className="ghost-btn detail-taxi-fav-btn" type="button" onClick={() => onFav(item.id)}>
                 {isFav(item.id) ? <><Icon name="heart-fill" /> В избранном</> : <><Icon name="heart" /> В избранное</>}
               </button>
             ) : null}
@@ -658,7 +658,7 @@ export function DetailModalContent({
           </section>
         </>
       ) : null}
-      {!isRestaurantDetail && !isOwnerView && !isTaxiDetail && !isServicesDetail && !isAdsDetail ? (
+      {!isRestaurantDetail && !isOwnerView && !isTaxiDetail && !isServicesDetail && !isAdsDetail && !isFoodDetail ? (
         <div className="actions" style={{ marginTop: 8 }}>
           <button className="primary-btn" type="button" onClick={() => onFav(item.id)}>{isFav(item.id) ? <><Icon name="heart-fill" /> Убрать из избранного</> : <><Icon name="heart" /> В избранное</>}</button>
           {typeof onEdit === "function" ? <button className="ghost-btn" type="button" onClick={onEdit}>Редактировать</button> : null}
