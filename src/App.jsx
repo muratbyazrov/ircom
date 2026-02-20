@@ -266,8 +266,8 @@ export default function App() {
         setAuthError("Введите имя");
         return;
       }
-      if (!phone && !nickname) {
-        setAuthError("Укажите телефон или ник");
+      if (!phone) {
+        setAuthError("Введите телефон");
         return;
       }
     }
@@ -1259,8 +1259,9 @@ export default function App() {
                     />
                   </label>
                   <label className="field">
-                    <span className="small">Телефон (опционально)</span>
+                    <span className="small">Телефон</span>
                     <input
+                      required
                       name="phone"
                       className="input"
                       placeholder="+7..."
