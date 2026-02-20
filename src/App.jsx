@@ -8,6 +8,7 @@ import { useGestureGuard } from "./hooks/use-gesture-guard";
 import { useNavHistory } from "./hooks/use-nav-history";
 import { useTaxiCatalog } from "./hooks/use-taxi-catalog";
 import { AdsTab, FoodTab, ProfileTab, ServicesTab, TaxiTab } from "./sections/tabs";
+import { getSessionRequest, registerRequest, signInRequest, signOutRequest } from "./api/auth";
 import { tabConfig } from "./utils/constants";
 import { sortItems } from "./utils/helpers";
 import { normalizeWeekdays } from "./utils/taxi";
@@ -77,6 +78,7 @@ const FEEDBACK_SEED = {
   ],
 };
 const APP_HISTORY_KEY = "__ircomNavState";
+const AUTH_SESSION_STORAGE_KEY = "__ircomAuthSession";
 
 const toArray = (value) => (Array.isArray(value) ? value : value ? [value] : []);
 const buildUserPhoto = (name, idx) => `https://picsum.photos/seed/${encodeURIComponent(`user-taxi-${name}-${idx}`)}/900/600`;
@@ -124,94 +126,6 @@ const getFeedbackRating = (reviews) => {
   return Number((sum / reviews.length).toFixed(1));
 };
 const deepCopy = (value) => (value == null ? value : JSON.parse(JSON.stringify(value)));
-const TEST_USERS = {
-  user_with_entities: {
-    label: "Пользователь с сущностями",
-    owner: "test_driver",
-    profile: {
-      name: "Тест Водитель",
-      phone: "+7(929)111-22-33",
-      telegram: "@test_driver_ircom",
-      whatsapp: "+7(929)111-22-33",
-      about: "Тестовый аккаунт: есть заведение, услуга и поездка такси.",
-    },
-    hasRestaurant: true,
-    restaurantEntity: {
-      title: "Кафе Тест",
-      desc: "Домашняя кухня и выпечка.",
-      address: "г. Цхинвал, ул. Тестовая, 10",
-      logo: buildUserPhoto("restaurant-test-user-logo", 0),
-      deliveryMode: "free",
-      deliveryPrice: 0,
-      phone: "+7(929)111-22-33",
-      telegram: "@cafe_test",
-      whatsapp: "+7(929)111-22-33",
-    },
-    services: [
-      {
-        id: "service-test-user-1",
-        category: "Другое",
-        title: "Услуга тестового пользователя",
-        price: 1500,
-        date: 0,
-        desc: "Тестовая услуга для проверки профиля.",
-        owner: "test_driver",
-        contacts: { phone: "+7(929)111-22-33", tg: "@test_driver_ircom", wa: "+7(929)111-22-33" },
-        photos: [buildUserPhoto("service-test-user-1", 0)],
-      },
-    ],
-    ads: [
-      {
-        id: "ad-test-user-1",
-        category: "Электроника",
-        title: "Ноутбук Lenovo ThinkPad",
-        price: 38000,
-        date: 0,
-        desc: "Тестовое объявление пользователя для проверки блока сущностей.",
-        owner: "test_driver",
-        contacts: { phone: "+7(929)111-22-33", tg: "@test_driver_ircom" },
-        photos: [buildUserPhoto("ad-test-user-1", 0)],
-      },
-    ],
-    taxiItems: [
-      {
-        id: "taxi-test-user-1",
-        category: "Цхинвал -> Владикавказ",
-        name: "Тест Водитель",
-        price: 1200,
-        rating: 5,
-        date: 0,
-        seats: { total: 4, free: 1 },
-        when: "Сегодня 18:00",
-        mode: "one-time",
-        isFilled: false,
-        desc: "Тестовая поездка межгород.",
-        contacts: { phone: "+7(929)111-22-33", wa: "+7(929)111-22-33" },
-        photos: [buildUserPhoto("taxi-test-user-1", 0)],
-      },
-    ],
-    taxiTemplates: [],
-    isTaxiDriver: true,
-  },
-  user_empty: {
-    label: "Пользователь без сущностей",
-    owner: "test_empty",
-    profile: {
-      name: "Тест Пустой",
-      phone: "+7(929)444-55-66",
-      telegram: "@test_empty_ircom",
-      whatsapp: "+7(929)444-55-66",
-      about: "Тестовый аккаунт без объявлений и услуг.",
-    },
-    hasRestaurant: false,
-    restaurantEntity: null,
-    services: [],
-    ads: [],
-    taxiItems: [],
-    taxiTemplates: [],
-    isTaxiDriver: false,
-  },
-};
 export default function App() {
   const [tab, setTab] = useState("ads");
   const [favorites, setFavorites] = useState(new Set());
@@ -225,11 +139,13 @@ export default function App() {
   const [taxiRequestedAt, setTaxiRequestedAt] = useState("");
   const [feedbackByItem, setFeedbackByItem] = useState(() => buildInitialFeedback());
   const [modal, setModal] = useState(null);
+  const [authMode, setAuthMode] = useState("signin");
+  const [authPending, setAuthPending] = useState(false);
+  const [authError, setAuthError] = useState("");
   const {
     isAuth,
+    authSession,
     currentOwner,
-    selectedAuthUser,
-    setSelectedAuthUser,
     profile,
     setProfile,
     hasRestaurant,
@@ -249,8 +165,8 @@ export default function App() {
     isTaxiDriver,
     setIsTaxiDriver,
     toggleAuth,
-    applyAuthUser,
-  } = useAuthState({ testUsers: TEST_USERS, mock, deepCopy });
+    applyAuthSession,
+  } = useAuthState({ mock, deepCopy });
 
   const adsCategoriesVisible = isAuth ? mock.adsCategories : mock.adsCategories.filter((x) => x !== "Мои объявления");
 
@@ -261,14 +177,139 @@ export default function App() {
     tg.expand();
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    const rawSession = localStorage.getItem(AUTH_SESSION_STORAGE_KEY);
+    if (!rawSession) return undefined;
+
+    const restore = async () => {
+      try {
+        const parsed = JSON.parse(rawSession);
+        const sessionToken = String(parsed?.sessionToken || "").trim();
+        if (!sessionToken) return;
+        const session = await getSessionRequest({ sessionToken });
+        if (!isMounted || !session?.accountId) return;
+        applyAuthSession({
+          sessionToken: session.sessionToken || sessionToken,
+          account: {
+            accountId: session.accountId,
+            name: session.name,
+            nickname: session.nickname,
+            phone: session.phone,
+            whatsapp: session.whatsapp,
+            telegram: session.telegram,
+          },
+        });
+      } catch {
+        localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+      }
+    };
+
+    restore();
+    return () => {
+      isMounted = false;
+    };
+  }, [applyAuthSession]);
+
   useNavHistory({ appHistoryKey: APP_HISTORY_KEY, tab, setTab, modal, setModal });
   useGestureGuard();
-  const toggleAuthModal = () => toggleAuth(() => setModal({ type: "auth", payload: {} }));
+  const toggleAuthModal = async () => {
+    if (isAuth) {
+      try {
+        if (authSession?.sessionToken) {
+          await signOutRequest({ sessionToken: authSession.sessionToken });
+        }
+      } catch {
+        // ignore: user should still be logged out locally
+      }
+      localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+      toggleAuth(() => setModal({ type: "auth", payload: {} }));
+      return;
+    }
+
+    setAuthMode("signin");
+    setAuthError("");
+    toggleAuth(() => setModal({ type: "auth", payload: {} }));
+  };
 
   const ensureAuth = (fn, options = {}) => {
     if (isAuth) return fn();
     const returnTo = options.returnTo || null;
+    setAuthMode("signin");
+    setAuthError("");
     setModal({ type: "auth", payload: returnTo ? { returnTo, fromDetail: Boolean(options.fromDetail) } : {} });
+  };
+
+  const handleAuthSubmit = async (event) => {
+    event.preventDefault();
+    if (authPending) return;
+
+    const fd = new FormData(event.currentTarget);
+    const login = String(fd.get("login") || "").trim();
+    const phone = String(fd.get("phone") || "").trim();
+    const nickname = String(fd.get("nickname") || "").trim();
+    const name = String(fd.get("name") || "").trim();
+    const password = String(fd.get("password") || "");
+
+    if (!password) {
+      setAuthError("Введите пароль");
+      return;
+    }
+
+    if (authMode === "signin" && !login) {
+      setAuthError("Введите телефон или ник");
+      return;
+    }
+
+    if (authMode === "signup") {
+      if (!name) {
+        setAuthError("Введите имя");
+        return;
+      }
+      if (!phone && !nickname) {
+        setAuthError("Укажите телефон или ник");
+        return;
+      }
+    }
+
+    setAuthPending(true);
+    setAuthError("");
+    try {
+      const response = authMode === "signup"
+        ? await registerRequest({
+          name,
+          phone: phone || undefined,
+          nickname: nickname || undefined,
+          password,
+        })
+        : await signInRequest({
+          login,
+          password,
+        });
+
+      if (!response?.sessionToken || !response?.account) {
+        throw new Error("Некорректный ответ сервера");
+      }
+
+      localStorage.setItem(
+        AUTH_SESSION_STORAGE_KEY,
+        JSON.stringify({ sessionToken: response.sessionToken })
+      );
+      applyAuthSession({
+        sessionToken: response.sessionToken,
+        account: response.account,
+      });
+
+      if (modal?.payload?.returnTo) {
+        setModal(modal.payload.returnTo);
+      } else {
+        setModal(null);
+      }
+    } catch (error) {
+      setAuthError(error?.message || "Ошибка авторизации");
+    } finally {
+      setAuthPending(false);
+    }
   };
 
   const toggleFavorite = (id) => {
@@ -1164,37 +1205,104 @@ export default function App() {
         {modal?.type === "auth" && (
           <>
             <h3>Требуется авторизация</h3>
-            <p className="small">Временно выберите тестового пользователя для входа.</p>
+            <p className="small">Войдите по телефону или нику, либо создайте новый аккаунт.</p>
             <div className="multi-select-buttons" style={{ marginTop: 8 }}>
-              {Object.entries(TEST_USERS).map(([key, user]) => (
-                <button
-                  key={key}
-                  type="button"
-                  className={`multi-select-btn ${selectedAuthUser === key ? "active" : ""}`}
-                  onClick={() => setSelectedAuthUser(key)}
-                  aria-pressed={selectedAuthUser === key}
-                >
-                  {user.label}
-                </button>
-              ))}
-            </div>
-            <div className="actions" style={{ marginTop: 8 }}>
               <button
-                className="primary-btn"
                 type="button"
+                className={`multi-select-btn ${authMode === "signin" ? "active" : ""}`}
                 onClick={() => {
-                  applyAuthUser(selectedAuthUser);
-                  if (modal?.payload?.returnTo) {
-                    setModal(modal.payload.returnTo);
-                  } else {
-                    setModal(null);
-                  }
+                  setAuthMode("signin");
+                  setAuthError("");
                 }}
+                aria-pressed={authMode === "signin"}
               >
-                Войти как выбранный
+                Вход
               </button>
-              <button className="ghost-btn" type="button" onClick={closeModal}>Отмена</button>
+              <button
+                type="button"
+                className={`multi-select-btn ${authMode === "signup" ? "active" : ""}`}
+                onClick={() => {
+                  setAuthMode("signup");
+                  setAuthError("");
+                }}
+                aria-pressed={authMode === "signup"}
+              >
+                Регистрация
+              </button>
             </div>
+            <form className="list" style={{ marginTop: 10 }} onSubmit={handleAuthSubmit}>
+              {authMode === "signin" && (
+                <label className="field">
+                  <span className="small">Телефон или ник</span>
+                  <input
+                    required
+                    name="login"
+                    className="input"
+                    placeholder="+7... или nickname"
+                    autoComplete="username"
+                  />
+                </label>
+              )}
+
+              {authMode === "signup" && (
+                <>
+                  <label className="field">
+                    <span className="small">Имя</span>
+                    <input
+                      required
+                      name="name"
+                      className="input"
+                      minLength={2}
+                      maxLength={80}
+                      placeholder="Ваше имя"
+                      autoComplete="name"
+                    />
+                  </label>
+                  <label className="field">
+                    <span className="small">Телефон (опционально)</span>
+                    <input
+                      name="phone"
+                      className="input"
+                      placeholder="+7..."
+                      autoComplete="tel"
+                    />
+                  </label>
+                  <label className="field">
+                    <span className="small">Ник (опционально)</span>
+                    <input
+                      name="nickname"
+                      className="input"
+                      minLength={3}
+                      maxLength={40}
+                      placeholder="nickname"
+                      autoComplete="username"
+                    />
+                  </label>
+                </>
+              )}
+
+              <label className="field">
+                <span className="small">Пароль</span>
+                <input
+                  required
+                  type="password"
+                  name="password"
+                  className="input"
+                  minLength={6}
+                  maxLength={128}
+                  autoComplete={authMode === "signin" ? "current-password" : "new-password"}
+                />
+              </label>
+
+              {authError ? <p className="small" style={{ color: "#c62828", marginTop: 6 }}>{authError}</p> : null}
+
+              <div className="actions" style={{ marginTop: 8 }}>
+                <button className="primary-btn" type="submit" disabled={authPending}>
+                  {authPending ? "Отправка..." : authMode === "signin" ? "Войти" : "Зарегистрироваться"}
+                </button>
+                <button className="ghost-btn" type="button" onClick={closeModal} disabled={authPending}>Отмена</button>
+              </div>
+            </form>
           </>
         )}
 
