@@ -107,11 +107,6 @@ export function FoodTab({
       />
       <Section>
         <CategoryTabs list={foodCategories} value={foodCategory} onChange={setFoodCategory} />
-        {hasOwnedRestaurant ? (
-          <div className="actions" style={{ marginTop: 10 }}>
-            <button className="ghost-btn" onClick={() => openCreate("dish")} type="button">Добавить блюдо</button>
-          </div>
-        ) : null}
       </Section>
       <section className="list">
         {!restaurants.length ? <Empty text="Пока нет заведений" /> : null}
