@@ -38,6 +38,7 @@ import {
   toggleMenuItemFavoriteRequest,
   updateMenuItemRequest,
 } from "./api/food";
+import { uploadImagesToS3 } from "./utils/s3-upload";
 import { tabConfig } from "./utils/constants";
 import { sortItems } from "./utils/helpers";
 import {
@@ -130,13 +131,21 @@ const DIRECTION_TO_TAXI_CATEGORY = {
 };
 
 const toArray = (value) => (Array.isArray(value) ? value : value ? [value] : []);
-const buildUserPhoto = (name, idx) => `https://picsum.photos/seed/${encodeURIComponent(`user-taxi-${name}-${idx}`)}/900/600`;
+const PHOTO_PUBLIC_BASE_URL = String(import.meta.env.VITE_S3_PUBLIC_BASE_URL || "").trim().replace(/\/+$/, "");
+const normalizePhotoReference = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (!PHOTO_PUBLIC_BASE_URL) return raw;
+  return `${PHOTO_PUBLIC_BASE_URL}/${encodeURIComponent(raw).replace(/%2F/g, "/")}`;
+};
 const randomSuffix = () => Math.random().toString(36).slice(2, 8);
 const normalizeRating = (value) => Math.max(1, Math.min(5, Number(value) || 1));
 const normalizePhotos = (photos, limit = 1) => {
   if (!Array.isArray(photos)) return [];
   return photos
-    .filter((photo) => Boolean(String(photo || "").trim()))
+    .map((photo) => normalizePhotoReference(photo))
+    .filter(Boolean)
     .slice(0, limit);
 };
 const normalizeSinglePhoto = (photos) => normalizePhotos(photos, 1);
@@ -184,7 +193,8 @@ const getContacts = (item) => ({
 });
 const toAccountId = (value) => {
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
+  if (!Number.isInteger(parsed) || parsed < 1) return null;
+  return parsed;
 };
 const mapListingToUi = (item) => ({
   id: `${item.kind === 1 ? "ad" : "service"}-${item.listingId}`,
@@ -386,13 +396,14 @@ export default function App() {
     setTaxiTemplates([]);
     setIsTaxiDriver(myTaxi.length > 0);
 
-    if (myRestaurantRaw?.restaurantId) {
-      const myRestaurantMenuRaw = await getMenuItemsRequest({ accountId, restaurantId: myRestaurantRaw.restaurantId, limit: 300 });
+    const myRestaurantId = toAccountId(myRestaurantRaw?.restaurantId);
+    if (myRestaurantId !== null) {
+      const myRestaurantMenuRaw = await getMenuItemsRequest({ accountId, restaurantId: myRestaurantId, limit: 300 });
       const myRestaurantMenu = toArray(myRestaurantMenuRaw).map(mapMenuItemToUi);
       setHasRestaurant(true);
       setRestaurantEntity({
-        id: `restaurant-${myRestaurantRaw.restaurantId}`,
-        restaurantId: myRestaurantRaw.restaurantId,
+        id: `restaurant-${myRestaurantId}`,
+        restaurantId: myRestaurantId,
         title: myRestaurantRaw.name || "Моё заведение",
         desc: myRestaurantRaw.description || "",
         address: "",
@@ -811,7 +822,7 @@ export default function App() {
       if (value instanceof File) {
         if (!value.name) continue;
         if (!payload[key]) payload[key] = [];
-        payload[key].push(value.name);
+        payload[key].push(value);
         continue;
       }
       if (key in payload) {
@@ -826,27 +837,37 @@ export default function App() {
     const editEntityId = typeof payload.editEntityId === "string" ? payload.editEntityId : "";
     const editEntityKind = typeof payload.editEntityKind === "string" ? payload.editEntityKind : "";
     const isEdit = Boolean(editEntityId || editEntityKind === "restaurant");
-    const photoFromPayload = (key, limit = 1) => toArray(payload[key]).slice(0, limit).map((name, idx) => buildUserPhoto(String(name), idx));
+    const uploadPhotos = async (key, limit, entityType) => {
+      const files = toArray(payload[key]).filter((value) => value instanceof File).slice(0, limit);
+      if (!files.length) return [];
+      return uploadImagesToS3({
+        files,
+        accountId,
+        entityType,
+      });
+    };
 
     if (accountId === null) return;
 
     try {
       if (type === "restaurant") {
-      const logo = photoFromPayload("logo", 1)[0] || String(restaurantEntity?.logo || "").trim() || undefined;
-      await createOrUpdateRestaurantRequest({
-        accountId,
-        name: payload.title || "Моё заведение",
-        description: payload.desc || "",
-        logoUrl: logo,
-        phone: payload.phone || undefined,
-        telegram: payload.telegram || undefined,
-        whatsapp: payload.whatsapp || undefined,
-      });
+        const uploadedLogo = await uploadPhotos("logo", 1, "restaurant");
+        const logo = uploadedLogo[0] || String(restaurantEntity?.logo || "").trim() || undefined;
+        await createOrUpdateRestaurantRequest({
+          accountId,
+          name: payload.title || "Моё заведение",
+          description: payload.desc || "",
+          logoUrl: logo,
+          phone: payload.phone || undefined,
+          telegram: payload.telegram || undefined,
+          whatsapp: payload.whatsapp || undefined,
+        });
         await refreshMyData();
         await refreshCatalog();
       }
 
       if (type === "ad" || type === "service") {
+        const uploadedListingPhotos = await uploadPhotos("images", 5, "listing");
         const kind = type === "ad" ? 1 : 2;
         if (isEdit) {
           const listingId = Number(String(editEntityId).split("-")[1]);
@@ -860,7 +881,7 @@ export default function App() {
             title: payload.title || currentItem?.title || (type === "ad" ? "Объявление" : "Услуга"),
             description: payload.desc || currentItem?.desc || "",
             price: Number(payload.price) || Number(currentItem?.price) || 1,
-            photos: photoFromPayload("images", 5).length ? photoFromPayload("images", 5) : normalizeFivePhotos(currentItem?.photos),
+            photos: uploadedListingPhotos.length ? uploadedListingPhotos : normalizeFivePhotos(currentItem?.photos),
           });
         } else {
           await createListingRequest({
@@ -870,7 +891,7 @@ export default function App() {
             title: payload.title || (type === "ad" ? "Объявление" : "Услуга"),
             description: payload.desc || "",
             price: Number(payload.price) || 1,
-            photos: photoFromPayload("images", 5),
+            photos: uploadedListingPhotos,
           });
         }
         await refreshMyData();
@@ -878,7 +899,7 @@ export default function App() {
       }
 
       if (type === "dish") {
-        const photos = photoFromPayload("images", 1);
+        const photos = await uploadPhotos("images", 1, "dish");
         if (isEdit && editEntityId && editEntityKind === "dish") {
           const menuItemId = Number(String(editEntityId).split("-").pop());
           if (!menuItemId) throw new Error("Некорректный идентификатор блюда");
@@ -937,6 +958,7 @@ export default function App() {
         if (isEdit && editEntityKind === "taxi-template") {
           throw new Error("Редактирование шаблонов такси не поддерживается бэкендом");
         }
+        const uploadedTaxiPhotos = await uploadPhotos("images", 1, "taxi");
         const categories = toArray(payload.category).filter(Boolean);
         const category = categories[0];
         const direction = TAXI_CATEGORY_TO_DIRECTION[category];
@@ -960,7 +982,7 @@ export default function App() {
             departureAt: payload.when || currentTaxi?.when || undefined,
             seatsTotal: seats,
             seatsFree: seats,
-            carPhotos: photoFromPayload("images", 1).length ? photoFromPayload("images", 1) : normalizeSinglePhoto(currentTaxi?.photos),
+            carPhotos: uploadedTaxiPhotos.length ? uploadedTaxiPhotos : normalizeSinglePhoto(currentTaxi?.photos),
           });
         } else {
           await createTaxiOfferRequest({
@@ -975,7 +997,7 @@ export default function App() {
             departureAt: payload.when || undefined,
             seatsTotal: seats,
             seatsFree: seats,
-            carPhotos: photoFromPayload("images", 1),
+            carPhotos: uploadedTaxiPhotos,
           });
         }
         await refreshMyData();
