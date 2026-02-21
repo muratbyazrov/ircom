@@ -39,6 +39,7 @@ export function DetailModalContent({
   const isServicesDetail = type === "services";
   const isAdsDetail = type === "ads";
   const isBasicDetail = !isRestaurantDetail && !isTaxiDetail && !isFoodDetail;
+  const isFoodOwnerView = isFoodDetail && typeof onEditDish === "function";
   const restaurantDeliveryText = isRestaurantDetail
     ? item.deliveryMode === "free"
       ? "Бесплатно"
@@ -633,7 +634,7 @@ export function DetailModalContent({
           )}
         </section>
       ) : null}
-      {!isRestaurantDetail && !isTaxiDetail && !isServicesDetail && !isAdsDetail && !(isFoodDetail && isOwnerView) ? (
+      {!isRestaurantDetail && !isTaxiDetail && !isServicesDetail && !isAdsDetail && !isFoodOwnerView ? (
         <section className={`detail-contacts-block ${isFoodDetail ? "detail-contacts-block-food" : "detail-contacts-block-basic"}`}>
           <div className="detail-contacts-title">{isFoodDetail ? "Контакты заведения" : "Контакты"}</div>
           <div className="detail-contact-grid">{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
@@ -695,7 +696,7 @@ export function DetailModalContent({
           {typeof onEdit === "function" ? <button className="ghost-btn" type="button" onClick={onEdit}>Редактировать</button> : null}
         </div>
       ) : null}
-      {isFoodDetail && isOwnerView ? (
+      {isFoodOwnerView ? (
         <div className="actions" style={{ marginTop: 8 }}>
           <button className="primary-btn" type="button" onClick={() => onEditDish?.(item.id)}>Редактировать</button>
           <button className={item.unavailable ? "primary-btn" : "ghost-btn"} type="button" onClick={() => onToggleDishAvailability?.(item.id)}>
