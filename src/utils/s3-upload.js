@@ -1,4 +1,4 @@
-import { initPhotoUploadRequest } from "../api/media";
+import { buildPhotoUrlRequest, initPhotoUploadRequest } from "../api/media";
 
 const ENTITY_TYPES = new Set(["listing", "taxi", "dish", "restaurant"]);
 const MAX_SIZE_BYTES = Number(import.meta.env.VITE_S3_MAX_UPLOAD_BYTES || 10485760);
@@ -81,11 +81,22 @@ export async function uploadImagesToS3({ files, accountId, entityType }) {
       file,
     });
 
-    uploaded.push(normalizePhotoReference(
-      init.photoUrl
-      || buildPhotoUrlFromUpload({ uploadUrl: init.upload.url, objectKey: init.objectKey })
-      || init.objectKey,
-    ));
+    let photoReference = normalizePhotoReference(init.photoUrl);
+
+    if (!photoReference) {
+      try {
+        const resolved = await buildPhotoUrlRequest({ objectKey: init.objectKey });
+        photoReference = normalizePhotoReference(resolved?.photoUrl || resolved?.objectKey || "");
+      } catch {
+        photoReference = "";
+      }
+    }
+
+    uploaded.push(
+      photoReference
+      || normalizePhotoReference(buildPhotoUrlFromUpload({ uploadUrl: init.upload.url, objectKey: init.objectKey }))
+      || normalizePhotoReference(init.objectKey),
+    );
   }
 
   return uploaded.filter(Boolean);

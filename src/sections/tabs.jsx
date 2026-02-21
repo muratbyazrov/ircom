@@ -1,7 +1,7 @@
 import { CategoryTabs, Empty, Field, Icon, Section, SectionHeader, SortSelect } from "../components/ui";
 import { ItemCard, TaxiCard } from "../components/cards";
 import { sectionSortModes } from "../utils/constants";
-import { applyImageFallback } from "../utils/images";
+import { applyImageFallback, replaceImageWithEmpty } from "../utils/images";
 
 export function AdsTab({ adsCategoriesVisible, adsCategory, setAdsCategory, adsSort, setAdsSort, adsItems, openCreate, openDetail, toggleFavorite, favorites }) {
   return (
@@ -130,7 +130,7 @@ export function FoodTab({
                     src={restaurant.logo}
                     alt={restaurant.title || "Заведение"}
                     loading="lazy"
-                    onError={(e) => applyImageFallback(e, "food")}
+                    onError={(e) => replaceImageWithEmpty(e)}
                   />
                 ) : (
                   <div className="restaurant-list-photo-empty">Нет фото</div>

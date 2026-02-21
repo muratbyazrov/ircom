@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { clamp, fmtRub, getTouchDistance } from "../../utils/helpers";
-import { applyImageFallback } from "../../utils/images";
+import { applyImageFallback, replaceImageWithEmpty } from "../../utils/images";
 import { Icon, Field } from "../ui";
 import { Media } from "../cards";
 
@@ -497,7 +497,7 @@ export function DetailModalContent({
                 src={restaurantLogo}
                 alt={item.title || "Заведение"}
                 loading="lazy"
-                onError={(e) => applyImageFallback(e, "food")}
+                onError={(e) => replaceImageWithEmpty(e, "detail-restaurant-photo-empty restaurant-list-photo-empty")}
               />
             ) : (
               <div className="detail-restaurant-photo-empty restaurant-list-photo-empty">Нет фото</div>

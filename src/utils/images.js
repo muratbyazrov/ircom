@@ -22,3 +22,16 @@ export function applyImageFallback(event, section) {
   img.dataset.fallbackApplied = "1";
   img.src = getSectionFallbackImage(section);
 }
+
+export function replaceImageWithEmpty(event, className = "restaurant-list-photo-empty", text = "Нет фото") {
+  const img = event.currentTarget;
+  if (!img || img.dataset.fallbackApplied === "1") return;
+  const parent = img.parentElement;
+  if (!parent) return;
+
+  img.dataset.fallbackApplied = "1";
+  const placeholder = document.createElement("div");
+  placeholder.className = className;
+  placeholder.textContent = text;
+  parent.replaceChild(placeholder, img);
+}

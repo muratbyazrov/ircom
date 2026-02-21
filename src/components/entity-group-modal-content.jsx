@@ -1,5 +1,5 @@
 import { Icon } from "./ui";
-import { applyImageFallback } from "../utils/images";
+import { applyImageFallback, replaceImageWithEmpty } from "../utils/images";
 
 export function EntityGroupModalContent({
   group,
@@ -68,7 +68,7 @@ export function EntityGroupModalContent({
                       src={item.logo}
                       alt={item.title || "Логотип заведения"}
                       loading="lazy"
-                      onError={(e) => applyImageFallback(e, "food")}
+                      onError={(e) => replaceImageWithEmpty(e, "entity-group-preview-empty", "Нет логотипа")}
                     />
                   ) : (
                     <div className="entity-group-preview-empty">Нет логотипа</div>
