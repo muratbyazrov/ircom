@@ -48,6 +48,7 @@ export function CreateForm({
   const [isPreparingPhotos, setIsPreparingPhotos] = useState(false);
   const [selectedPhotoCount, setSelectedPhotoCount] = useState(0);
   const [photosLimitError, setPhotosLimitError] = useState("");
+  const [attemptedTaxiSubmit, setAttemptedTaxiSubmit] = useState(false);
   const [selectedTaxiCategories, setSelectedTaxiCategories] = useState(() => (type === "taxi" ? initialTaxiCategories : []));
   const [taxiOfferMode, setTaxiOfferMode] = useState(initialTaxiMode);
   const [taxiDayPreset, setTaxiDayPreset] = useState(initialTaxiDayPreset);
@@ -119,6 +120,8 @@ export function CreateForm({
     });
   };
   const isIntercitySelected = selectedTaxiCategories.some((x) => x !== cityCategory);
+  const isIntercityCreate = isIntercitySelected && !isEdit;
+  const hasTaxiDirection = selectedTaxiCategories.length > 0;
   const formatTaxiHour = (hour) => `${hour % 24}`.padStart(2, "0") + ":00";
   const taxiTimePreset = formatTaxiHour(taxiHourPreset);
   const recurringTimePreset = formatTaxiHour(recurringHourPreset);
@@ -126,6 +129,11 @@ export function CreateForm({
   const taxiWhenValue = taxiDayPreset && taxiDateValue
     ? `${taxiDayPreset} (${taxiDateValue})${taxiTimePreset ? ` ${taxiTimePreset}` : ""}`
     : "";
+  const hasTaxiWhen = Boolean(String(taxiWhenValue || "").trim());
+  const hasRecurringDays = recurringDays.length > 0;
+  const showTaxiDirectionError = attemptedTaxiSubmit && !hasTaxiDirection;
+  const showTaxiWhenError = attemptedTaxiSubmit && isIntercityCreate && !isRecurring && !hasTaxiWhen;
+  const showTaxiRecurringDaysError = attemptedTaxiSubmit && isIntercityCreate && isRecurring && !hasRecurringDays;
   const toggleRecurringDay = (day) => {
     setRecurringDays((prev) => (
       prev.includes(day) ? prev.filter((x) => x !== day) : [...prev, day]
@@ -135,6 +143,19 @@ export function CreateForm({
   useEffect(() => {
     if (!isIntercitySelected && taxiOfferMode !== "one-time") setTaxiOfferMode("one-time");
   }, [isIntercitySelected, taxiOfferMode]);
+
+  const handleTaxiSubmit = (e) => {
+    setAttemptedTaxiSubmit(true);
+    const form = e.currentTarget;
+    const nativeValid = form.reportValidity();
+    const hasRequiredTaxiWhen = !isIntercityCreate || isRecurring || hasTaxiWhen;
+    const hasRequiredRecurringDays = !isIntercityCreate || !isRecurring || hasRecurringDays;
+    if (!nativeValid || !hasTaxiDirection || !hasRequiredTaxiWhen || !hasRequiredRecurringDays || Boolean(photosLimitError)) {
+      e.preventDefault();
+      return;
+    }
+    onSubmit(e, "taxi");
+  };
 
   if (type === "restaurant") {
     return (
@@ -326,11 +347,11 @@ export function CreateForm({
           <p className="small" style={{ margin: 0, color: "var(--text)" }}>Укажите маршрут, время и контакты для пассажиров</p>
         </div>
         <h3 style={{ marginBottom: 8 }}>{isEdit ? "Редактирование предложения такси" : "Создание предложения такси"}</h3>
-        <form className="list" onSubmit={(e) => onSubmit(e, "taxi")}>
+        <form className={`list ${attemptedTaxiSubmit ? "form-attempted" : ""}`} onSubmit={handleTaxiSubmit}>
           {isEdit && editMeta?.id ? <input type="hidden" name="editEntityId" value={editMeta.id} /> : null}
           {isEdit && editMeta?.kind ? <input type="hidden" name="editEntityKind" value={editMeta.kind} /> : null}
           <Field label="Направления">
-            <div className="multi-select-buttons">
+            <div className={`multi-select-buttons ${showTaxiDirectionError ? "is-invalid" : ""}`}>
               {taxiCategories.map((x) => {
                 return (
                   <button
@@ -351,12 +372,12 @@ export function CreateForm({
             <p className="small" style={{ marginTop: 6, color: "var(--muted)" }}>
               Можно выбрать только одно направление.
             </p>
-            {!selectedTaxiCategories.length ? <p className="small" style={{ color: "var(--danger)", marginTop: 6 }}>Выберите хотя бы одно направление</p> : null}
+            {showTaxiDirectionError ? <p className="small field-invalid-note">Выберите хотя бы одно направление</p> : null}
           </Field>
           <Field label="Имя"><input required name="name" defaultValue={initialValues?.name || ""} className="input" minLength={2} maxLength={60} /></Field>
           <div className={isIntercitySelected ? "grid-2" : undefined}>
             <Field label="Стоимость"><input required name="price" defaultValue={initialValues?.price || ""} type="number" min={1} inputMode="numeric" pattern="[0-9]*" className="input" /></Field>
-            {isIntercitySelected ? <Field label="Свободных мест"><input name="seats" defaultValue={initialValues?.seats?.free || initialValues?.seats?.total || ""} type="number" min={1} className="input" /></Field> : null}
+            {isIntercitySelected ? <Field label={isIntercityCreate ? "Всего мест" : "Свободных мест"}><input required={isIntercityCreate} name="seats" defaultValue={initialValues?.seats?.free || initialValues?.seats?.total || ""} type="number" min={1} className="input" /></Field> : null}
           </div>
           {isIntercitySelected ? (
             <>
@@ -382,7 +403,7 @@ export function CreateForm({
               </Field>
               {isRecurring ? (
                 <Field label={`Регулярные выезды (${recurringDays.join(", ") || "выберите дни"} · ${recurringTimePreset})`}>
-                  <div className="multi-select-buttons">
+                  <div className={`multi-select-buttons ${showTaxiRecurringDaysError ? "is-invalid" : ""}`}>
                     {TAXI_RECURRING_WEEKDAYS.map((x) => (
                       <button
                         key={x}
@@ -416,10 +437,11 @@ export function CreateForm({
                   />
                   {recurringDays.map((x) => <input key={x} type="hidden" name="scheduleDay" value={x} />)}
                   <input type="hidden" name="scheduleHour" value={recurringTimePreset} />
+                  {showTaxiRecurringDaysError ? <p className="small field-invalid-note">Выберите хотя бы один день</p> : null}
                 </Field>
               ) : (
                 <Field label={taxiDateValue ? `Дата и время (${taxiDateValue} ${taxiTimePreset})` : "Дата и время"}>
-                  <div className="multi-select-buttons">
+                  <div className={`multi-select-buttons ${showTaxiWhenError ? "is-invalid" : ""}`}>
                     {TAXI_DAY_PRESETS.map((x) => (
                       <button
                         key={x}
@@ -452,6 +474,7 @@ export function CreateForm({
                     onPointerLeave={endTimeDrag}
                   />
                   <input type="hidden" name="when" value={taxiWhenValue} />
+                  {showTaxiWhenError ? <p className="small field-invalid-note">Выберите дату выезда</p> : null}
                 </Field>
               )}
               <input type="hidden" name="mode" value={taxiOfferMode} />
@@ -475,6 +498,7 @@ export function CreateForm({
           </Field>
           <Field label="WhatsApp">
             <input
+              required={isIntercityCreate}
               name="wa"
               type="tel"
               inputMode="tel"
@@ -489,12 +513,13 @@ export function CreateForm({
             />
           </Field>
           <Field label="Telegram"><input name="tg" defaultValue={initialValues?.contacts?.tg || ""} className="input" /></Field>
-          <Field label="Описание"><textarea name="desc" defaultValue={initialValues?.desc || ""} className="textarea" maxLength={2000} /></Field>
+          <Field label="Описание"><textarea required={isIntercityCreate} name="desc" defaultValue={initialValues?.desc || ""} className="textarea" maxLength={2000} /></Field>
           <Field label="Фото авто или водителя (1 фото)">
             <div className="input-with-clear">
               <input
                 type="file"
                 name="images"
+                required={isIntercityCreate}
                 className={`input ${selectedPhotoCount > 0 ? "input-has-clear" : ""}`}
                 multiple={maxPhotos > 1}
                 accept="image/*"
@@ -527,7 +552,11 @@ export function CreateForm({
           <FormActions
             onClose={onClose}
             submitting={submitPending}
-            submitDisabled={submitPending || !selectedTaxiCategories.length || isPreparingPhotos || Boolean(photosLimitError) || (isIntercitySelected && isRecurring && !recurringDays.length)}
+            submitDisabled={
+              submitPending
+              || isPreparingPhotos
+              || Boolean(photosLimitError)
+            }
             submitLabel={submitPending ? "Сохранение..." : isPreparingPhotos ? "Подготовка фото..." : isEdit ? "Сохранить изменения" : "Сохранить"}
           />
         </form>

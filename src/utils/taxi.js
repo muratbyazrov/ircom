@@ -77,6 +77,19 @@ export const parseTaxiWhenValue = (whenValue, baseDate = new Date()) => {
   return datePart;
 };
 
+export const toTaxiDepartureAtApiValue = (whenValue, baseDate = new Date()) => {
+  const text = String(whenValue || "").trim();
+  if (!text) return undefined;
+
+  const parsedPresetDate = parseTaxiWhenValue(text, baseDate);
+  if (parsedPresetDate) return parsedPresetDate.toISOString();
+
+  const nativeParsed = new Date(text);
+  if (!Number.isNaN(nativeParsed.getTime())) return nativeParsed.toISOString();
+
+  return null;
+};
+
 export function buildRecurringTaxiOccurrences(templates, horizonDays = 14, baseDate = new Date()) {
   const today = dayStart(baseDate);
   const result = [];

@@ -4,7 +4,7 @@ import { applyImageFallback } from "../utils/images";
 import { Icon } from "./ui";
 
 export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, section = "ads", isOwn = false, canFavorite = true }) {
-  const hasRating = typeof item.ratingValue === "number";
+  const hasRating = typeof item.ratingValue === "number" && Number(item.reviewsCount) > 0;
   return (
     <article
       className="card card-clickable"
@@ -66,7 +66,7 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
 }
 
 export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFavorite = true }) {
-  const hasRating = typeof item.ratingValue === "number";
+  const hasRating = typeof item.ratingValue === "number" && Number(item.reviewsCount) > 0;
   return (
     <article
       className="card card-clickable card-taxi"

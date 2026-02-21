@@ -195,6 +195,12 @@ body {
   min-width: 0;
 }
 
+.multi-select-buttons.is-invalid {
+  border: 1px solid var(--danger);
+  border-radius: 12px;
+  padding: 8px;
+}
+
 .multi-select-btn {
   border: 1px solid var(--line);
   background: #fff;
@@ -1150,6 +1156,18 @@ button {
 .field {
   display: grid;
   gap: 6px;
+}
+
+.field-invalid-note {
+  color: var(--danger);
+  margin-top: 6px;
+}
+
+.form-attempted .input:invalid,
+.form-attempted .select:invalid,
+.form-attempted .textarea:invalid {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.25);
 }
 
 .input,

@@ -42,6 +42,7 @@ import {
 import { uploadImagesToS3 } from "./utils/s3-upload";
 import { tabConfig } from "./utils/constants";
 import { sortItems } from "./utils/helpers";
+import { toTaxiDepartureAtApiValue } from "./utils/taxi";
 import {
   formatPhoneValueCompact,
   handlePhoneInputCompact,
@@ -1130,10 +1131,15 @@ export default function App() {
         if (!direction) throw new Error("Выберите направление");
         const seatsValue = Number(payload.seats);
         const seats = Number.isFinite(seatsValue) && seatsValue > 0 ? seatsValue : undefined;
+        const currentTaxi = isEdit ? customTaxiItems.find((x) => x.id === editEntityId) : null;
+        const rawDepartureAt = payload.when || currentTaxi?.when || undefined;
+        const departureAt = toTaxiDepartureAtApiValue(rawDepartureAt);
+        if (typeof rawDepartureAt === "string" && rawDepartureAt.trim() && departureAt === null) {
+          throw new Error("Неверный формат даты поездки");
+        }
         if (isEdit && editEntityKind === "taxi-one-time") {
           const taxiOfferId = Number(String(editEntityId).split("-")[1]);
           if (!taxiOfferId) throw new Error("Некорректный идентификатор поездки");
-          const currentTaxi = customTaxiItems.find((x) => x.id === editEntityId);
           await updateTaxiOfferRequest({
             accountId,
             taxiOfferId,
@@ -1144,7 +1150,7 @@ export default function App() {
             whatsapp: payload.wa || currentTaxi?.contacts?.wa || undefined,
             telegram: payload.tg || currentTaxi?.contacts?.tg || undefined,
             price: Number(payload.price) || Number(currentTaxi?.price) || 1,
-            departureAt: payload.when || currentTaxi?.when || undefined,
+            departureAt: departureAt === undefined ? undefined : departureAt,
             seatsTotal: seats,
             seatsFree: seats,
             carPhotos: uploadedTaxiPhotos.length ? uploadedTaxiPhotos : normalizeSinglePhoto(currentTaxi?.photos),
@@ -1159,7 +1165,7 @@ export default function App() {
             whatsapp: payload.wa || undefined,
             telegram: payload.tg || undefined,
             price: Number(payload.price) || 1,
-            departureAt: payload.when || undefined,
+            departureAt: departureAt === undefined ? undefined : departureAt,
             seatsTotal: seats,
             seatsFree: seats,
             carPhotos: uploadedTaxiPhotos,
