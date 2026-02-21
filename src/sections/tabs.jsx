@@ -90,20 +90,24 @@ export function FoodTab({
   setFoodCategory,
   restaurants,
   foodCategories,
+  isAuth,
   hasRestaurant,
   openCreate,
+  openEntityGroup,
   openDetail,
 }) {
+  const hasOwnedRestaurant = isAuth && hasRestaurant;
+
   return (
     <>
       <SectionHeader
         title="Еда"
-        actionLabel={hasRestaurant ? "Управлять заведением" : "Создать заведение"}
-        onAction={() => openCreate("restaurant")}
+        actionLabel={hasOwnedRestaurant ? "В мои заведения" : "Создать заведение"}
+        onAction={() => (hasOwnedRestaurant ? openEntityGroup("restaurant") : openCreate("restaurant"))}
       />
       <Section>
         <CategoryTabs list={foodCategories} value={foodCategory} onChange={setFoodCategory} />
-        {hasRestaurant ? (
+        {hasOwnedRestaurant ? (
           <div className="actions" style={{ marginTop: 10 }}>
             <button className="ghost-btn" onClick={() => openCreate("dish")} type="button">Добавить блюдо</button>
           </div>

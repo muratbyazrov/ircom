@@ -1388,8 +1388,10 @@ export default function App() {
             setFoodCategory={setFoodCategory}
             restaurants={visibleFoodRestaurants}
             foodCategories={FOOD_CATEGORIES}
+            isAuth={isAuth}
             hasRestaurant={hasRestaurant}
             openCreate={openCreate}
+            openEntityGroup={openEntityGroup}
             openDetail={openDetail}
           />
         )}
