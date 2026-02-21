@@ -108,7 +108,6 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
             <div className="taxi-card-head">
               <div className="row wrap" style={{ alignItems: "center", gap: 6 }}>
                 <div className="card-title">{item.name}</div>
-                {isOwn ? <span className="badge">Моё</span> : null}
               </div>
               <div className="price">{fmtRub.format(item.price)}</div>
             </div>
