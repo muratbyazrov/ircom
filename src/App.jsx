@@ -115,6 +115,7 @@ const FEEDBACK_SEED = {
 };
 const APP_HISTORY_KEY = "__ircomNavState";
 const AUTH_SESSION_STORAGE_KEY = "__ircomAuthSession";
+const FEEDBACK_STORAGE_KEY = "__ircomFeedbackByItem";
 const ADS_CATEGORIES = ["Все", "Авто", "Недвижимость", "Электроника", "Бытовая техника", "Мебель", "Другое", "Мои объявления"];
 const SERVICE_CATEGORIES = ["Все", "Кондитерка", "Репетиторы", "Красота", "Автосервис", "Другое"];
 const FOOD_CATEGORIES = ["Все", "Кавказская кухня", "Суши и роллы", "Осетинские пироги", "Бургеры", "Другое"];
@@ -172,7 +173,18 @@ const profileValue = (value) => {
   return text === "-" ? "" : text;
 };
 const buildInitialFeedback = () => {
-  return {};
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(FEEDBACK_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    return Object.fromEntries(
+      Object.entries(parsed).map(([key, value]) => [key, Array.isArray(value) ? value : []])
+    );
+  } catch {
+    return {};
+  }
 };
 const getFeedbackRating = (reviews) => {
   if (!Array.isArray(reviews) || !reviews.length) return null;
@@ -443,6 +455,14 @@ export default function App() {
     refreshMyData().catch(() => {});
   }, [refreshMyData]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(feedbackByItem));
+    } catch {
+      // ignore storage errors
+    }
+  }, [feedbackByItem]);
+
   useNavHistory({ appHistoryKey: APP_HISTORY_KEY, tab, setTab, modal, setModal });
   useGestureGuard();
   const toggleAuthModal = async () => {
@@ -656,6 +676,7 @@ export default function App() {
 
     const fromFood = [...buckets.entries()].map(([restaurantKey, dishes]) => {
       const restaurantTitle = String(dishes[0]?.restaurant || "").trim() || "Без названия заведения";
+      const numericRestaurantId = toAccountId(dishes[0]?.restaurantId);
       const contacts = dishes.reduce((acc, dish) => {
         const nextContacts = dish.contacts || {};
         if (!acc.phone && nextContacts.phone) acc.phone = nextContacts.phone;
@@ -663,7 +684,11 @@ export default function App() {
         if (!acc.tg && nextContacts.tg) acc.tg = nextContacts.tg;
         return acc;
       }, {});
-      const id = String(restaurantKey).startsWith("restaurant-") ? restaurantKey : buildRestaurantId(restaurantTitle);
+      const id = numericRestaurantId
+        ? `restaurant-${numericRestaurantId}`
+        : String(restaurantKey).startsWith("restaurant-")
+          ? restaurantKey
+          : buildRestaurantId(restaurantTitle);
       const reviews = Array.isArray(feedbackByItem[id]) ? feedbackByItem[id] : [];
       const categories = [...new Set(dishes.map((x) => x.category).filter(Boolean))];
 
@@ -1154,12 +1179,15 @@ export default function App() {
   };
 
   const addFeedback = ({ itemId, rating, text }) => {
-    let added = false;
+    const normalizedItemId = String(itemId || "").trim();
+    const message = String(text || "").trim();
+    if (!normalizedItemId || !message) return false;
 
     ensureAuth(() => {
-      const message = String(text || "").trim();
-      if (!message) return;
       const authorName = String(profile.name || "Пользователь").trim();
+      const existingReviews = Array.isArray(feedbackByItem[normalizedItemId]) ? feedbackByItem[normalizedItemId] : [];
+      const alreadyLeft = existingReviews.some((review) => String(review.author || "").trim().toLowerCase() === authorName.toLowerCase());
+      if (alreadyLeft) return;
 
       const nextReview = {
         id: `review-${Date.now()}-${randomSuffix()}`,
@@ -1170,18 +1198,15 @@ export default function App() {
       };
 
       setFeedbackByItem((prev) => {
-        const current = Array.isArray(prev[itemId]) ? prev[itemId] : [];
-        const alreadyLeft = current.some((review) => String(review.author || "").trim().toLowerCase() === authorName.toLowerCase());
-        if (alreadyLeft) return prev;
-        added = true;
+        const current = Array.isArray(prev[normalizedItemId]) ? prev[normalizedItemId] : [];
         return {
           ...prev,
-          [itemId]: [nextReview, ...current],
+          [normalizedItemId]: [nextReview, ...current],
         };
       });
     });
 
-    return added;
+    return true;
   };
 
   const requireAuthForFeedback = () => {
