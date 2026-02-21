@@ -1,7 +1,15 @@
+import { useEffect, useRef } from "react";
 import { FormActions, Field } from "../ui";
-import { formatPhoneValue, handlePhoneInput, PHONE_PATTERN, PHONE_PLACEHOLDER, syncPhonePrev } from "../../utils/phone";
+import { formatPhoneValue, handlePhoneInput, PHONE_PATTERN, PHONE_PLACEHOLDER, syncPhonePrev, syncWhatsappFromPhone } from "../../utils/phone";
 
 export function ProfileEditForm({ profile, onSubmit, onClose }) {
+  const phoneRef = useRef(null);
+  const whatsappRef = useRef(null);
+
+  useEffect(() => {
+    syncWhatsappFromPhone(phoneRef.current, whatsappRef.current);
+  }, []);
+
   return (
     <>
       <h3 style={{ marginBottom: 8 }}>Редактирование профиля</h3>
@@ -19,7 +27,11 @@ export function ProfileEditForm({ profile, onSubmit, onClose }) {
             maxLength={18}
             pattern={PHONE_PATTERN}
             title="Введите номер в формате +7 (999) 999-99-99"
-            onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+            ref={phoneRef}
+            onInput={(e) => {
+              handlePhoneInput(e, { allowEmpty: true });
+              syncWhatsappFromPhone(e.currentTarget, whatsappRef.current);
+            }}
             onFocus={syncPhonePrev}
           />
         </Field>
@@ -35,6 +47,7 @@ export function ProfileEditForm({ profile, onSubmit, onClose }) {
             maxLength={18}
             pattern={PHONE_PATTERN}
             title="Введите номер в формате +7 (999) 999-99-99"
+            ref={whatsappRef}
             onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
             onFocus={syncPhonePrev}
           />

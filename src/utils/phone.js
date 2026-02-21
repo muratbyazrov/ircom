@@ -81,3 +81,18 @@ export const handlePhoneInputCompact = (e, options = {}) => {
 export const syncPhonePrev = (e) => {
   e.currentTarget.dataset.prevValue = e.currentTarget.value;
 };
+
+export const syncWhatsappFromPhone = (phoneInput, whatsappInput) => {
+  if (!phoneInput || !whatsappInput) return;
+
+  const phoneValue = String(phoneInput.value || "");
+  const whatsappValue = String(whatsappInput.value || "");
+  const lastAutofillValue = String(whatsappInput.dataset.autofillFromPhone || "");
+
+  // Keep WhatsApp in sync with phone until user provides their own different value.
+  if (!whatsappValue || whatsappValue === lastAutofillValue) {
+    whatsappInput.value = phoneValue;
+    whatsappInput.dataset.prevValue = phoneValue;
+    whatsappInput.dataset.autofillFromPhone = phoneValue;
+  }
+};

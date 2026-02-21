@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { applyImageFallback } from "../../utils/images";
-import { formatPhoneValue, handlePhoneInput, PHONE_PATTERN, PHONE_PLACEHOLDER, syncPhonePrev } from "../../utils/phone";
+import { formatPhoneValue, handlePhoneInput, PHONE_PATTERN, PHONE_PLACEHOLDER, syncPhonePrev, syncWhatsappFromPhone } from "../../utils/phone";
 import { getTaxiDateByPreset, TAXI_DAY_PRESETS, TAXI_RECURRING_WEEKDAYS } from "../../utils/taxi";
 import { FormActions, Field } from "../ui";
 import restaurantHero from "../../assets/restaurant-hero.svg";
@@ -71,6 +71,10 @@ export function CreateForm({
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
   const wasIntercityOneTimeCreateRef = useRef(false);
+  const restaurantPhoneRef = useRef(null);
+  const restaurantWhatsappRef = useRef(null);
+  const taxiPhoneRef = useRef(null);
+  const taxiWhatsappRef = useRef(null);
   const maxPhotos = type === "ad" || type === "service" ? 5 : 1;
 
   useEffect(() => {
@@ -160,6 +164,11 @@ export function CreateForm({
     wasIntercityOneTimeCreateRef.current = isIntercityOneTimeCreate;
   }, [isIntercityOneTimeCreate, taxiDayPreset]);
 
+  useEffect(() => {
+    syncWhatsappFromPhone(restaurantPhoneRef.current, restaurantWhatsappRef.current);
+    syncWhatsappFromPhone(taxiPhoneRef.current, taxiWhatsappRef.current);
+  }, []);
+
   const handleTaxiSubmit = (e) => {
     setAttemptedTaxiSubmit(true);
     const form = e.currentTarget;
@@ -231,7 +240,11 @@ export function CreateForm({
                 maxLength={18}
                 pattern={PHONE_PATTERN}
                 title="Введите номер в формате +7 (999) 999-99-99"
-                onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+                ref={restaurantPhoneRef}
+                onInput={(e) => {
+                  handlePhoneInput(e, { allowEmpty: true });
+                  syncWhatsappFromPhone(e.currentTarget, restaurantWhatsappRef.current);
+                }}
                 onFocus={syncPhonePrev}
               />
             </Field>
@@ -248,6 +261,7 @@ export function CreateForm({
               maxLength={18}
               pattern={PHONE_PATTERN}
               title="Введите номер в формате +7 (999) 999-99-99"
+              ref={restaurantWhatsappRef}
               onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
               onFocus={syncPhonePrev}
             />
@@ -556,8 +570,10 @@ export function CreateForm({
               maxLength={18}
               pattern={PHONE_PATTERN}
               title="Введите номер в формате +7 (999) 999-99-99"
+              ref={taxiPhoneRef}
               onInput={(e) => {
                 handlePhoneInput(e, { allowEmpty: true });
+                syncWhatsappFromPhone(e.currentTarget, taxiWhatsappRef.current);
                 setTaxiFieldErrors((prev) => ({ ...prev, phone: "" }));
               }}
               onFocus={syncPhonePrev}
@@ -576,6 +592,7 @@ export function CreateForm({
               maxLength={18}
               pattern={PHONE_PATTERN}
               title="Введите номер в формате +7 (999) 999-99-99"
+              ref={taxiWhatsappRef}
               onInput={(e) => {
                 handlePhoneInput(e, { allowEmpty: true });
                 setTaxiFieldErrors((prev) => ({ ...prev, wa: "" }));
