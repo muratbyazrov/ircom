@@ -3,7 +3,7 @@ import { clamp, fmtRub, short } from "../utils/helpers";
 import { applyImageFallback } from "../utils/images";
 import { Icon } from "./ui";
 
-export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, section = "ads" }) {
+export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, section = "ads", isOwn = false, canFavorite = true }) {
   const hasRating = typeof item.ratingValue === "number";
   return (
     <article
@@ -16,28 +16,37 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
       }}
     >
       <div className="card-body">
-        <button
-          className={`fav-corner-btn taxi-fav-btn ${activeFav ? "active" : ""}`}
-          type="button"
-          aria-label={activeFav ? "Убрать из избранного" : "Добавить в избранное"}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-          }}
-          onTouchStart={(e) => {
-            e.stopPropagation();
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onFav();
-          }}
-        >
-          <Icon name={activeFav ? "heart-fill" : "heart"} />
-          <span>{activeFav ? "В избранном" : "В избранное"}</span>
-        </button>
+        {canFavorite ? (
+          <button
+            className={`fav-corner-btn taxi-fav-btn ${activeFav ? "active" : ""}`}
+            type="button"
+            aria-label={activeFav ? "Убрать из избранного" : "Добавить в избранное"}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onFav();
+            }}
+          >
+            <Icon name={activeFav ? "heart-fill" : "heart"} />
+            <span>{activeFav ? "В избранном" : "В избранное"}</span>
+          </button>
+        ) : isOwn ? (
+          <span className="fav-corner-btn taxi-fav-btn owner-corner-tag" aria-label="Ваше объявление">
+            Моё объявление
+          </span>
+        ) : null}
         <Media photos={item.photos} emptyText="Нет фотографий" bleed section={section} />
         <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <div className="card-title">{item.title}</div>
+            <div className="row wrap" style={{ alignItems: "center", gap: 6 }}>
+              <div className="card-title">{item.title}</div>
+              {isOwn ? <span className="badge">Моё</span> : null}
+            </div>
             <div className="meta">{item.category} · {item.date} дн. назад</div>
           </div>
           <div className="price">{fmtRub.format(item.price)}</div>
@@ -56,7 +65,7 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
   );
 }
 
-export function TaxiCard({ item, onOpen, onFav, activeFav }) {
+export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFavorite = true }) {
   const hasRating = typeof item.ratingValue === "number";
   return (
     <article
@@ -69,29 +78,38 @@ export function TaxiCard({ item, onOpen, onFav, activeFav }) {
       }}
     >
       <div className="card-body taxi-card-body">
-        <button
-          className={`fav-corner-btn taxi-fav-btn ${activeFav ? "active" : ""}`}
-          type="button"
-          aria-label={activeFav ? "Убрать из избранного" : "Добавить в избранное"}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-          }}
-          onTouchStart={(e) => {
-            e.stopPropagation();
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onFav();
-          }}
-        >
-          <Icon name={activeFav ? "heart-fill" : "heart"} />
-          <span>{activeFav ? "В избранном" : "В избранное"}</span>
-        </button>
+        {canFavorite ? (
+          <button
+            className={`fav-corner-btn taxi-fav-btn ${activeFav ? "active" : ""}`}
+            type="button"
+            aria-label={activeFav ? "Убрать из избранного" : "Добавить в избранное"}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onFav();
+            }}
+          >
+            <Icon name={activeFav ? "heart-fill" : "heart"} />
+            <span>{activeFav ? "В избранном" : "В избранное"}</span>
+          </button>
+        ) : isOwn ? (
+          <span className="fav-corner-btn taxi-fav-btn owner-corner-tag" aria-label="Ваша поездка">
+            Моя поездка
+          </span>
+        ) : null}
         <div className="taxi-card-layout">
           <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full" blockParentClick />
           <div className="taxi-card-content">
             <div className="taxi-card-head">
-              <div className="card-title">{item.name}</div>
+              <div className="row wrap" style={{ alignItems: "center", gap: 6 }}>
+                <div className="card-title">{item.name}</div>
+                {isOwn ? <span className="badge">Моё</span> : null}
+              </div>
               <div className="price">{fmtRub.format(item.price)}</div>
             </div>
             <div className="meta">{item.category}</div>

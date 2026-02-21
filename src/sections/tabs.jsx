@@ -3,7 +3,19 @@ import { ItemCard, TaxiCard } from "../components/cards";
 import { sectionSortModes } from "../utils/constants";
 import { applyImageFallback, replaceImageWithEmpty } from "../utils/images";
 
-export function AdsTab({ adsCategoriesVisible, adsCategory, setAdsCategory, adsSort, setAdsSort, adsItems, openCreate, openDetail, toggleFavorite, favorites }) {
+export function AdsTab({
+  adsCategoriesVisible,
+  adsCategory,
+  setAdsCategory,
+  adsSort,
+  setAdsSort,
+  adsItems,
+  openCreate,
+  openDetail,
+  toggleFavorite,
+  favorites,
+  currentOwner,
+}) {
   return (
     <>
       <SectionHeader title="Объявления" subtitle="Продажа б/у вещей" actionLabel="Разместить" onAction={() => openCreate("ad")} />
@@ -12,13 +24,36 @@ export function AdsTab({ adsCategoriesVisible, adsCategory, setAdsCategory, adsS
         <SortSelect value={adsSort} onChange={setAdsSort} modes={sectionSortModes.ads} />
       </Section>
       <section className="list">
-        {adsItems.length ? adsItems.map((x) => <ItemCard key={x.id} item={x} section="ads" onOpen={() => openDetail("ads", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} />) : <Empty text="Пока нет объявлений" />}
+        {adsItems.length ? adsItems.map((x) => (
+          <ItemCard
+            key={x.id}
+            item={x}
+            section="ads"
+            onOpen={() => openDetail("ads", x.id)}
+            onFav={() => toggleFavorite(x.id)}
+            activeFav={favorites.has(x.id)}
+            isOwn={Boolean(currentOwner && x.owner === currentOwner)}
+            canFavorite={!Boolean(currentOwner && x.owner === currentOwner)}
+          />
+        )) : <Empty text="Пока нет объявлений" />}
       </section>
     </>
   );
 }
 
-export function ServicesTab({ serviceCategory, setServiceCategory, servicesSort, setServicesSort, servicesItems, openCreate, openDetail, toggleFavorite, favorites, serviceCategories }) {
+export function ServicesTab({
+  serviceCategory,
+  setServiceCategory,
+  servicesSort,
+  setServicesSort,
+  servicesItems,
+  openCreate,
+  openDetail,
+  toggleFavorite,
+  favorites,
+  serviceCategories,
+  currentOwner,
+}) {
   return (
     <>
       <SectionHeader title="Услуги" actionLabel="Разместить услугу" onAction={() => openCreate("service")} />
@@ -27,7 +62,19 @@ export function ServicesTab({ serviceCategory, setServiceCategory, servicesSort,
         <SortSelect value={servicesSort} onChange={setServicesSort} modes={sectionSortModes.services} />
       </Section>
       <section className="list">
-        {servicesItems.length ? servicesItems.map((x) => <ItemCard key={x.id} item={x} section="services" onOpen={() => openDetail("services", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} showRating />) : <Empty text="Пока нет услуг" />}
+        {servicesItems.length ? servicesItems.map((x) => (
+          <ItemCard
+            key={x.id}
+            item={x}
+            section="services"
+            onOpen={() => openDetail("services", x.id)}
+            onFav={() => toggleFavorite(x.id)}
+            activeFav={favorites.has(x.id)}
+            showRating
+            isOwn={Boolean(currentOwner && x.owner === currentOwner)}
+            canFavorite={!Boolean(currentOwner && x.owner === currentOwner)}
+          />
+        )) : <Empty text="Пока нет услуг" />}
       </section>
     </>
   );
@@ -46,6 +93,8 @@ export function TaxiTab({
   openDetail,
   toggleFavorite,
   favorites,
+  currentOwner,
+  isOwnTaxiItem,
 }) {
   const isIntercity = taxiCategory !== "Такси по Цхинвалу";
 
@@ -78,7 +127,22 @@ export function TaxiTab({
       </Section>
       <section className="list">
         {taxiItems.length
-          ? taxiItems.map((x) => <TaxiCard key={x.id} item={x} onOpen={() => openDetail("taxi", x.id)} onFav={() => toggleFavorite(x.id)} activeFav={favorites.has(x.id)} />)
+          ? taxiItems.map((x) => {
+            const isOwn = typeof isOwnTaxiItem === "function"
+              ? Boolean(isOwnTaxiItem(x))
+              : Boolean(currentOwner && x.owner === currentOwner);
+            return (
+              <TaxiCard
+                key={x.id}
+                item={x}
+                onOpen={() => openDetail("taxi", x.id)}
+                onFav={() => toggleFavorite(x.id)}
+                activeFav={favorites.has(x.id)}
+                isOwn={isOwn}
+                canFavorite={!isOwn}
+              />
+            );
+          })
           : <Empty text={taxiRequestedAt && isIntercity ? "Нет поездок на выбранное время" : "Пока нет предложений"} />}
       </section>
     </>
@@ -92,6 +156,7 @@ export function FoodTab({
   foodCategories,
   isAuth,
   hasRestaurant,
+  ownedRestaurantId,
   openCreate,
   openEntityGroup,
   openDetail,
@@ -136,7 +201,10 @@ export function FoodTab({
                 )}
               </div>
               <div className="restaurant-list-head">
-                <div className="card-title">{restaurant.title}</div>
+                <div className="row wrap" style={{ alignItems: "center", gap: 6 }}>
+                  <div className="card-title">{restaurant.title}</div>
+                  {ownedRestaurantId && restaurant.id === ownedRestaurantId ? <span className="badge">Моё</span> : null}
+                </div>
                 <span className="badge">{restaurant.dishes.length} блюд</span>
               </div>
               <div className="restaurant-list-address">{restaurant.address || "Адрес не указан"}</div>

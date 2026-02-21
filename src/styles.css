@@ -280,6 +280,13 @@ body {
   background: #fff5f5;
 }
 
+.fav-corner-btn.owner-corner-tag {
+  color: #b4232d;
+  border-color: #f5b2b8;
+  background: #fff2f4;
+  pointer-events: none;
+}
+
 .fav-corner-btn .icon {
   width: 17px;
   height: 17px;
@@ -389,13 +396,15 @@ body {
 }
 
 .card-taxi .taxi-media-full {
-  flex: 0 0 auto;
-  align-self: stretch;
+  flex: 0 0 clamp(94px, 30vw, 132px);
+  align-self: flex-start;
   aspect-ratio: 1 / 1;
-  width: auto;
+  width: clamp(94px, 30vw, 132px);
+  height: clamp(94px, 30vw, 132px);
   min-width: 94px;
   max-width: 132px;
-  min-height: 0;
+  max-height: 132px;
+  min-height: 94px;
 }
 
 .card-taxi .taxi-media-full.media-has-image,
@@ -518,6 +527,10 @@ body {
   .card-taxi .taxi-media-full {
     min-width: 84px;
     max-width: 108px;
+    width: clamp(84px, 30vw, 108px);
+    height: clamp(84px, 30vw, 108px);
+    min-height: 84px;
+    max-height: 108px;
   }
 
   .taxi-card-head {
@@ -533,6 +546,16 @@ body {
   width: calc(100% + 20px);
   margin: -10px -10px 2px;
   border-radius: 16px 16px 0 0;
+  aspect-ratio: 16 / 10;
+  min-height: 140px;
+  max-height: 220px;
+}
+
+.media-bleed.media-has-image,
+.media-bleed .media-slider,
+.media-bleed .media-slide,
+.media-bleed .media-img {
+  height: 100%;
 }
 
 .media-img {
@@ -1967,11 +1990,20 @@ button {
 
 .detail-taxi-media .media {
   min-height: 170px;
+  height: clamp(180px, 48vw, 300px);
+  aspect-ratio: 16 / 10;
   border-radius: 0;
 }
 
 .detail-taxi-media .media.media-has-image {
   border-radius: 0;
+}
+
+.detail-taxi-media .media.media-has-image,
+.detail-taxi-media .media-slider,
+.detail-taxi-media .media-slide,
+.detail-taxi-media .media-img {
+  height: 100%;
 }
 
 .detail-taxi-info-grid {

@@ -208,6 +208,20 @@ const toAccountId = (value) => {
   if (!Number.isInteger(parsed) || parsed < 1) return null;
   return parsed;
 };
+const pickFirstNumber = (...values) => {
+  for (const value of values) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  return null;
+};
+const pickFirstText = (...values) => {
+  for (const value of values) {
+    const text = String(value || "").trim();
+    if (text) return text;
+  }
+  return "";
+};
 const mapListingToUi = (item) => ({
   id: `${item.kind === 1 ? "ad" : "service"}-${item.listingId}`,
   listingId: item.listingId,
@@ -222,23 +236,35 @@ const mapListingToUi = (item) => ({
   isFavorite: Boolean(item.isFavorite),
 });
 const mapTaxiToUi = (item) => ({
-  id: `taxi-${item.taxiOfferId}`,
-  taxiOfferId: item.taxiOfferId,
-  category: DIRECTION_TO_TAXI_CATEGORY[item.direction] || TAXI_CATEGORIES[0],
-  direction: item.direction,
-  name: item.displayName,
-  price: Number(item.price) || 0,
-  rating: Number(item.rating) || 0,
-  date: getDaysAgo(item.createdAt),
-  seats: item.seatsTotal ? { total: item.seatsTotal, free: item.seatsFree } : null,
-  when: item.departureAt || null,
+  id: `taxi-${pickFirstNumber(item.taxiOfferId, item.offerId, item.id, item.taxi_id) || randomSuffix()}`,
+  taxiOfferId: pickFirstNumber(item.taxiOfferId, item.offerId, item.id, item.taxi_id),
+  category: DIRECTION_TO_TAXI_CATEGORY[pickFirstNumber(item.direction, item.routeDirection)] || TAXI_CATEGORIES[0],
+  direction: pickFirstNumber(item.direction, item.routeDirection),
+  name: pickFirstText(item.displayName, item.driverName, item.name, item.nickname, item.accountName, item.ownerName) || "Водитель",
+  price: Number(item.price ?? item.cityPrice) || 0,
+  rating: Number(item.rating ?? item.avgRating) || 0,
+  date: getDaysAgo(item.createdAt || item.created_at),
+  seats: pickFirstNumber(item.seatsTotal, item.totalSeats, item.seats_total)
+    ? {
+      total: pickFirstNumber(item.seatsTotal, item.totalSeats, item.seats_total),
+      free: pickFirstNumber(item.seatsFree, item.freeSeats, item.seats_free) || 0,
+    }
+    : null,
+  when: pickFirstText(item.departureAt, item.departure_at, item.when) || null,
   mode: "one-time",
   isFilled: false,
-  desc: item.description || "",
-  contacts: getContacts(item),
-  photos: normalizeSinglePhoto(item.carPhotos),
-  reviewsCount: Number(item.reviewsCount) || 0,
-  owner: item.accountId ? `account-${item.accountId}` : null,
+  desc: pickFirstText(item.description, item.desc),
+  contacts: getContacts({
+    phone: pickFirstText(item.phone, item.phoneNumber, item.mobile),
+    whatsapp: pickFirstText(item.whatsapp, item.wa, item.whatsApp),
+    telegram: pickFirstText(item.telegram, item.tg),
+  }),
+  photos: normalizeSinglePhoto(item.carPhotos || item.photos || item.photoUrls),
+  reviewsCount: Number(item.reviewsCount ?? item.reviewCount) || 0,
+  owner: (() => {
+    const ownerId = pickFirstNumber(item.accountId, item.ownerAccountId, item.driverAccountId, item.userId, item.createdByAccountId);
+    return ownerId ? `account-${ownerId}` : null;
+  })(),
   isFavorite: Boolean(item.isFavorite),
 });
 const mapMenuItemToUi = (item) => ({
@@ -574,10 +600,62 @@ export default function App() {
     }
   };
 
+  const isTaxiOwnedByProfile = useCallback((item) => {
+    if (!item) return false;
+    const normalizeText = (value) => String(value || "").trim().toLowerCase();
+    const normalizePhone = (value) => {
+      let digits = String(value || "").replace(/\D/g, "");
+      if (digits.length === 11 && digits.startsWith("8")) digits = `7${digits.slice(1)}`;
+      return digits;
+    };
+
+    const profileName = normalizeText(profile?.name);
+    const itemName = normalizeText(item.name || item.title);
+    const profileFirstName = profileName.split(/\s+/).filter(Boolean)[0] || "";
+    const itemFirstName = itemName.split(/\s+/).filter(Boolean)[0] || "";
+    const sameName = Boolean(
+      profileName
+      && itemName
+      && (
+        profileName === itemName
+        || (profileFirstName.length >= 3 && profileFirstName === itemFirstName)
+        || profileName.startsWith(`${itemName} `)
+        || itemName.startsWith(`${profileName} `)
+      )
+    );
+
+    const profilePhones = [profile?.phone, profile?.whatsapp]
+      .map(normalizePhone)
+      .filter(Boolean);
+    const itemPhones = [item?.contacts?.phone, item?.contacts?.wa]
+      .map(normalizePhone)
+      .filter(Boolean);
+    const hasSamePhone = profilePhones.some((phone) => itemPhones.includes(phone));
+
+    const normalizeTelegram = (value) => normalizeText(String(value || "").replace(/^@/, ""));
+    const profileTelegram = normalizeTelegram(profile?.telegram);
+    const itemTelegram = normalizeTelegram(item?.contacts?.tg);
+    const hasSameTelegram = Boolean(profileTelegram && itemTelegram && profileTelegram === itemTelegram);
+
+    return hasSamePhone || hasSameTelegram || sameName;
+  }, [profile?.name, profile?.phone, profile?.telegram, profile?.whatsapp]);
+
   const toggleFavorite = (id) => {
     ensureAuth(async () => {
       const accountId = toAccountId(authSession?.accountId);
       if (accountId === null || !id) return;
+      const ownTaxiByTemplate = taxiTemplates.some((item) => {
+        if (!item?.id || typeof id !== "string") return false;
+        return id === item.id || id === `template-preview-${item.id}` || id.startsWith(`${item.id}-`);
+      });
+      const isOwnItem =
+        customAds.some((item) => item.id === id)
+        || customServices.some((item) => item.id === id)
+        || customTaxiItems.some((item) => item.id === id)
+        || userRestaurantDishes.some((item) => item.id === id)
+        || ownTaxiByTemplate
+        || taxiData.some((item) => item.id === id && (item.owner === currentOwner || isTaxiOwnedByProfile(item)));
+      if (isOwnItem) return;
       try {
         if (id.startsWith("ad-") || id.startsWith("service-")) {
           const listingId = Number(id.split("-")[1]);
@@ -750,17 +828,34 @@ export default function App() {
     [foodRestaurants, foodCategory, restaurantEntity?.id]
   );
 
-  const normalizedCustomTaxiItems = useMemo(
+  const normalizedTaxiFeedItems = useMemo(
     () => taxiData.map((item) => normalizeEntityPhotos(item)),
     [taxiData]
+  );
+  const normalizedCustomTaxiItems = useMemo(
+    () => customTaxiItems.map((item) => normalizeEntityPhotos(item)),
+    [customTaxiItems]
   );
   const normalizedTaxiTemplates = useMemo(
     () => taxiTemplates.map((item) => normalizeEntityPhotos(item)),
     [taxiTemplates]
   );
+  const isOwnTaxiItem = useCallback((item) => {
+    if (!item) return false;
+    if (currentOwner && item.owner === currentOwner) return true;
+    if (isTaxiOwnedByProfile(item)) return true;
+    const id = String(item.id || "");
+    if (!id) return false;
+    if (normalizedCustomTaxiItems.some((entry) => entry.id === id)) return true;
+    return normalizedTaxiTemplates.some((entry) => {
+      const templateId = String(entry.id || "");
+      if (!templateId) return false;
+      return id === templateId || id === `template-preview-${templateId}` || id.startsWith(`${templateId}-`);
+    });
+  }, [currentOwner, normalizedCustomTaxiItems, normalizedTaxiTemplates, isTaxiOwnedByProfile]);
 
   const { taxiCatalog, taxiItems } = useTaxiCatalog({
-    customTaxiItems: normalizedCustomTaxiItems,
+    customTaxiItems: normalizedTaxiFeedItems,
     taxiTemplates: normalizedTaxiTemplates,
     mockTaxi: [],
     feedbackByItem,
@@ -1370,7 +1465,8 @@ export default function App() {
       return {
         title: "Моё такси",
         items: {
-          oneTime: normalizedCustomTaxiItems.filter((x) => x.mode === "one-time" && x.category !== "Такси по Цхинвалу"),
+          oneTimeCity: normalizedCustomTaxiItems.filter((x) => x.mode === "one-time" && x.category === "Такси по Цхинвалу"),
+          oneTimeIntercity: normalizedCustomTaxiItems.filter((x) => x.mode === "one-time" && x.category !== "Такси по Цхинвалу"),
           regular: normalizedTaxiTemplates,
         },
       };
@@ -1405,6 +1501,7 @@ export default function App() {
             openDetail={openDetail}
             toggleFavorite={toggleFavorite}
             favorites={favorites}
+            currentOwner={currentOwner}
           />
         )}
 
@@ -1420,6 +1517,7 @@ export default function App() {
             toggleFavorite={toggleFavorite}
             favorites={favorites}
             serviceCategories={SERVICE_CATEGORIES}
+            currentOwner={currentOwner}
           />
         )}
 
@@ -1437,6 +1535,8 @@ export default function App() {
             openDetail={openDetail}
             toggleFavorite={toggleFavorite}
             favorites={favorites}
+            currentOwner={currentOwner}
+            isOwnTaxiItem={isOwnTaxiItem}
           />
         )}
 
@@ -1448,6 +1548,7 @@ export default function App() {
             foodCategories={FOOD_CATEGORIES}
             isAuth={isAuth}
             hasRestaurant={hasRestaurant}
+            ownedRestaurantId={restaurantEntity?.id || null}
             openCreate={openCreate}
             openEntityGroup={openEntityGroup}
             openDetail={openDetail}
@@ -1465,7 +1566,7 @@ export default function App() {
             restaurantEntity={restaurantEntity}
             isTaxiDriver={isTaxiDriver}
             taxiTemplates={taxiTemplates}
-            oneTimeIntercityOffers={customTaxiItems.filter((x) => x.mode === "one-time" && x.category !== "Такси по Цхинвалу")}
+            oneTimeIntercityOffers={customTaxiItems.filter((x) => x.mode === "one-time")}
             myServices={customServices}
             onOpenEntityGroup={openEntityGroup}
             openCreate={openCreate}
@@ -1683,7 +1784,14 @@ export default function App() {
                 ? toggleDishAvailability
                 : null
             }
-            isOwnerView={Boolean(modal?.payload?.fromBusiness)}
+            isOwnerView={Boolean(
+              modal?.payload?.fromBusiness
+              || (detailData.type === "restaurant" && detailData.item.id === restaurantEntity?.id)
+              || (detailData.type === "ads" && (detailData.item.owner === currentOwner || customAds.some((item) => item.id === detailData.item.id)))
+              || (detailData.type === "services" && (detailData.item.owner === currentOwner || customServices.some((item) => item.id === detailData.item.id)))
+              || (detailData.type === "food" && userRestaurantDishes.some((dish) => dish.id === detailData.item.id))
+              || (detailData.type === "taxi" && isOwnTaxiItem(detailData.item))
+            )}
           />
         )}
 

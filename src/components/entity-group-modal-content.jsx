@@ -181,10 +181,10 @@ export function EntityGroupModalContent({
       ) : group === "taxi" ? (
         <div className="list">
           <section className="section" style={{ padding: 10 }}>
-            <h4 style={{ marginBottom: 4 }}>Разовые поездки</h4>
-            {(entityGroupData.items.oneTime || []).length ? (
+            <h4 style={{ marginBottom: 4 }}>Такси по городу</h4>
+            {(entityGroupData.items.oneTimeCity || []).length ? (
               <div className="list">
-                {entityGroupData.items.oneTime.map((item) => (
+                {entityGroupData.items.oneTimeCity.map((item) => (
                   <article
                     className="card card-clickable"
                     key={item.id}
@@ -225,12 +225,61 @@ export function EntityGroupModalContent({
                 ))}
               </div>
             ) : (
-              <p className="small">Разовых поездок пока нет.</p>
+              <p className="small">Городских поездок пока нет.</p>
             )}
           </section>
 
           <section className="section" style={{ padding: 10 }}>
-            <h4 style={{ marginBottom: 4 }}>Регулярные поездки</h4>
+            <h4 style={{ marginBottom: 4 }}>Межгород (разовые)</h4>
+            {(entityGroupData.items.oneTimeIntercity || []).length ? (
+              <div className="list">
+                {entityGroupData.items.oneTimeIntercity.map((item) => (
+                  <article
+                    className="card card-clickable"
+                    key={item.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onOpenTaxi(item.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") onOpenTaxi(item.id);
+                    }}
+                  >
+                    <div className="card-body">
+                      <div className="card-title">{item.category}</div>
+                      <p className="small">{item.when || "Дата не указана"} · {item.price} ₽</p>
+                      <div className="actions">
+                        <button
+                          className="primary-btn"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenTaxi(item.id);
+                          }}
+                        >
+                          Посмотреть
+                        </button>
+                        <button
+                          className={item.isFilled ? "primary-btn" : "ghost-btn"}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleTaxiFilled(item.id);
+                          }}
+                        >
+                          {item.isFilled ? "Снять заполнение" : "Заполнен"}
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="small">Межгородских поездок пока нет.</p>
+            )}
+          </section>
+
+          <section className="section" style={{ padding: 10 }}>
+            <h4 style={{ marginBottom: 4 }}>Межгород (регулярные)</h4>
             {(entityGroupData.items.regular || []).length ? (
               <div className="list">
                 {entityGroupData.items.regular.map((item) => (
@@ -300,7 +349,7 @@ export function EntityGroupModalContent({
                 ))}
               </div>
             ) : (
-              <p className="small">Регулярных поездок пока нет.</p>
+              <p className="small">Регулярных межгородских поездок пока нет.</p>
             )}
           </section>
         </div>
