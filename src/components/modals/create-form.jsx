@@ -70,6 +70,7 @@ export function CreateForm({
   const [isTimeDragging, setIsTimeDragging] = useState(false);
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
+  const wasIntercityOneTimeCreateRef = useRef(false);
   const maxPhotos = type === "ad" || type === "service" ? 5 : 1;
 
   useEffect(() => {
@@ -151,6 +152,14 @@ export function CreateForm({
     if (!isIntercitySelected && taxiOfferMode !== "one-time") setTaxiOfferMode("one-time");
   }, [isIntercitySelected, taxiOfferMode]);
 
+  const isIntercityOneTimeCreate = isIntercityCreate && !isRecurring;
+  useEffect(() => {
+    if (isIntercityOneTimeCreate && !wasIntercityOneTimeCreateRef.current && !taxiDayPreset) {
+      setTaxiDayPreset("Сегодня");
+    }
+    wasIntercityOneTimeCreateRef.current = isIntercityOneTimeCreate;
+  }, [isIntercityOneTimeCreate, taxiDayPreset]);
+
   const handleTaxiSubmit = (e) => {
     setAttemptedTaxiSubmit(true);
     const form = e.currentTarget;
@@ -162,8 +171,6 @@ export function CreateForm({
     if (isIntercityCreate && !String(formData.get("seats") || "").trim()) nextFieldErrors.seats = "Укажите количество мест";
     if (!String(formData.get("phone") || "").trim()) nextFieldErrors.phone = "Укажите номер телефона для связи";
     if (isIntercityCreate && !String(formData.get("wa") || "").trim()) nextFieldErrors.wa = "Укажите WhatsApp для связи";
-    if (isIntercityCreate && !String(formData.get("desc") || "").trim()) nextFieldErrors.desc = "Добавьте короткое описание поездки";
-    if (isIntercityCreate && (imagesInputRef.current?.files?.length || 0) === 0) nextFieldErrors.images = "Добавьте фото авто или водителя";
 
     setTaxiFieldErrors(nextFieldErrors);
     const nativeValid = form.reportValidity();
@@ -580,7 +587,6 @@ export function CreateForm({
           <Field label="Telegram"><input name="tg" defaultValue={initialValues?.contacts?.tg || ""} className="input" /></Field>
           <Field label="Описание">
             <textarea
-              required={isIntercityCreate}
               name="desc"
               defaultValue={initialValues?.desc || ""}
               className={`textarea ${taxiFieldErrors.desc ? "is-invalid" : ""}`}
@@ -594,7 +600,6 @@ export function CreateForm({
               <input
                 type="file"
                 name="images"
-                required={isIntercityCreate}
                 className={`input ${selectedPhotoCount > 0 ? "input-has-clear" : ""} ${taxiFieldErrors.images ? "is-invalid" : ""}`}
                 multiple={maxPhotos > 1}
                 accept="image/*"
