@@ -24,6 +24,16 @@ const buildPhotoUrlFromUpload = ({ uploadUrl, objectKey }) => {
   return `${normalizedUrl}/${encodeURIComponent(normalizedKey).replace(/%2F/g, "/")}`;
 };
 
+const extractS3Error = (raw) => {
+  const text = String(raw || "").trim();
+  if (!text) return "";
+  const code = text.match(/<Code>([^<]+)<\/Code>/i)?.[1] || "";
+  const message = text.match(/<Message>([^<]+)<\/Message>/i)?.[1] || "";
+  if (code && message) return `${code}: ${message}`;
+  if (message) return message;
+  return text.slice(0, 400);
+};
+
 const postFileToS3 = async ({ url, fields, file }) => {
   const formData = new FormData();
   Object.entries(fields || {}).forEach(([key, value]) => {
@@ -42,7 +52,13 @@ const postFileToS3 = async ({ url, fields, file }) => {
   }
 
   if (!response.ok) {
-    throw new Error("S3 upload failed");
+    let details = "";
+    try {
+      details = extractS3Error(await response.text());
+    } catch {
+      details = "";
+    }
+    throw new Error(details ? `S3 upload failed: ${details}` : `S3 upload failed (HTTP ${response.status})`);
   }
 };
 
