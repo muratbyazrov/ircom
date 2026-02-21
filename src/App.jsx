@@ -455,7 +455,7 @@ export default function App() {
     if (authPending) return;
 
     const fd = new FormData(event.currentTarget);
-    const login = String(fd.get("login") || "").trim();
+    const signInPhone = String(fd.get("phone") || "").trim();
     const phone = String(fd.get("phone") || "").trim();
     const nickname = String(fd.get("nickname") || "").trim();
     const name = String(fd.get("name") || "").trim();
@@ -466,8 +466,8 @@ export default function App() {
       return;
     }
 
-    if (authMode === "signin" && !login) {
-      setAuthError("Введите телефон или ник");
+    if (authMode === "signin" && !signInPhone) {
+      setAuthError("Введите телефон");
       return;
     }
 
@@ -493,7 +493,7 @@ export default function App() {
           password,
         })
         : await signInRequest({
-          login,
+          phone: signInPhone,
           password,
         });
 
@@ -1421,13 +1421,13 @@ export default function App() {
             <form className="list" style={{ marginTop: 10 }} onSubmit={handleAuthSubmit}>
               {authMode === "signin" && (
                 <label className="field">
-                  <span className="small">Телефон или ник</span>
+                  <span className="small">Телефон</span>
                   <input
                     required
-                    name="login"
+                    name="phone"
                     className="input"
-                    placeholder="+7... или nickname"
-                    autoComplete="username"
+                    placeholder="+7..."
+                    autoComplete="tel"
                   />
                 </label>
               )}
