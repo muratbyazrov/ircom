@@ -1,5 +1,6 @@
 import { Icon } from "./ui";
 import { applyImageFallback, replaceImageWithEmpty } from "../utils/images";
+import { formatTaxiWhenForDisplay } from "../utils/taxi";
 
 export function EntityGroupModalContent({
   group,
@@ -197,7 +198,7 @@ export function EntityGroupModalContent({
                   >
                     <div className="card-body">
                       <div className="card-title">{item.category}</div>
-                      <p className="small">{item.when || "Дата не указана"} · {item.price} ₽</p>
+                      <p className="small">{formatTaxiWhenForDisplay(item.when) || "Дата не указана"} · {item.price} ₽</p>
                       <div className="actions">
                         <button
                           className="primary-btn"
@@ -246,7 +247,7 @@ export function EntityGroupModalContent({
                   >
                     <div className="card-body">
                       <div className="card-title">{item.category}</div>
-                      <p className="small">{item.when || "Дата не указана"} · {item.price} ₽</p>
+                      <p className="small">{formatTaxiWhenForDisplay(item.when) || "Дата не указана"} · {item.price} ₽</p>
                       <div className="actions">
                         <button
                           className="primary-btn"

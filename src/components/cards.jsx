@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { clamp, fmtRub, short } from "../utils/helpers";
 import { applyImageFallback } from "../utils/images";
+import { formatTaxiWhenForDisplay } from "../utils/taxi";
 import { Icon } from "./ui";
 
 export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, section = "ads", isOwn = false, canFavorite = true }) {
@@ -67,6 +68,7 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
 
 export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFavorite = true }) {
   const hasRating = typeof item.ratingValue === "number" && Number(item.reviewsCount) > 0;
+  const whenText = formatTaxiWhenForDisplay(item.when);
   return (
     <article
       className="card card-clickable card-taxi"
@@ -120,7 +122,7 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
         </div>
         <div className="row wrap taxi-tags">
           {item.weekdays ? <span className="badge">Регулярно</span> : null}
-          {item.when ? <span className="badge">{item.when}</span> : null}
+          {whenText ? <span className="badge">{whenText}</span> : null}
           {item.seats ? <span className="badge">Места: {item.seats.free}/{item.seats.total}</span> : null}
           {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
         </div>

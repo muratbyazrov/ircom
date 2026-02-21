@@ -42,6 +42,9 @@ export const parseTaxiWhenValue = (whenValue, baseDate = new Date()) => {
   const text = String(whenValue || "").trim();
   if (!text) return null;
 
+  const nativeParsed = new Date(text);
+  if (!Number.isNaN(nativeParsed.getTime())) return nativeParsed;
+
   const timeMatch = text.match(/(\d{1,2}):(\d{2})/);
   if (!timeMatch) return null;
 
@@ -75,6 +78,28 @@ export const parseTaxiWhenValue = (whenValue, baseDate = new Date()) => {
 
   datePart.setHours(hour, minute, 0, 0);
   return datePart;
+};
+
+export const formatTaxiWhenForDisplay = (whenValue, baseDate = new Date()) => {
+  const text = String(whenValue || "").trim();
+  if (!text) return "";
+
+  const date = parseTaxiWhenValue(text, baseDate);
+  if (!date) return text;
+
+  const today = dayStart(baseDate);
+  const targetDay = dayStart(date);
+  const dayDiff = Math.round((targetDay.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+  const timeText = new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" }).format(date);
+
+  if (dayDiff === 0) return `Сегодня, ${timeText}`;
+  if (dayDiff === 1) return `Завтра, ${timeText}`;
+
+  const dateText = new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "short",
+  }).format(date);
+  return `${dateText}, ${timeText}`;
 };
 
 export const toTaxiDepartureAtApiValue = (whenValue, baseDate = new Date()) => {

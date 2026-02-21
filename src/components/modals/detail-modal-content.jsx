@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { clamp, fmtRub, getTouchDistance } from "../../utils/helpers";
 import { applyImageFallback, replaceImageWithEmpty } from "../../utils/images";
+import { formatTaxiWhenForDisplay } from "../../utils/taxi";
 import { Icon, Field } from "../ui";
 import { Media } from "../cards";
 
@@ -37,6 +38,7 @@ export function DetailModalContent({
   const foodDeliveryText = type === "food" ? (item.delivery ? "Есть доставка" : "Только самовывоз") : "";
   const isFoodDetail = type === "food";
   const isTaxiDetail = type === "taxi";
+  const taxiWhenText = isTaxiDetail ? formatTaxiWhenForDisplay(item.when) : "";
   const isServicesDetail = type === "services";
   const isAdsDetail = type === "ads";
   const isBasicDetail = !isRestaurantDetail && !isTaxiDetail && !isFoodDetail;
@@ -464,10 +466,10 @@ export function DetailModalContent({
               <span>Направление</span>
               <b>{item.category || "Не указано"}</b>
             </div>
-            {item.when ? (
+            {taxiWhenText ? (
               <div className="detail-taxi-info-item">
                 <span>Дата и время</span>
-                <b>{item.when}</b>
+                <b>{taxiWhenText}</b>
               </div>
             ) : null}
             {item.seats ? (
