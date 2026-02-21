@@ -1577,7 +1577,8 @@ export default function App() {
               });
             }}
             onEdit={
-              modal?.payload?.fromBusiness
+              (modal?.payload?.fromBusiness
+                || (detailData.type === "restaurant" && detailData.item.id === restaurantEntity?.id))
                 ? () => {
                   if (detailData.type === "restaurant") {
                     editRestaurant();
