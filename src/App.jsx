@@ -267,6 +267,7 @@ const mapTaxiToUi = (item) => ({
     const ownerId = pickFirstNumber(item.accountId, item.ownerAccountId, item.driverAccountId, item.userId, item.createdByAccountId);
     return ownerId ? `account-${ownerId}` : null;
   })(),
+  isActive: Object.prototype.hasOwnProperty.call(item || {}, "isActive") ? Boolean(item.isActive) : true,
   isFavorite: Boolean(item.isFavorite),
 });
 const mapMenuItemToUi = (item) => ({
@@ -432,12 +433,13 @@ export default function App() {
     const myAds = toArray(myAdsRaw).map((item) => mapListingToUi({ ...item, kind: 1, accountId }));
     const myServices = toArray(myServicesRaw).map((item) => mapListingToUi({ ...item, kind: 2, accountId }));
     const myTaxi = toArray(myTaxiRaw).map((item) => mapTaxiToUi({ ...item, accountId }));
+    const myActiveTaxi = myTaxi.filter((item) => item.isActive !== false);
 
     setCustomAds(myAds);
     setCustomServices(myServices);
-    setCustomTaxiItems(myTaxi);
+    setCustomTaxiItems(myActiveTaxi);
     setTaxiTemplates([]);
-    setIsTaxiDriver(myTaxi.length > 0);
+    setIsTaxiDriver(myActiveTaxi.length > 0);
 
     const myRestaurantId = toAccountId(myRestaurantRaw?.restaurantId);
     if (myRestaurantId !== null) {
@@ -903,6 +905,22 @@ export default function App() {
 
   const openBusinessDetail = (type, id, group) => {
     if (!id) return;
+    if (type === "restaurant") {
+      const restaurant = foodRestaurants.find((entry) => entry.id === id);
+      if (!restaurant) return;
+    }
+    if (type === "ads") {
+      const item = adsCatalog.find((entry) => entry.id === id);
+      if (!item) return;
+    }
+    if (type === "services") {
+      const item = servicesCatalog.find((entry) => entry.id === id);
+      if (!item) return;
+    }
+    if (type === "taxi") {
+      const item = taxiCatalog.find((entry) => entry.id === id);
+      if (!item) return;
+    }
     setModal({
       type: "detail",
       payload: {

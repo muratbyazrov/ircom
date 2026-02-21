@@ -49,6 +49,7 @@ export function CreateForm({
   const [selectedPhotoCount, setSelectedPhotoCount] = useState(0);
   const [photosLimitError, setPhotosLimitError] = useState("");
   const [attemptedTaxiSubmit, setAttemptedTaxiSubmit] = useState(false);
+  const [taxiFieldErrors, setTaxiFieldErrors] = useState({});
   const [selectedTaxiCategories, setSelectedTaxiCategories] = useState(() => (type === "taxi" ? initialTaxiCategories : []));
   const [taxiOfferMode, setTaxiOfferMode] = useState(initialTaxiMode);
   const [taxiDayPreset, setTaxiDayPreset] = useState(initialTaxiDayPreset);
@@ -81,6 +82,12 @@ export function CreateForm({
     const count = e.target.files?.length || 0;
     setSelectedPhotoCount(count);
     setPhotosLimitError(count > maxPhotos ? `Можно загрузить не более ${maxPhotos} фото` : "");
+    if (count > 0) {
+      setTaxiFieldErrors((prev) => {
+        if (!prev.images) return prev;
+        return { ...prev, images: "" };
+      });
+    }
 
     if (!count) {
       setIsPreparingPhotos(false);
@@ -147,10 +154,23 @@ export function CreateForm({
   const handleTaxiSubmit = (e) => {
     setAttemptedTaxiSubmit(true);
     const form = e.currentTarget;
+    const formData = new FormData(form);
+    const nextFieldErrors = {};
+
+    if (!String(formData.get("name") || "").trim()) nextFieldErrors.name = "Укажите имя водителя";
+    if (!String(formData.get("price") || "").trim()) nextFieldErrors.price = "Укажите стоимость поездки";
+    if (isIntercityCreate && !String(formData.get("seats") || "").trim()) nextFieldErrors.seats = "Укажите количество мест";
+    if (!String(formData.get("phone") || "").trim()) nextFieldErrors.phone = "Укажите номер телефона для связи";
+    if (isIntercityCreate && !String(formData.get("wa") || "").trim()) nextFieldErrors.wa = "Укажите WhatsApp для связи";
+    if (isIntercityCreate && !String(formData.get("desc") || "").trim()) nextFieldErrors.desc = "Добавьте короткое описание поездки";
+    if (isIntercityCreate && (imagesInputRef.current?.files?.length || 0) === 0) nextFieldErrors.images = "Добавьте фото авто или водителя";
+
+    setTaxiFieldErrors(nextFieldErrors);
     const nativeValid = form.reportValidity();
     const hasRequiredTaxiWhen = !isIntercityCreate || isRecurring || hasTaxiWhen;
     const hasRequiredRecurringDays = !isIntercityCreate || !isRecurring || hasRecurringDays;
-    if (!nativeValid || !hasTaxiDirection || !hasRequiredTaxiWhen || !hasRequiredRecurringDays || Boolean(photosLimitError)) {
+    const hasMissingTaxiFields = Object.values(nextFieldErrors).some(Boolean);
+    if (!nativeValid || hasMissingTaxiFields || !hasTaxiDirection || !hasRequiredTaxiWhen || !hasRequiredRecurringDays || Boolean(photosLimitError)) {
       e.preventDefault();
       return;
     }
@@ -374,10 +394,47 @@ export function CreateForm({
             </p>
             {showTaxiDirectionError ? <p className="small field-invalid-note">Выберите хотя бы одно направление</p> : null}
           </Field>
-          <Field label="Имя"><input required name="name" defaultValue={initialValues?.name || ""} className="input" minLength={2} maxLength={60} /></Field>
+          <Field label="Имя">
+            <input
+              required
+              name="name"
+              defaultValue={initialValues?.name || ""}
+              className={`input ${taxiFieldErrors.name ? "is-invalid" : ""}`}
+              minLength={2}
+              maxLength={60}
+              onInput={() => setTaxiFieldErrors((prev) => ({ ...prev, name: "" }))}
+            />
+            {taxiFieldErrors.name ? <p className="small field-invalid-note">{taxiFieldErrors.name}</p> : null}
+          </Field>
           <div className={isIntercitySelected ? "grid-2" : undefined}>
-            <Field label="Стоимость"><input required name="price" defaultValue={initialValues?.price || ""} type="number" min={1} inputMode="numeric" pattern="[0-9]*" className="input" /></Field>
-            {isIntercitySelected ? <Field label={isIntercityCreate ? "Всего мест" : "Свободных мест"}><input required={isIntercityCreate} name="seats" defaultValue={initialValues?.seats?.free || initialValues?.seats?.total || ""} type="number" min={1} className="input" /></Field> : null}
+            <Field label="Стоимость">
+              <input
+                required
+                name="price"
+                defaultValue={initialValues?.price || ""}
+                type="number"
+                min={1}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                className={`input ${taxiFieldErrors.price ? "is-invalid" : ""}`}
+                onInput={() => setTaxiFieldErrors((prev) => ({ ...prev, price: "" }))}
+              />
+              {taxiFieldErrors.price ? <p className="small field-invalid-note">{taxiFieldErrors.price}</p> : null}
+            </Field>
+            {isIntercitySelected ? (
+              <Field label={isIntercityCreate ? "Всего мест" : "Свободных мест"}>
+                <input
+                  required={isIntercityCreate}
+                  name="seats"
+                  defaultValue={initialValues?.seats?.free || initialValues?.seats?.total || ""}
+                  type="number"
+                  min={1}
+                  className={`input ${taxiFieldErrors.seats ? "is-invalid" : ""}`}
+                  onInput={() => setTaxiFieldErrors((prev) => ({ ...prev, seats: "" }))}
+                />
+                {taxiFieldErrors.seats ? <p className="small field-invalid-note">{taxiFieldErrors.seats}</p> : null}
+              </Field>
+            ) : null}
           </div>
           {isIntercitySelected ? (
             <>
@@ -487,14 +544,18 @@ export function CreateForm({
               type="tel"
               inputMode="tel"
               defaultValue={formatPhoneValue(initialValues?.contacts?.phone, { allowEmpty: true })}
-              className="input"
+              className={`input ${taxiFieldErrors.phone ? "is-invalid" : ""}`}
               placeholder={PHONE_PLACEHOLDER}
               maxLength={18}
               pattern={PHONE_PATTERN}
               title="Введите номер в формате +7 (999) 999-99-99"
-              onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+              onInput={(e) => {
+                handlePhoneInput(e, { allowEmpty: true });
+                setTaxiFieldErrors((prev) => ({ ...prev, phone: "" }));
+              }}
               onFocus={syncPhonePrev}
             />
+            {taxiFieldErrors.phone ? <p className="small field-invalid-note">{taxiFieldErrors.phone}</p> : null}
           </Field>
           <Field label="WhatsApp">
             <input
@@ -503,24 +564,38 @@ export function CreateForm({
               type="tel"
               inputMode="tel"
               defaultValue={formatPhoneValue(initialValues?.contacts?.wa, { allowEmpty: true })}
-              className="input"
+              className={`input ${taxiFieldErrors.wa ? "is-invalid" : ""}`}
               placeholder={PHONE_PLACEHOLDER}
               maxLength={18}
               pattern={PHONE_PATTERN}
               title="Введите номер в формате +7 (999) 999-99-99"
-              onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+              onInput={(e) => {
+                handlePhoneInput(e, { allowEmpty: true });
+                setTaxiFieldErrors((prev) => ({ ...prev, wa: "" }));
+              }}
               onFocus={syncPhonePrev}
             />
+            {taxiFieldErrors.wa ? <p className="small field-invalid-note">{taxiFieldErrors.wa}</p> : null}
           </Field>
           <Field label="Telegram"><input name="tg" defaultValue={initialValues?.contacts?.tg || ""} className="input" /></Field>
-          <Field label="Описание"><textarea required={isIntercityCreate} name="desc" defaultValue={initialValues?.desc || ""} className="textarea" maxLength={2000} /></Field>
+          <Field label="Описание">
+            <textarea
+              required={isIntercityCreate}
+              name="desc"
+              defaultValue={initialValues?.desc || ""}
+              className={`textarea ${taxiFieldErrors.desc ? "is-invalid" : ""}`}
+              maxLength={2000}
+              onInput={() => setTaxiFieldErrors((prev) => ({ ...prev, desc: "" }))}
+            />
+            {taxiFieldErrors.desc ? <p className="small field-invalid-note">{taxiFieldErrors.desc}</p> : null}
+          </Field>
           <Field label="Фото авто или водителя (1 фото)">
             <div className="input-with-clear">
               <input
                 type="file"
                 name="images"
                 required={isIntercityCreate}
-                className={`input ${selectedPhotoCount > 0 ? "input-has-clear" : ""}`}
+                className={`input ${selectedPhotoCount > 0 ? "input-has-clear" : ""} ${taxiFieldErrors.images ? "is-invalid" : ""}`}
                 multiple={maxPhotos > 1}
                 accept="image/*"
                 ref={imagesInputRef}
@@ -548,6 +623,7 @@ export function CreateForm({
               </div>
             ) : null}
             {photosLimitError ? <p className="small" style={{ color: "var(--danger)" }}>{photosLimitError}</p> : null}
+            {taxiFieldErrors.images ? <p className="small field-invalid-note">{taxiFieldErrors.images}</p> : null}
           </Field>
           <FormActions
             onClose={onClose}
