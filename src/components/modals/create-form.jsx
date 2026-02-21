@@ -11,6 +11,7 @@ export function CreateForm({
   type,
   onSubmit,
   onClose,
+  submitPending = false,
   taxiCategories,
   adsCategories = [],
   serviceCategories = [],
@@ -288,8 +289,9 @@ export function CreateForm({
           </Field>
           <FormActions
             onClose={onClose}
-            submitDisabled={isPreparingPhotos || Boolean(photosLimitError)}
-            submitLabel={isPreparingPhotos ? "Подготовка фото..." : isEdit ? "Сохранить изменения" : "Сохранить"}
+            submitting={submitPending}
+            submitDisabled={submitPending || isPreparingPhotos || Boolean(photosLimitError)}
+            submitLabel={submitPending ? "Сохранение..." : isPreparingPhotos ? "Подготовка фото..." : isEdit ? "Сохранить изменения" : "Сохранить"}
           />
         </form>
       </>
@@ -524,8 +526,9 @@ export function CreateForm({
           </Field>
           <FormActions
             onClose={onClose}
-            submitDisabled={!selectedTaxiCategories.length || isPreparingPhotos || Boolean(photosLimitError) || (isIntercitySelected && isRecurring && !recurringDays.length)}
-            submitLabel={isPreparingPhotos ? "Подготовка фото..." : isEdit ? "Сохранить изменения" : "Сохранить"}
+            submitting={submitPending}
+            submitDisabled={submitPending || !selectedTaxiCategories.length || isPreparingPhotos || Boolean(photosLimitError) || (isIntercitySelected && isRecurring && !recurringDays.length)}
+            submitLabel={submitPending ? "Сохранение..." : isPreparingPhotos ? "Подготовка фото..." : isEdit ? "Сохранить изменения" : "Сохранить"}
           />
         </form>
       </>
@@ -616,8 +619,9 @@ export function CreateForm({
         {photosLimitError ? <p className="small" style={{ color: "var(--danger)" }}>{photosLimitError}</p> : null}
         <FormActions
           onClose={onClose}
-          submitDisabled={isPreparingPhotos || Boolean(photosLimitError)}
-          submitLabel={isPreparingPhotos ? "Подготовка фото..." : isEdit ? "Сохранить изменения" : "Сохранить"}
+          submitting={submitPending}
+          submitDisabled={submitPending || isPreparingPhotos || Boolean(photosLimitError)}
+          submitLabel={submitPending ? "Сохранение..." : isPreparingPhotos ? "Подготовка фото..." : isEdit ? "Сохранить изменения" : "Сохранить"}
         />
       </form>
     </>

@@ -1271,7 +1271,7 @@ export default function App() {
       return {
         type: "restaurant",
         initialValues: restaurantEntity || {},
-        editMeta: { kind: editKind || "restaurant" },
+        editMeta: { id: restaurantEntity?.id, kind: editKind || "restaurant" },
       };
     }
 
