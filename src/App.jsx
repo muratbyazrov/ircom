@@ -24,6 +24,7 @@ import {
 } from "./api/listing";
 import {
   createTaxiOfferRequest,
+  deleteTaxiOfferRequest,
   getMyTaxiOffersRequest,
   getTaxiOffersRequest,
   toggleTaxiFavoriteRequest,
@@ -884,6 +885,18 @@ export default function App() {
           : taxiCatalog;
     const item = source.find((x) => x.id === id);
     if (!item) return;
+    if (type === "taxi" && isOwnTaxiItem(item)) {
+      setModal({
+        type: "detail",
+        payload: {
+          type,
+          id,
+          fromBusiness: true,
+          returnTo: { type: "entityGroup", payload: { group: "taxi" } },
+        },
+      });
+      return;
+    }
     setModal({ type: "detail", payload: { type, id } });
   };
 
@@ -1183,6 +1196,20 @@ export default function App() {
   };
 
   const editTaxiOffer = (id) => openEditEntity({ type: "taxi", id, kind: "taxi-one-time" });
+  const removeTaxiOffer = (id) => {
+    const targetTaxi = normalizedCustomTaxiItems.find((item) => item.id === id);
+    if (!targetTaxi) return;
+    const taxiTitle = String(targetTaxi.name || targetTaxi.category || "Поездка").trim();
+
+    setModal({
+      type: "confirmTaxiDelete",
+      payload: {
+        taxiId: id,
+        taxiTitle,
+        returnTo: { type: "entityGroup", payload: { group: "taxi" } },
+      },
+    });
+  };
 
   const editService = (id) => openEditEntity({ type: "service", id, kind: "service" });
   const editAd = (id) => openEditEntity({ type: "ad", id, kind: "ad" });
@@ -1226,6 +1253,38 @@ export default function App() {
       await deleteMenuItemRequest({ accountId, menuItemId });
       await refreshMyData();
       await refreshCatalog();
+    }
+    if (modal?.payload?.returnTo) {
+      setModal(modal.payload.returnTo);
+      return;
+    }
+    setModal(null);
+  };
+  const confirmRemoveTaxiOffer = async () => {
+    if (modal?.type !== "confirmTaxiDelete") return;
+    const taxiId = modal?.payload?.taxiId;
+    if (!taxiId) {
+      closeModal();
+      return;
+    }
+    const accountId = toAccountId(authSession?.accountId);
+    const taxiOfferId = Number(String(taxiId).split("-")[1]);
+    if (accountId !== null && taxiOfferId) {
+      await deleteTaxiOfferRequest({ accountId, taxiOfferId });
+      await refreshMyData();
+      await refreshCatalog();
+      setFeedbackByItem((prev) => {
+        if (!Object.prototype.hasOwnProperty.call(prev, taxiId)) return prev;
+        const next = { ...prev };
+        delete next[taxiId];
+        return next;
+      });
+      setFavorites((prev) => {
+        if (!prev.has(taxiId)) return prev;
+        const next = new Set(prev);
+        next.delete(taxiId);
+        return next;
+      });
     }
     if (modal?.payload?.returnTo) {
       setModal(modal.payload.returnTo);
@@ -1784,6 +1843,11 @@ export default function App() {
                 ? toggleDishAvailability
                 : null
             }
+            onDeleteTaxi={
+              detailData.type === "taxi" && isOwnTaxiItem(detailData.item)
+                ? removeTaxiOffer
+                : null
+            }
             isOwnerView={Boolean(
               modal?.payload?.fromBusiness
               || (detailData.type === "restaurant" && detailData.item.id === restaurantEntity?.id)
@@ -1803,6 +1867,19 @@ export default function App() {
             </p>
             <div className="actions" style={{ marginTop: 8 }}>
               <button className="danger-btn" type="button" onClick={confirmRemoveDish}>Удалить</button>
+              <button className="ghost-btn" type="button" onClick={closeModal}>Отмена</button>
+            </div>
+          </>
+        )}
+
+        {modal?.type === "confirmTaxiDelete" && (
+          <>
+            <h3>Удалить поездку?</h3>
+            <p className="small">
+              Поездка «{modal?.payload?.taxiTitle || "Без названия"}» будет удалена без возможности восстановления.
+            </p>
+            <div className="actions" style={{ marginTop: 8 }}>
+              <button className="danger-btn" type="button" onClick={confirmRemoveTaxiOffer}>Удалить</button>
               <button className="ghost-btn" type="button" onClick={closeModal}>Отмена</button>
             </div>
           </>

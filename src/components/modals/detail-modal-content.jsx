@@ -19,6 +19,7 @@ export function DetailModalContent({
   onEditDish,
   onDeleteDish,
   onToggleDishAvailability,
+  onDeleteTaxi,
 }) {
   const { item, type } = data;
   const photos = item.photos || [];
@@ -708,6 +709,7 @@ export function DetailModalContent({
       {!isRestaurantDetail && isOwnerView && type !== "food" ? (
         <div className="actions" style={{ marginTop: 8 }}>
           {typeof onEdit === "function" ? <button className="primary-btn" type="button" onClick={onEdit}>Редактировать</button> : null}
+          {isTaxiDetail && typeof onDeleteTaxi === "function" ? <button className="danger-btn" type="button" onClick={() => onDeleteTaxi(item.id)}>Удалить</button> : null}
         </div>
       ) : null}
 

@@ -99,7 +99,7 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
           </button>
         ) : isOwn ? (
           <span className="fav-corner-btn taxi-fav-btn owner-corner-tag" aria-label="Ваша поездка">
-            Моя поездка
+            Вы водитель
           </span>
         ) : null}
         <div className="taxi-card-layout">
