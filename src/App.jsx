@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import { mock } from "./data/mock";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CreateForm, DetailModalContent, ProfileEditForm } from "./components/modals";
 import { EntityGroupModalContent } from "./components/entity-group-modal-content";
 import { Icon, Modal } from "./components/ui";
@@ -8,10 +7,38 @@ import { useGestureGuard } from "./hooks/use-gesture-guard";
 import { useNavHistory } from "./hooks/use-nav-history";
 import { useTaxiCatalog } from "./hooks/use-taxi-catalog";
 import { AdsTab, FoodTab, ProfileTab, ServicesTab, TaxiTab } from "./sections/tabs";
-import { getSessionRequest, registerRequest, signInRequest, signOutRequest } from "./api/auth";
+import {
+  createOrUpdateAccountRequest,
+  getSessionRequest,
+  registerRequest,
+  signInRequest,
+  signOutRequest,
+} from "./api/auth";
+import {
+  createListingRequest,
+  getListingsRequest,
+  getMyListingsRequest,
+  toggleListingFavoriteRequest,
+  updateListingRequest,
+} from "./api/listing";
+import {
+  createTaxiOfferRequest,
+  getMyTaxiOffersRequest,
+  getTaxiOffersRequest,
+  toggleTaxiFavoriteRequest,
+  updateTaxiOfferRequest,
+} from "./api/taxi";
+import {
+  createMenuItemRequest,
+  createOrUpdateRestaurantRequest,
+  deleteMenuItemRequest,
+  getMenuItemsRequest,
+  getMyRestaurantRequest,
+  toggleMenuItemFavoriteRequest,
+  updateMenuItemRequest,
+} from "./api/food";
 import { tabConfig } from "./utils/constants";
 import { sortItems } from "./utils/helpers";
-import { normalizeWeekdays } from "./utils/taxi";
 
 const FEEDBACK_SEED = {
   t1: [
@@ -79,6 +106,20 @@ const FEEDBACK_SEED = {
 };
 const APP_HISTORY_KEY = "__ircomNavState";
 const AUTH_SESSION_STORAGE_KEY = "__ircomAuthSession";
+const ADS_CATEGORIES = ["Все", "Авто", "Недвижимость", "Электроника", "Бытовая техника", "Мебель", "Другое", "Мои объявления"];
+const SERVICE_CATEGORIES = ["Все", "Кондитерка", "Репетиторы", "Красота", "Автосервис", "Другое"];
+const FOOD_CATEGORIES = ["Все", "Кавказская кухня", "Суши и роллы", "Осетинские пироги", "Бургеры", "Другое"];
+const TAXI_CATEGORIES = ["Такси по Цхинвалу", "Цхинвал -> Владикавказ", "Владикавказ -> Цхинвал"];
+const TAXI_CATEGORY_TO_DIRECTION = {
+  "Такси по Цхинвалу": 1,
+  "Цхинвал -> Владикавказ": 2,
+  "Владикавказ -> Цхинвал": 3,
+};
+const DIRECTION_TO_TAXI_CATEGORY = {
+  1: "Такси по Цхинвалу",
+  2: "Цхинвал -> Владикавказ",
+  3: "Владикавказ -> Цхинвал",
+};
 
 const toArray = (value) => (Array.isArray(value) ? value : value ? [value] : []);
 const buildUserPhoto = (name, idx) => `https://picsum.photos/seed/${encodeURIComponent(`user-taxi-${name}-${idx}`)}/900/600`;
@@ -114,11 +155,7 @@ const profileValue = (value) => {
   return text === "-" ? "" : text;
 };
 const buildInitialFeedback = () => {
-  const source = [...mock.services, ...mock.taxi];
-  return source.reduce((acc, item) => {
-    acc[item.id] = Array.isArray(FEEDBACK_SEED[item.id]) ? [...FEEDBACK_SEED[item.id]] : [];
-    return acc;
-  }, {});
+  return {};
 };
 const getFeedbackRating = (reviews) => {
   if (!Array.isArray(reviews) || !reviews.length) return null;
@@ -126,6 +163,71 @@ const getFeedbackRating = (reviews) => {
   return Number((sum / reviews.length).toFixed(1));
 };
 const deepCopy = (value) => (value == null ? value : JSON.parse(JSON.stringify(value)));
+const getDaysAgo = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 0;
+  const delta = Date.now() - date.getTime();
+  return Math.max(0, Math.floor(delta / 86400000));
+};
+const getContacts = (item) => ({
+  ...(item?.phone ? { phone: item.phone } : {}),
+  ...(item?.whatsapp ? { wa: item.whatsapp } : {}),
+  ...(item?.telegram ? { tg: item.telegram } : {}),
+});
+const toAccountId = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+const mapListingToUi = (item) => ({
+  id: `${item.kind === 1 ? "ad" : "service"}-${item.listingId}`,
+  listingId: item.listingId,
+  category: item.category,
+  title: item.title,
+  price: Number(item.price) || 0,
+  date: getDaysAgo(item.createdAt),
+  desc: item.description || "",
+  owner: item.accountId ? `account-${item.accountId}` : null,
+  contacts: getContacts(item),
+  photos: normalizeFivePhotos(item.photos),
+  isFavorite: Boolean(item.isFavorite),
+});
+const mapTaxiToUi = (item) => ({
+  id: `taxi-${item.taxiOfferId}`,
+  taxiOfferId: item.taxiOfferId,
+  category: DIRECTION_TO_TAXI_CATEGORY[item.direction] || TAXI_CATEGORIES[0],
+  direction: item.direction,
+  name: item.displayName,
+  price: Number(item.price) || 0,
+  rating: Number(item.rating) || 0,
+  date: getDaysAgo(item.createdAt),
+  seats: item.seatsTotal ? { total: item.seatsTotal, free: item.seatsFree } : null,
+  when: item.departureAt || null,
+  mode: "one-time",
+  isFilled: false,
+  desc: item.description || "",
+  contacts: getContacts(item),
+  photos: normalizeSinglePhoto(item.carPhotos),
+  reviewsCount: Number(item.reviewsCount) || 0,
+  owner: item.accountId ? `account-${item.accountId}` : null,
+  isFavorite: Boolean(item.isFavorite),
+});
+const mapMenuItemToUi = (item) => ({
+  id: `food-${item.menuItemId}`,
+  menuItemId: item.menuItemId,
+  restaurantId: item.restaurantId,
+  category: item.category || "Другое",
+  restaurant: item.restaurantName || "Без названия заведения",
+  title: item.name,
+  price: Number(item.price) || 0,
+  prep: Number(item.cookTimeMinutes) || 25,
+  always: Boolean(item.alwaysInStock),
+  unavailable: !Boolean(item.isAvailable),
+  delivery: Boolean(item.hasDelivery),
+  desc: item.description || "",
+  contacts: getContacts(item),
+  photos: normalizeSinglePhoto(item.photos),
+  isFavorite: Boolean(item.isFavorite),
+});
 export default function App() {
   const [tab, setTab] = useState("ads");
   const [favorites, setFavorites] = useState(new Set());
@@ -142,6 +244,10 @@ export default function App() {
   const [authMode, setAuthMode] = useState("signin");
   const [authPending, setAuthPending] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [adsData, setAdsData] = useState([]);
+  const [servicesData, setServicesData] = useState([]);
+  const [taxiData, setTaxiData] = useState([]);
+  const [foodData, setFoodData] = useState([]);
   const {
     isAuth,
     authSession,
@@ -166,9 +272,9 @@ export default function App() {
     setIsTaxiDriver,
     toggleAuth,
     applyAuthSession,
-  } = useAuthState({ mock, deepCopy });
+  } = useAuthState({ deepCopy });
 
-  const adsCategoriesVisible = isAuth ? mock.adsCategories : mock.adsCategories.filter((x) => x !== "Мои объявления");
+  const adsCategoriesVisible = isAuth ? ADS_CATEGORIES : ADS_CATEGORIES.filter((x) => x !== "Мои объявления");
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
@@ -210,6 +316,110 @@ export default function App() {
       isMounted = false;
     };
   }, [applyAuthSession]);
+
+  const refreshCatalog = useCallback(async () => {
+    const accountId = toAccountId(authSession?.accountId);
+    const [adsRaw, servicesRaw, taxiCityRaw, taxiOutRaw, taxiInRaw, menuRaw] = await Promise.all([
+      getListingsRequest({ kind: 1, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
+      getListingsRequest({ kind: 2, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
+      getTaxiOffersRequest({ direction: 1, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
+      getTaxiOffersRequest({ direction: 2, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
+      getTaxiOffersRequest({ direction: 3, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
+      getMenuItemsRequest({ limit: 300, ...(accountId !== null ? { accountId } : {}) }),
+    ]);
+
+    const nextAds = toArray(adsRaw).map(mapListingToUi);
+    const nextServices = toArray(servicesRaw).map(mapListingToUi);
+    const nextTaxi = [...toArray(taxiCityRaw), ...toArray(taxiOutRaw), ...toArray(taxiInRaw)].map(mapTaxiToUi);
+    const nextFood = toArray(menuRaw).map(mapMenuItemToUi);
+
+    setAdsData(nextAds);
+    setServicesData(nextServices);
+    setTaxiData(nextTaxi);
+    setFoodData(nextFood);
+
+    const nextFavorites = new Set([
+      ...nextAds.filter((x) => x.isFavorite).map((x) => x.id),
+      ...nextServices.filter((x) => x.isFavorite).map((x) => x.id),
+      ...nextTaxi.filter((x) => x.isFavorite).map((x) => x.id),
+      ...nextFood.filter((x) => x.isFavorite).map((x) => x.id),
+    ]);
+    setFavorites(nextFavorites);
+  }, [authSession?.accountId]);
+
+  const refreshMyData = useCallback(async () => {
+    const accountId = toAccountId(authSession?.accountId);
+    if (accountId === null) {
+      setCustomAds([]);
+      setCustomServices([]);
+      setCustomTaxiItems([]);
+      setTaxiTemplates([]);
+      setUserRestaurantDishes([]);
+      setHasRestaurant(false);
+      setRestaurantEntity(null);
+      setIsTaxiDriver(false);
+      return;
+    }
+
+    const [myAdsRaw, myServicesRaw, myTaxiRaw, myRestaurantRaw] = await Promise.all([
+      getMyListingsRequest({ accountId, kind: 1, limit: 200 }),
+      getMyListingsRequest({ accountId, kind: 2, limit: 200 }),
+      getMyTaxiOffersRequest({ accountId, limit: 200 }),
+      getMyRestaurantRequest({ accountId }),
+    ]);
+
+    const myAds = toArray(myAdsRaw).map((item) => mapListingToUi({ ...item, kind: 1, accountId }));
+    const myServices = toArray(myServicesRaw).map((item) => mapListingToUi({ ...item, kind: 2, accountId }));
+    const myTaxi = toArray(myTaxiRaw).map((item) => mapTaxiToUi({ ...item, accountId }));
+
+    setCustomAds(myAds);
+    setCustomServices(myServices);
+    setCustomTaxiItems(myTaxi);
+    setTaxiTemplates([]);
+    setIsTaxiDriver(myTaxi.length > 0);
+
+    if (myRestaurantRaw?.restaurantId) {
+      const myRestaurantMenuRaw = await getMenuItemsRequest({ accountId, restaurantId: myRestaurantRaw.restaurantId, limit: 300 });
+      const myRestaurantMenu = toArray(myRestaurantMenuRaw).map(mapMenuItemToUi);
+      setHasRestaurant(true);
+      setRestaurantEntity({
+        id: `restaurant-${myRestaurantRaw.restaurantId}`,
+        restaurantId: myRestaurantRaw.restaurantId,
+        title: myRestaurantRaw.name || "Моё заведение",
+        desc: myRestaurantRaw.description || "",
+        address: "",
+        deliveryMode: myRestaurantMenu.some((dish) => dish.delivery) ? "free" : "none",
+        deliveryPrice: 0,
+        logo: myRestaurantRaw.logoUrl || "",
+        phone: myRestaurantRaw.phone || "",
+        telegram: myRestaurantRaw.telegram || "",
+        whatsapp: myRestaurantRaw.whatsapp || "",
+      });
+      setUserRestaurantDishes(myRestaurantMenu);
+    } else {
+      setHasRestaurant(false);
+      setRestaurantEntity(null);
+      setUserRestaurantDishes([]);
+    }
+  }, [
+    authSession?.accountId,
+    setCustomAds,
+    setCustomServices,
+    setCustomTaxiItems,
+    setTaxiTemplates,
+    setUserRestaurantDishes,
+    setHasRestaurant,
+    setRestaurantEntity,
+    setIsTaxiDriver,
+  ]);
+
+  useEffect(() => {
+    refreshCatalog().catch(() => {});
+  }, [refreshCatalog]);
+
+  useEffect(() => {
+    refreshMyData().catch(() => {});
+  }, [refreshMyData]);
 
   useNavHistory({ appHistoryKey: APP_HISTORY_KEY, tab, setTab, modal, setModal });
   useGestureGuard();
@@ -313,24 +523,52 @@ export default function App() {
   };
 
   const toggleFavorite = (id) => {
-    ensureAuth(() => {
-      setFavorites((prev) => {
-        const next = new Set(prev);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        return next;
-      });
+    ensureAuth(async () => {
+      const accountId = toAccountId(authSession?.accountId);
+      if (accountId === null || !id) return;
+      try {
+        if (id.startsWith("ad-") || id.startsWith("service-")) {
+          const listingId = Number(id.split("-")[1]);
+          if (!listingId) return;
+          const result = await toggleListingFavoriteRequest({ accountId, listingId });
+          setFavorites((prev) => {
+            const next = new Set(prev);
+            if (result?.isFavorite) next.add(id);
+            else next.delete(id);
+            return next;
+          });
+        } else if (id.startsWith("taxi-")) {
+          const taxiOfferId = Number(id.split("-")[1]);
+          if (!taxiOfferId) return;
+          const result = await toggleTaxiFavoriteRequest({ accountId, taxiOfferId });
+          setFavorites((prev) => {
+            const next = new Set(prev);
+            if (result?.isFavorite) next.add(id);
+            else next.delete(id);
+            return next;
+          });
+        } else if (id.startsWith("food-")) {
+          const menuItemId = Number(id.split("-")[1]);
+          if (!menuItemId) return;
+          const result = await toggleMenuItemFavoriteRequest({ accountId, menuItemId });
+          setFavorites((prev) => {
+            const next = new Set(prev);
+            if (result?.isFavorite) next.add(id);
+            else next.delete(id);
+            return next;
+          });
+        }
+      } catch {
+        // ignore
+      }
     });
   };
 
   const adsCatalog = useMemo(
-    () => [...customAds, ...mock.ads].map((item) => ({ ...item, photos: normalizeFivePhotos(item?.photos) })),
-    [customAds]
+    () => adsData.map((item) => ({ ...item, photos: normalizeFivePhotos(item?.photos) })),
+    [adsData]
   );
-  const myAds = useMemo(
-    () => (currentOwner ? adsCatalog.filter((x) => x.owner === currentOwner) : []),
-    [adsCatalog, currentOwner]
-  );
+  const myAds = useMemo(() => customAds, [customAds]);
 
   const adsItems = useMemo(() => {
     const category = adsCategoriesVisible.includes(adsCategory) ? adsCategory : "Все";
@@ -342,7 +580,7 @@ export default function App() {
 
   const decorateWithFeedback = (item) => {
     const reviews = Array.isArray(feedbackByItem[item.id]) ? feedbackByItem[item.id] : [];
-    const reviewsCount = reviews.length;
+    const reviewsCount = Math.max(reviews.length, Number(item.reviewsCount) || 0);
     const reviewsRating = getFeedbackRating(reviews);
     const baseRating = typeof item.rating === "number" ? Number(item.rating.toFixed(1)) : null;
     const ratingValue = reviewsRating ?? baseRating;
@@ -357,35 +595,35 @@ export default function App() {
   };
 
   const servicesCatalog = useMemo(
-    () => [...customServices, ...mock.services]
+    () => servicesData
       .map((item) => ({ ...item, photos: normalizeFivePhotos(item?.photos) }))
       .map((item) => decorateWithFeedback(item)),
-    [feedbackByItem, customServices]
+    [feedbackByItem, servicesData]
   );
 
   const servicesItems = useMemo(
     () => sortItems(servicesCatalog.filter((x) => serviceCategory === "Все" || x.category === serviceCategory), servicesSort, favorites),
     [serviceCategory, servicesSort, favorites, servicesCatalog]
   );
-  const normalizedMockFood = useMemo(() => mock.food.map((dish) => normalizeDish(dish)), []);
   const normalizedUserRestaurantDishes = useMemo(
     () => (Array.isArray(userRestaurantDishes) ? userRestaurantDishes : []).map((dish) => normalizeDish(dish)),
     [userRestaurantDishes]
   );
   const foodCatalog = useMemo(
-    () => [...normalizedUserRestaurantDishes, ...normalizedMockFood],
-    [normalizedUserRestaurantDishes, normalizedMockFood]
+    () => foodData.map((dish) => normalizeDish(dish)),
+    [foodData]
   );
 
   const foodRestaurants = useMemo(() => {
     const buckets = new Map();
-    normalizedMockFood.forEach((dish) => {
-      const restaurantName = String(dish.restaurant || "").trim() || "Без названия заведения";
-      if (!buckets.has(restaurantName)) buckets.set(restaurantName, []);
-      buckets.get(restaurantName).push(dish);
+    foodCatalog.forEach((dish) => {
+      const restaurantKey = String(dish.restaurantId || dish.restaurant || "").trim() || "restaurant-unknown";
+      if (!buckets.has(restaurantKey)) buckets.set(restaurantKey, []);
+      buckets.get(restaurantKey).push(dish);
     });
 
-    const fromFood = [...buckets.entries()].map(([restaurantTitle, dishes]) => {
+    const fromFood = [...buckets.entries()].map(([restaurantKey, dishes]) => {
+      const restaurantTitle = String(dishes[0]?.restaurant || "").trim() || "Без названия заведения";
       const contacts = dishes.reduce((acc, dish) => {
         const nextContacts = dish.contacts || {};
         if (!acc.phone && nextContacts.phone) acc.phone = nextContacts.phone;
@@ -393,9 +631,7 @@ export default function App() {
         if (!acc.tg && nextContacts.tg) acc.tg = nextContacts.tg;
         return acc;
       }, {});
-      const restaurantAddress = String(mock.foodRestaurantAddresses?.[restaurantTitle] || dishes.find((x) => x.address)?.address || "").trim();
-      const restaurantLogo = String(mock.foodRestaurantLogos?.[restaurantTitle] || "").trim();
-      const id = buildRestaurantId(restaurantTitle);
+      const id = String(restaurantKey).startsWith("restaurant-") ? restaurantKey : buildRestaurantId(restaurantTitle);
       const reviews = Array.isArray(feedbackByItem[id]) ? feedbackByItem[id] : [];
       const categories = [...new Set(dishes.map((x) => x.category).filter(Boolean))];
 
@@ -403,8 +639,8 @@ export default function App() {
         id,
         title: restaurantTitle,
         desc: categories.length ? `Кухня: ${categories.join(", ")}` : "Описание заведения не указано.",
-        address: restaurantAddress,
-        logo: restaurantLogo,
+        address: "",
+        logo: String(dishes[0]?.restaurantLogo || "").trim(),
         deliveryMode: dishes.some((x) => x.delivery) ? "free" : "none",
         deliveryPrice: 0,
         contacts,
@@ -417,10 +653,11 @@ export default function App() {
     });
 
     if (hasRestaurant && restaurantEntity) {
-      const ownReviews = Array.isArray(feedbackByItem["my-restaurant"]) ? feedbackByItem["my-restaurant"] : [];
+      const ownRestaurantId = restaurantEntity?.id || "restaurant-own";
+      const ownReviews = Array.isArray(feedbackByItem[ownRestaurantId]) ? feedbackByItem[ownRestaurantId] : [];
       const ownDishes = normalizedUserRestaurantDishes;
-      fromFood.unshift({
-        id: "my-restaurant",
+      const ownRestaurantCard = {
+        id: ownRestaurantId,
         title: restaurantEntity.title || "Моё заведение",
         desc: restaurantEntity.desc || "",
         address: restaurantEntity.address || "",
@@ -437,11 +674,14 @@ export default function App() {
         reviews: ownReviews,
         reviewsCount: ownReviews.length,
         ratingValue: getFeedbackRating(ownReviews),
-      });
+      };
+      const existingIdx = fromFood.findIndex((x) => x.id === ownRestaurantId);
+      if (existingIdx >= 0) fromFood[existingIdx] = ownRestaurantCard;
+      else fromFood.unshift(ownRestaurantCard);
     }
 
     return fromFood;
-  }, [hasRestaurant, restaurantEntity, feedbackByItem, normalizedUserRestaurantDishes, normalizedMockFood]);
+  }, [hasRestaurant, restaurantEntity, feedbackByItem, normalizedUserRestaurantDishes, foodCatalog]);
 
   const visibleFoodRestaurants = useMemo(
     () => foodRestaurants
@@ -449,24 +689,23 @@ export default function App() {
         ...restaurant,
         dishes: restaurant.dishes.filter((dish) => foodCategory === "Все" || dish.category === foodCategory),
       }))
-      .filter((restaurant) => restaurant.dishes.length > 0 || (foodCategory === "Все" && restaurant.id === "my-restaurant")),
-    [foodRestaurants, foodCategory]
+      .filter((restaurant) => restaurant.dishes.length > 0 || (foodCategory === "Все" && restaurant.id === restaurantEntity?.id)),
+    [foodRestaurants, foodCategory, restaurantEntity?.id]
   );
 
   const normalizedCustomTaxiItems = useMemo(
-    () => customTaxiItems.map((item) => normalizeEntityPhotos(item)),
-    [customTaxiItems]
+    () => taxiData.map((item) => normalizeEntityPhotos(item)),
+    [taxiData]
   );
   const normalizedTaxiTemplates = useMemo(
     () => taxiTemplates.map((item) => normalizeEntityPhotos(item)),
     [taxiTemplates]
   );
-  const normalizedMockTaxi = useMemo(() => mock.taxi.map((item) => normalizeEntityPhotos(item)), []);
 
   const { taxiCatalog, taxiItems } = useTaxiCatalog({
     customTaxiItems: normalizedCustomTaxiItems,
     taxiTemplates: normalizedTaxiTemplates,
-    mockTaxi: normalizedMockTaxi,
+    mockTaxi: [],
     feedbackByItem,
     decorateWithFeedback,
     taxiRequestedAt,
@@ -545,7 +784,7 @@ export default function App() {
   const fullScreenModal = modal?.type === "detail" || modal?.type === "profileEdit" || modal?.type === "entityGroup" || fullScreenCreate;
   const blockAuthBackdropClose = modal?.type === "auth" && Boolean(modal?.payload?.returnTo);
 
-  const submitMock = (event, type) => {
+  const submitMock = async (event, type) => {
     event.preventDefault();
     const fd = new FormData(event.currentTarget);
     const payload = {};
@@ -565,250 +804,175 @@ export default function App() {
       }
     }
 
+    const accountId = toAccountId(authSession?.accountId);
     const editEntityId = typeof payload.editEntityId === "string" ? payload.editEntityId : "";
     const editEntityKind = typeof payload.editEntityKind === "string" ? payload.editEntityKind : "";
     const isEdit = Boolean(editEntityId || editEntityKind === "restaurant");
+    const photoFromPayload = (key, limit = 1) => toArray(payload[key]).slice(0, limit).map((name, idx) => buildUserPhoto(String(name), idx));
 
-    if (type === "restaurant") setHasRestaurant(true);
-    if (type === "restaurant") {
-      setRestaurantEntity((prev) => {
-        const deliveryModeRaw = String(payload.deliveryMode || "none");
-        const deliveryMode = deliveryModeRaw === "free" || deliveryModeRaw === "paid" ? deliveryModeRaw : "none";
-        const deliveryPrice = deliveryMode === "paid" ? Math.max(0, Number(payload.deliveryPrice) || 0) : 0;
-        const nextLogo = toArray(payload.logo).length
-          ? buildUserPhoto(String(toArray(payload.logo)[0]), 0)
-          : String(prev?.logo || "").trim();
-        return {
-          title: payload.title || "Моё заведение",
-          desc: payload.desc || "",
-          address: payload.address || "",
-          deliveryMode,
-          deliveryPrice,
-          phone: payload.phone || "",
-          telegram: payload.telegram || "",
-          whatsapp: payload.whatsapp || "",
-          logo: nextLogo,
-        };
+    if (accountId === null) return;
+
+    try {
+      if (type === "restaurant") {
+      const logo = photoFromPayload("logo", 1)[0] || String(restaurantEntity?.logo || "").trim() || undefined;
+      await createOrUpdateRestaurantRequest({
+        accountId,
+        name: payload.title || "Моё заведение",
+        description: payload.desc || "",
+        logoUrl: logo,
+        phone: payload.phone || undefined,
+        telegram: payload.telegram || undefined,
+        whatsapp: payload.whatsapp || undefined,
       });
-    }
-    if (type === "ad") {
-      if (isEdit && editEntityId) {
-        setCustomAds((prev) => prev.map((ad) => {
-          if (ad.id !== editEntityId) return ad;
-          const nextPhotos = toArray(payload.images).length
-            ? toArray(payload.images).slice(0, 5).map((name, idx) => buildUserPhoto(String(name), idx))
-            : normalizeFivePhotos(ad.photos);
-          return {
-            ...ad,
-            category: payload.category || ad.category,
-            title: payload.title || ad.title,
-            price: Number(payload.price) || ad.price || 0,
-            desc: payload.desc || ad.desc || "",
-            photos: nextPhotos,
-          };
-        }));
-      } else {
-        setCustomAds((prev) => [
-          {
-            id: `ad-custom-${Date.now()}-${randomSuffix()}`,
-            category: payload.category || "Другое",
-            title: payload.title || "Объявление",
-            price: Number(payload.price) || 0,
-            date: 0,
-            desc: payload.desc || "",
-            owner: currentOwner || "test_driver",
-            contacts: {
-              ...(profile.phone && profile.phone !== "-" ? { phone: profile.phone } : {}),
-              ...(profile.whatsapp && profile.whatsapp !== "-" ? { wa: profile.whatsapp } : {}),
-              ...(profile.telegram && profile.telegram !== "-" ? { tg: profile.telegram } : {}),
-            },
-            photos: toArray(payload.images).slice(0, 5).map((name, idx) => buildUserPhoto(String(name), idx)),
-          },
-          ...prev,
-        ]);
+        await refreshMyData();
+        await refreshCatalog();
       }
-    }
-    if (type === "service") {
-      if (isEdit && editEntityId) {
-        setCustomServices((prev) => prev.map((service) => {
-          if (service.id !== editEntityId) return service;
-          const nextPhotos = toArray(payload.images).length
-            ? toArray(payload.images).slice(0, 5).map((name, idx) => buildUserPhoto(String(name), idx))
-            : normalizeFivePhotos(service.photos);
-          return {
-            ...service,
-            category: payload.category || service.category,
-            title: payload.title || service.title,
-            price: Number(payload.price) || service.price || 0,
-            desc: payload.desc || service.desc || "",
-            photos: nextPhotos,
-          };
-        }));
-      } else {
-        setCustomServices((prev) => [
-          {
-            id: `service-custom-${Date.now()}-${randomSuffix()}`,
-            category: payload.category || "Другое",
-            title: payload.title || "Услуга",
-            price: Number(payload.price) || 0,
-            date: 0,
-            desc: payload.desc || "",
-            owner: currentOwner || "test_driver",
-            contacts: {
-              ...(profile.phone && profile.phone !== "-" ? { phone: profile.phone } : {}),
-              ...(profile.whatsapp && profile.whatsapp !== "-" ? { wa: profile.whatsapp } : {}),
-              ...(profile.telegram && profile.telegram !== "-" ? { tg: profile.telegram } : {}),
-            },
-            photos: toArray(payload.images).slice(0, 5).map((name, idx) => buildUserPhoto(String(name), idx)),
-          },
-          ...prev,
-        ]);
-      }
-    }
-    if (type === "dish") {
-      const nextPhoto = toArray(payload.images)
-        .slice(0, 1)
-        .map((name, idx) => buildUserPhoto(String(name), idx));
-      const ownRestaurantTitle = String(restaurantEntity?.title || "Моё заведение").trim();
-      const ownContacts = {
-        ...(restaurantEntity?.phone ? { phone: restaurantEntity.phone } : {}),
-        ...(restaurantEntity?.whatsapp ? { wa: restaurantEntity.whatsapp } : {}),
-        ...(restaurantEntity?.telegram ? { tg: restaurantEntity.telegram } : {}),
-      };
 
-      if (isEdit && editEntityId && editEntityKind === "dish") {
-        setUserRestaurantDishes((prev) => prev.map((dish) => {
-          if (dish.id !== editEntityId) return dish;
-          return {
-            ...dish,
-            category: payload.category || dish.category,
-            title: payload.title || dish.title,
-            price: Number(payload.price) || dish.price || 0,
-            desc: payload.desc || dish.desc || "",
-            photos: nextPhoto.length ? nextPhoto : normalizeSinglePhoto(dish.photos),
-            restaurant: ownRestaurantTitle,
-          };
-        }));
-      } else {
-        setUserRestaurantDishes((prev) => [
-          {
-            id: `dish-custom-${Date.now()}-${randomSuffix()}`,
+      if (type === "ad" || type === "service") {
+        const kind = type === "ad" ? 1 : 2;
+        if (isEdit) {
+          const listingId = Number(String(editEntityId).split("-")[1]);
+          if (!listingId) throw new Error("Некорректный идентификатор объявления/услуги");
+          const currentItem = (type === "ad" ? customAds : customServices).find((x) => x.id === editEntityId);
+          await updateListingRequest({
+            accountId,
+            listingId,
+            kind,
+            category: payload.category || currentItem?.category || "Другое",
+            title: payload.title || currentItem?.title || (type === "ad" ? "Объявление" : "Услуга"),
+            description: payload.desc || currentItem?.desc || "",
+            price: Number(payload.price) || Number(currentItem?.price) || 1,
+            photos: photoFromPayload("images", 5).length ? photoFromPayload("images", 5) : normalizeFivePhotos(currentItem?.photos),
+          });
+        } else {
+          await createListingRequest({
+            accountId,
+            kind,
             category: payload.category || "Другое",
-            restaurant: ownRestaurantTitle,
-            title: payload.title || "Новое блюдо",
-            price: Number(payload.price) || 0,
-            prep: 25,
-            always: true,
-            unavailable: false,
-            delivery: restaurantEntity?.deliveryMode === "free" || restaurantEntity?.deliveryMode === "paid",
-            desc: payload.desc || "",
-            contacts: ownContacts,
-            photos: nextPhoto,
-          },
+            title: payload.title || (type === "ad" ? "Объявление" : "Услуга"),
+            description: payload.desc || "",
+            price: Number(payload.price) || 1,
+            photos: photoFromPayload("images", 5),
+          });
+        }
+        await refreshMyData();
+        await refreshCatalog();
+      }
+
+      if (type === "dish") {
+        const photos = photoFromPayload("images", 1);
+        if (isEdit && editEntityId && editEntityKind === "dish") {
+          const menuItemId = Number(String(editEntityId).split("-").pop());
+          if (!menuItemId) throw new Error("Некорректный идентификатор блюда");
+          const currentDish = userRestaurantDishes.find((x) => x.id === editEntityId);
+          await updateMenuItemRequest({
+            accountId,
+            menuItemId,
+            category: payload.category || currentDish?.category || "Другое",
+            name: payload.title || currentDish?.title || "Блюдо",
+            description: payload.desc || currentDish?.desc || "",
+            cookTimeMinutes: Number(currentDish?.prep) || 25,
+            alwaysInStock: Boolean(currentDish?.always),
+            price: Number(payload.price) || Number(currentDish?.price) || 1,
+            hasDelivery: Boolean(currentDish?.delivery),
+            isAvailable: !Boolean(currentDish?.unavailable),
+            photos: photos.length ? photos : normalizeSinglePhoto(currentDish?.photos),
+          });
+        } else {
+          await createMenuItemRequest({
+            accountId,
+            category: payload.category || "Другое",
+            name: payload.title || "Новое блюдо",
+            description: payload.desc || "",
+            cookTimeMinutes: 25,
+            alwaysInStock: true,
+            price: Number(payload.price) || 1,
+            hasDelivery: Boolean(restaurantEntity && restaurantEntity.deliveryMode !== "none"),
+            isAvailable: true,
+            photos,
+          });
+        }
+        await refreshMyData();
+        await refreshCatalog();
+      }
+
+      if (type === "profile") {
+        await createOrUpdateAccountRequest({
+          accountId,
+          name: payload.name || profile.name || "Пользователь",
+          phone: payload.phone || null,
+          telegram: payload.telegram || null,
+          whatsapp: payload.whatsapp || null,
+          nickname: profile.nickname && profile.nickname !== "-" ? profile.nickname : null,
+        });
+        setProfile((prev) => ({
           ...prev,
-        ]);
+          name: payload.name || "-",
+          phone: payload.phone || "-",
+          telegram: payload.telegram || "-",
+          whatsapp: payload.whatsapp || "-",
+          about: payload.about || "-",
+        }));
+        await refreshCatalog();
       }
-    }
-    if (type === "profile") {
-      setProfile({
-        name: payload.name || "-",
-        phone: payload.phone || "-",
-        telegram: payload.telegram || "-",
-        whatsapp: payload.whatsapp || "-",
-        about: payload.about || "-",
-      });
-    }
-    if (type === "taxi") {
-      const categories = toArray(payload.category).filter(Boolean);
-      const mode = payload.mode === "recurring" ? "recurring" : "one-time";
-      const scheduleDays = normalizeWeekdays(payload.scheduleDay);
-      const scheduleHour = typeof payload.scheduleHour === "string" ? payload.scheduleHour : "08:00";
-      const seatsValue = Number(payload.seats);
-      const seats = Number.isFinite(seatsValue) && seatsValue > 0 ? { total: seatsValue, free: seatsValue } : null;
-      const photos = toArray(payload.images).slice(0, 1).map((name, idx) => buildUserPhoto(String(name), idx));
-      const contacts = {
-        ...(payload.phone ? { phone: payload.phone } : {}),
-        ...(payload.wa ? { wa: payload.wa } : {}),
-        ...(payload.tg ? { tg: payload.tg } : {}),
-      };
 
-      if (isEdit && editEntityId && editEntityKind === "taxi-one-time") {
-        setCustomTaxiItems((prev) => prev.map((item) => {
-          if (item.id !== editEntityId) return item;
-          return {
-            ...item,
-            category: categories[0] || item.category,
-            name: payload.name || item.name,
-            price: Number(payload.price) || item.price || 0,
-            seats,
-            when: payload.when || item.when || null,
-            desc: payload.desc || item.desc || "",
-            contacts,
-            photos: photos.length ? photos : normalizeSinglePhoto(item.photos),
-          };
-        }));
-        setIsTaxiDriver(true);
-      } else if (isEdit && editEntityId && editEntityKind === "taxi-template") {
-        setTaxiTemplates((prev) => prev.map((template) => {
-          if (template.id !== editEntityId) return template;
-          return {
-            ...template,
-            category: categories[0] || template.category,
-            name: payload.name || template.name,
-            price: Number(payload.price) || template.price || 0,
-            seats,
-            desc: payload.desc || template.desc || "",
-            contacts,
-            photos: photos.length ? photos : normalizeSinglePhoto(template.photos),
-            weekdays: scheduleDays.length ? scheduleDays : template.weekdays || [],
-            time: scheduleHour || template.time,
-          };
-        }));
-        setIsTaxiDriver(true);
-      } else if (mode === "recurring" && scheduleDays.length && categories.length) {
-        const templates = categories.map((category) => ({
-          id: `taxi-template-${Date.now()}-${randomSuffix()}`,
-          category,
-          name: payload.name || "Водитель",
-          price: Number(payload.price) || 0,
-          rating: 5,
-          seats,
-          desc: payload.desc || "Регулярные поездки по расписанию.",
-          contacts,
-          photos,
-          weekdays: scheduleDays,
-          time: scheduleHour,
-          status: "active",
-        }));
-        setTaxiTemplates((prev) => [...templates, ...prev]);
-        setIsTaxiDriver(true);
-      } else if (categories.length) {
-        const items = categories.map((category) => ({
-          id: `taxi-custom-${Date.now()}-${randomSuffix()}`,
-          category,
-          name: payload.name || "Водитель",
-          price: Number(payload.price) || 0,
-          rating: 5,
-          date: 0,
-          seats,
-          when: payload.when || null,
-          mode: "one-time",
-          isFilled: false,
-          desc: payload.desc || "Новое предложение",
-          contacts,
-          photos,
-        }));
-        setCustomTaxiItems((prev) => [...items, ...prev]);
-        setIsTaxiDriver(true);
+      if (type === "taxi") {
+        if (isEdit && editEntityKind === "taxi-template") {
+          throw new Error("Редактирование шаблонов такси не поддерживается бэкендом");
+        }
+        const categories = toArray(payload.category).filter(Boolean);
+        const category = categories[0];
+        const direction = TAXI_CATEGORY_TO_DIRECTION[category];
+        if (!direction) throw new Error("Выберите направление");
+        const seatsValue = Number(payload.seats);
+        const seats = Number.isFinite(seatsValue) && seatsValue > 0 ? seatsValue : undefined;
+        if (isEdit && editEntityKind === "taxi-one-time") {
+          const taxiOfferId = Number(String(editEntityId).split("-")[1]);
+          if (!taxiOfferId) throw new Error("Некорректный идентификатор поездки");
+          const currentTaxi = customTaxiItems.find((x) => x.id === editEntityId);
+          await updateTaxiOfferRequest({
+            accountId,
+            taxiOfferId,
+            direction,
+            displayName: payload.name || currentTaxi?.name || "Водитель",
+            description: payload.desc || currentTaxi?.desc || "",
+            phone: payload.phone || currentTaxi?.contacts?.phone,
+            whatsapp: payload.wa || currentTaxi?.contacts?.wa || undefined,
+            telegram: payload.tg || currentTaxi?.contacts?.tg || undefined,
+            price: Number(payload.price) || Number(currentTaxi?.price) || 1,
+            departureAt: payload.when || currentTaxi?.when || undefined,
+            seatsTotal: seats,
+            seatsFree: seats,
+            carPhotos: photoFromPayload("images", 1).length ? photoFromPayload("images", 1) : normalizeSinglePhoto(currentTaxi?.photos),
+          });
+        } else {
+          await createTaxiOfferRequest({
+            accountId,
+            direction,
+            displayName: payload.name || "Водитель",
+            description: payload.desc || "",
+            phone: payload.phone,
+            whatsapp: payload.wa || undefined,
+            telegram: payload.tg || undefined,
+            price: Number(payload.price) || 1,
+            departureAt: payload.when || undefined,
+            seatsTotal: seats,
+            seatsFree: seats,
+            carPhotos: photoFromPayload("images", 1),
+          });
+        }
+        await refreshMyData();
+        await refreshCatalog();
       }
-    }
 
-    alert(`Мок-отправка (${type})\n${JSON.stringify(payload, null, 2)}`);
-    if (modal?.payload?.returnTo) {
-      setModal(modal.payload.returnTo);
-      return;
+      if (modal?.payload?.returnTo) {
+        setModal(modal.payload.returnTo);
+        return;
+      }
+      setModal(null);
+    } catch (error) {
+      alert(error?.message || "Не удалось сохранить данные");
     }
-    setModal(null);
   };
 
   const setTemplateStatus = (id, status) => {
@@ -839,7 +1003,7 @@ export default function App() {
       type: "detail",
       payload: {
         type: "restaurant",
-        id: "my-restaurant",
+        id: restaurantEntity?.id,
         fromBusiness: true,
         returnTo: { type: "entityGroup", payload: { group: "restaurant" } },
       },
@@ -856,29 +1020,53 @@ export default function App() {
     });
   };
 
-  const confirmRemoveDish = () => {
+  const confirmRemoveDish = async () => {
     if (modal?.type !== "confirmDishDelete") return;
     const dishId = modal?.payload?.dishId;
     if (!dishId) {
       closeModal();
       return;
     }
-
-    setUserRestaurantDishes((prev) => prev.filter((dish) => dish.id !== dishId));
+    const accountId = toAccountId(authSession?.accountId);
+    const menuItemId = Number(String(dishId).split("-").pop());
+    if (accountId !== null && menuItemId) {
+      await deleteMenuItemRequest({ accountId, menuItemId });
+      await refreshMyData();
+      await refreshCatalog();
+    }
     if (modal?.payload?.returnTo) {
       setModal(modal.payload.returnTo);
       return;
     }
     setModal(null);
   };
-  const toggleDishAvailability = (id) => {
-    setUserRestaurantDishes((prev) => prev.map((dish) => (
-      dish.id === id ? { ...dish, unavailable: !dish.unavailable } : dish
-    )));
+  const toggleDishAvailability = async (id) => {
+    const accountId = toAccountId(authSession?.accountId);
+    const menuItemId = Number(String(id).split("-").pop());
+    const dish = userRestaurantDishes.find((x) => x.id === id);
+    if (accountId === null || !menuItemId || !dish) return;
+    await updateMenuItemRequest({
+      accountId,
+      menuItemId,
+      category: dish.category,
+      name: dish.title,
+      description: dish.desc || "",
+      cookTimeMinutes: Number(dish.prep) || 25,
+      alwaysInStock: Boolean(dish.always),
+      price: Number(dish.price) || 1,
+      hasDelivery: Boolean(dish.delivery),
+      isAvailable: Boolean(dish.unavailable),
+      photos: normalizeSinglePhoto(dish.photos),
+    });
+    await refreshMyData();
+    await refreshCatalog();
   };
 
   const editRestaurant = () => openEditEntity({ type: "restaurant", kind: "restaurant" });
-  const viewRestaurant = () => openBusinessDetail("restaurant", "my-restaurant", "restaurant");
+  const viewRestaurant = () => {
+    if (!restaurantEntity?.id) return;
+    openBusinessDetail("restaurant", restaurantEntity.id, "restaurant");
+  };
   const viewTaxiTemplate = (id) => {
     if (!id) return;
     setModal({
@@ -1133,7 +1321,7 @@ export default function App() {
             openDetail={openDetail}
             toggleFavorite={toggleFavorite}
             favorites={favorites}
-            serviceCategories={mock.serviceCategories}
+            serviceCategories={SERVICE_CATEGORIES}
           />
         )}
 
@@ -1146,7 +1334,7 @@ export default function App() {
             taxiItems={taxiItems}
             taxiRequestedAt={taxiRequestedAt}
             setTaxiRequestedAt={setTaxiRequestedAt}
-            taxiCategories={mock.taxiCategories}
+            taxiCategories={TAXI_CATEGORIES}
             openCreate={openCreate}
             openDetail={openDetail}
             toggleFavorite={toggleFavorite}
@@ -1159,7 +1347,7 @@ export default function App() {
             foodCategory={foodCategory}
             setFoodCategory={setFoodCategory}
             restaurants={visibleFoodRestaurants}
-            foodCategories={mock.foodCategories}
+            foodCategories={FOOD_CATEGORIES}
             hasRestaurant={hasRestaurant}
             openCreate={openCreate}
             openDetail={openDetail}
@@ -1367,21 +1555,21 @@ export default function App() {
                 }
                 : null
             }
-            onAddDish={detailData.type === "restaurant" && detailData.item.id === "my-restaurant" ? () => openCreate("dish") : null}
+            onAddDish={detailData.type === "restaurant" && detailData.item.id === restaurantEntity?.id ? () => openCreate("dish") : null}
             onEditDish={
-              (detailData.type === "restaurant" && detailData.item.id === "my-restaurant")
+              (detailData.type === "restaurant" && detailData.item.id === restaurantEntity?.id)
               || (detailData.type === "food" && userRestaurantDishes.some((dish) => dish.id === detailData.item.id))
                 ? editDish
                 : null
             }
             onDeleteDish={
-              (detailData.type === "restaurant" && detailData.item.id === "my-restaurant")
+              (detailData.type === "restaurant" && detailData.item.id === restaurantEntity?.id)
               || (detailData.type === "food" && userRestaurantDishes.some((dish) => dish.id === detailData.item.id))
                 ? removeDish
                 : null
             }
             onToggleDishAvailability={
-              (detailData.type === "restaurant" && detailData.item.id === "my-restaurant")
+              (detailData.type === "restaurant" && detailData.item.id === restaurantEntity?.id)
               || (detailData.type === "food" && userRestaurantDishes.some((dish) => dish.id === detailData.item.id))
                 ? toggleDishAvailability
                 : null
@@ -1409,7 +1597,10 @@ export default function App() {
             initialValues={createInitialValues}
             onSubmit={submitMock}
             onClose={closeModal}
-            taxiCategories={mock.taxiCategories}
+            taxiCategories={TAXI_CATEGORIES}
+            adsCategories={ADS_CATEGORIES}
+            serviceCategories={SERVICE_CATEGORIES}
+            foodCategories={FOOD_CATEGORIES}
           />
         )}
 
@@ -1421,7 +1612,10 @@ export default function App() {
             editMeta={editEntityData.editMeta}
             onSubmit={submitMock}
             onClose={closeModal}
-            taxiCategories={mock.taxiCategories}
+            taxiCategories={TAXI_CATEGORIES}
+            adsCategories={ADS_CATEGORIES}
+            serviceCategories={SERVICE_CATEGORIES}
+            foodCategories={FOOD_CATEGORIES}
           />
         )}
 

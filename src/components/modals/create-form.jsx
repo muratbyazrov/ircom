@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { mock } from "../../data/mock";
 import { applyImageFallback } from "../../utils/images";
 import { formatPhoneValue, handlePhoneInput, PHONE_PATTERN, PHONE_PLACEHOLDER, syncPhonePrev } from "../../utils/phone";
 import { getTaxiDateByPreset, TAXI_DAY_PRESETS, TAXI_RECURRING_WEEKDAYS } from "../../utils/taxi";
@@ -8,7 +7,18 @@ import restaurantHero from "../../assets/restaurant-hero.svg";
 import taxiHero from "../../assets/taxi-hero.svg";
 import serviceHero from "../../assets/service-hero.svg";
 
-export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "create", initialValues = null, editMeta = null }) {
+export function CreateForm({
+  type,
+  onSubmit,
+  onClose,
+  taxiCategories,
+  adsCategories = [],
+  serviceCategories = [],
+  foodCategories = [],
+  mode = "create",
+  initialValues = null,
+  editMeta = null,
+}) {
   const isEdit = mode === "edit";
   const initialCategory = initialValues?.category;
   const initialTaxiCategories = Array.isArray(initialValues?.categories)
@@ -523,10 +533,10 @@ export function CreateForm({ type, onSubmit, onClose, taxiCategories, mode = "cr
   }
 
   const categories = type === "ad"
-    ? mock.adsCategories.filter((x) => x !== "Мои объявления")
+    ? adsCategories.filter((x) => x !== "Мои объявления")
     : type === "service"
-      ? mock.serviceCategories
-      : mock.foodCategories;
+      ? serviceCategories
+      : foodCategories;
 
   return (
     <>

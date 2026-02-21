@@ -36,7 +36,7 @@ const profileOrGuest = (account) => ({
   about: account?.about || "",
 });
 
-export function useAuthState({ mock, deepCopy }) {
+export function useAuthState({ deepCopy }) {
   const [isAuth, setIsAuth] = useState(false);
   const [authSession, setAuthSession] = useState({
     sessionToken: null,
@@ -74,7 +74,8 @@ export function useAuthState({ mock, deepCopy }) {
   }, [isAuth]);
 
   const applyAuthSession = useCallback(({ sessionToken, account }) => {
-    const accountId = account?.accountId || null;
+    const normalizedAccountId = Number(account?.accountId);
+    const accountId = Number.isFinite(normalizedAccountId) ? normalizedAccountId : null;
     const ownerId = accountId ? `account-${accountId}` : null;
 
     setIsAuth(true);
@@ -109,16 +110,7 @@ export function useAuthState({ mock, deepCopy }) {
     setTaxiTemplates((deepCopy(data.taxiTemplates) || []).map(normalizeEntityPhotos));
     setIsTaxiDriver(Boolean(data.isTaxiDriver));
 
-    if (Array.isArray(mock?.food)) {
-      const restaurantTitle = String(data.restaurantEntity?.title || "").trim();
-      if (data.hasRestaurant && restaurantTitle) {
-        const defaultDishes = mock.food
-          .filter((dish) => String(dish.restaurant || "").trim() === restaurantTitle)
-          .map((dish) => ({ ...dish, photos: normalizeSinglePhoto(dish?.photos) }));
-        if (!sourceDishes.length) setUserRestaurantDishes(defaultDishes);
-      }
-    }
-  }, [deepCopy, mock]);
+  }, [deepCopy]);
 
   return {
     isAuth,
