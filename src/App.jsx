@@ -263,6 +263,7 @@ export default function App() {
   const [authMode, setAuthMode] = useState("signin");
   const [authPending, setAuthPending] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [submitPending, setSubmitPending] = useState(false);
   const [showAuthPassword, setShowAuthPassword] = useState(false);
   const [adsData, setAdsData] = useState([]);
   const [servicesData, setServicesData] = useState([]);
@@ -816,6 +817,7 @@ export default function App() {
 
   const submitMock = async (event, type) => {
     event.preventDefault();
+    if (submitPending) return;
     const fd = new FormData(event.currentTarget);
     const payload = {};
 
@@ -851,11 +853,22 @@ export default function App() {
     if (accountId === null) return;
 
     try {
+      setSubmitPending(true);
       if (type === "restaurant") {
+        const parseRestaurantIdFromString = (value) => {
+          if (typeof value !== "string") return null;
+          const parsed = Number(value.replace("restaurant-", ""));
+          return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+        };
+        const modalReturnRestaurantId = parseRestaurantIdFromString(modal?.payload?.returnTo?.payload?.id);
+        const editRestaurantId = parseRestaurantIdFromString(editEntityId);
+        const currentRestaurantId = toAccountId(restaurantEntity?.restaurantId);
+        const restaurantIdForUpdate = editRestaurantId || currentRestaurantId || modalReturnRestaurantId;
         const uploadedLogo = await uploadPhotos("logo", 1, "restaurant");
         const logo = uploadedLogo[0] || String(restaurantEntity?.logo || "").trim() || undefined;
-        await createOrUpdateRestaurantRequest({
+        const restaurantResponse = await createOrUpdateRestaurantRequest({
           accountId,
+          ...(isEdit && restaurantIdForUpdate ? { restaurantId: restaurantIdForUpdate } : {}),
           name: payload.title || "Моё заведение",
           description: payload.desc || "",
           logoUrl: logo,
@@ -865,6 +878,22 @@ export default function App() {
         });
         await refreshMyData();
         await refreshCatalog();
+
+        if (isEdit) {
+          const savedRestaurantId = toAccountId(restaurantResponse?.restaurantId) || restaurantIdForUpdate;
+          if (savedRestaurantId) {
+            setModal({
+              type: "detail",
+              payload: {
+                type: "restaurant",
+                id: `restaurant-${savedRestaurantId}`,
+                fromBusiness: true,
+                returnTo: { type: "entityGroup", payload: { group: "restaurant" } },
+              },
+            });
+            return;
+          }
+        }
       }
 
       if (type === "ad" || type === "service") {
@@ -1012,6 +1041,8 @@ export default function App() {
       setModal(null);
     } catch (error) {
       alert(error?.message || "Не удалось сохранить данные");
+    } finally {
+      setSubmitPending(false);
     }
   };
 
@@ -1648,6 +1679,7 @@ export default function App() {
             initialValues={createInitialValues}
             onSubmit={submitMock}
             onClose={closeModal}
+            submitPending={submitPending}
             taxiCategories={TAXI_CATEGORIES}
             adsCategories={ADS_CATEGORIES}
             serviceCategories={SERVICE_CATEGORIES}
@@ -1663,6 +1695,7 @@ export default function App() {
             editMeta={editEntityData.editMeta}
             onSubmit={submitMock}
             onClose={closeModal}
+            submitPending={submitPending}
             taxiCategories={TAXI_CATEGORIES}
             adsCategories={ADS_CATEGORIES}
             serviceCategories={SERVICE_CATEGORIES}
