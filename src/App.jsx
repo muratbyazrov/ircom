@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { CreateForm, DetailModalContent, ProfileEditForm } from "./components/modals";
 import { EntityGroupModalContent } from "./components/entity-group-modal-content";
 import { Icon, Modal } from "./components/ui";
@@ -39,6 +40,13 @@ import {
 } from "./api/food";
 import { tabConfig } from "./utils/constants";
 import { sortItems } from "./utils/helpers";
+import {
+  formatPhoneValueCompact,
+  handlePhoneInputCompact,
+  PHONE_COMPACT_PATTERN,
+  PHONE_COMPACT_PLACEHOLDER,
+  syncPhonePrev,
+} from "./utils/phone";
 
 const FEEDBACK_SEED = {
   t1: [
@@ -244,6 +252,7 @@ export default function App() {
   const [authMode, setAuthMode] = useState("signin");
   const [authPending, setAuthPending] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [showAuthPassword, setShowAuthPassword] = useState(false);
   const [adsData, setAdsData] = useState([]);
   const [servicesData, setServicesData] = useState([]);
   const [taxiData, setTaxiData] = useState([]);
@@ -300,7 +309,6 @@ export default function App() {
           account: {
             accountId: session.accountId,
             name: session.name,
-            nickname: session.nickname,
             phone: session.phone,
             whatsapp: session.whatsapp,
             telegram: session.telegram,
@@ -439,6 +447,7 @@ export default function App() {
 
     setAuthMode("signin");
     setAuthError("");
+    setShowAuthPassword(false);
     toggleAuth(() => setModal({ type: "auth", payload: {} }));
   };
 
@@ -447,6 +456,7 @@ export default function App() {
     const returnTo = options.returnTo || null;
     setAuthMode("signin");
     setAuthError("");
+    setShowAuthPassword(false);
     setModal({ type: "auth", payload: returnTo ? { returnTo, fromDetail: Boolean(options.fromDetail) } : {} });
   };
 
@@ -455,11 +465,12 @@ export default function App() {
     if (authPending) return;
 
     const fd = new FormData(event.currentTarget);
-    const signInPhone = String(fd.get("phone") || "").trim();
-    const phone = String(fd.get("phone") || "").trim();
-    const nickname = String(fd.get("nickname") || "").trim();
+    const rawPhone = String(fd.get("phone") || "").trim();
+    const signInPhone = formatPhoneValueCompact(rawPhone, { allowEmpty: true });
+    const phone = signInPhone;
     const name = String(fd.get("name") || "").trim();
     const password = String(fd.get("password") || "");
+    const isValidPhone = /^\+7\(\d{3}\)\d{3}-\d{2}-\d{2}$/.test(signInPhone);
 
     if (!password) {
       setAuthError("Введите пароль");
@@ -468,6 +479,10 @@ export default function App() {
 
     if (authMode === "signin" && !signInPhone) {
       setAuthError("Введите телефон");
+      return;
+    }
+    if (authMode === "signin" && !isValidPhone) {
+      setAuthError("Введите телефон в формате +7(XXX)XXX-XX-XX");
       return;
     }
 
@@ -480,6 +495,10 @@ export default function App() {
         setAuthError("Введите телефон");
         return;
       }
+      if (!isValidPhone) {
+        setAuthError("Введите телефон в формате +7(XXX)XXX-XX-XX");
+        return;
+      }
     }
 
     setAuthPending(true);
@@ -489,7 +508,6 @@ export default function App() {
         ? await registerRequest({
           name,
           phone: phone || undefined,
-          nickname: nickname || undefined,
           password,
         })
         : await signInRequest({
@@ -897,14 +915,13 @@ export default function App() {
       }
 
       if (type === "profile") {
-        await createOrUpdateAccountRequest({
-          accountId,
-          name: payload.name || profile.name || "Пользователь",
-          phone: payload.phone || null,
-          telegram: payload.telegram || null,
-          whatsapp: payload.whatsapp || null,
-          nickname: profile.nickname && profile.nickname !== "-" ? profile.nickname : null,
-        });
+      await createOrUpdateAccountRequest({
+        accountId,
+        name: payload.name || profile.name || "Пользователь",
+        phone: payload.phone || null,
+        telegram: payload.telegram || null,
+        whatsapp: payload.whatsapp || null,
+      });
         setProfile((prev) => ({
           ...prev,
           name: payload.name || "-",
@@ -1393,7 +1410,7 @@ export default function App() {
         {modal?.type === "auth" && (
           <>
             <h3>Требуется авторизация</h3>
-            <p className="small">Войдите по телефону или нику, либо создайте новый аккаунт.</p>
+            <p className="small">Войдите по телефону и паролю, либо создайте новый аккаунт.</p>
             <div className="multi-select-buttons" style={{ marginTop: 8 }}>
               <button
                 type="button"
@@ -1401,6 +1418,7 @@ export default function App() {
                 onClick={() => {
                   setAuthMode("signin");
                   setAuthError("");
+                  setShowAuthPassword(false);
                 }}
                 aria-pressed={authMode === "signin"}
               >
@@ -1412,6 +1430,7 @@ export default function App() {
                 onClick={() => {
                   setAuthMode("signup");
                   setAuthError("");
+                  setShowAuthPassword(false);
                 }}
                 aria-pressed={authMode === "signup"}
               >
@@ -1426,8 +1445,11 @@ export default function App() {
                     required
                     name="phone"
                     className="input"
-                    placeholder="+7..."
+                    placeholder={PHONE_COMPACT_PLACEHOLDER}
+                    pattern={PHONE_COMPACT_PATTERN}
                     autoComplete="tel"
+                    onInput={(e) => handlePhoneInputCompact(e, { allowEmpty: true })}
+                    onFocus={syncPhonePrev}
                   />
                 </label>
               )}
@@ -1452,19 +1474,11 @@ export default function App() {
                       required
                       name="phone"
                       className="input"
-                      placeholder="+7..."
+                      placeholder={PHONE_COMPACT_PLACEHOLDER}
+                      pattern={PHONE_COMPACT_PATTERN}
                       autoComplete="tel"
-                    />
-                  </label>
-                  <label className="field">
-                    <span className="small">Ник (опционально)</span>
-                    <input
-                      name="nickname"
-                      className="input"
-                      minLength={3}
-                      maxLength={40}
-                      placeholder="nickname"
-                      autoComplete="username"
+                      onInput={(e) => handlePhoneInputCompact(e, { allowEmpty: true })}
+                      onFocus={syncPhonePrev}
                     />
                   </label>
                 </>
@@ -1472,15 +1486,26 @@ export default function App() {
 
               <label className="field">
                 <span className="small">Пароль</span>
-                <input
-                  required
-                  type="password"
-                  name="password"
-                  className="input"
-                  minLength={6}
-                  maxLength={128}
-                  autoComplete={authMode === "signin" ? "current-password" : "new-password"}
-                />
+                <div className="password-input-wrap">
+                  <input
+                    required
+                    type={showAuthPassword ? "text" : "password"}
+                    name="password"
+                    className="input password-input"
+                    minLength={6}
+                    maxLength={128}
+                    autoComplete={authMode === "signin" ? "current-password" : "new-password"}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowAuthPassword((v) => !v)}
+                    aria-label={showAuthPassword ? "Скрыть пароль" : "Показать пароль"}
+                    aria-pressed={showAuthPassword}
+                  >
+                    {showAuthPassword ? <EyeOff className="icon" aria-hidden="true" /> : <Eye className="icon" aria-hidden="true" />}
+                  </button>
+                </div>
               </label>
 
               {authError ? <p className="small" style={{ color: "#c62828", marginTop: 6 }}>{authError}</p> : null}

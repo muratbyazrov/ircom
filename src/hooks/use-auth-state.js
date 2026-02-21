@@ -6,7 +6,6 @@ const GUEST_PROFILE = {
   telegram: "-",
   whatsapp: "-",
   about: "Авторизуйтесь, чтобы управлять профилем.",
-  nickname: "-",
 };
 
 const normalizeSinglePhoto = (photos) => {
@@ -32,7 +31,6 @@ const profileOrGuest = (account) => ({
   phone: account?.phone || "-",
   telegram: account?.telegram || "-",
   whatsapp: account?.whatsapp || "-",
-  nickname: account?.nickname || "-",
   about: account?.about || "",
 });
 

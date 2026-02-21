@@ -351,7 +351,7 @@ export function CreateForm({
             </p>
             {!selectedTaxiCategories.length ? <p className="small" style={{ color: "var(--danger)", marginTop: 6 }}>Выберите хотя бы одно направление</p> : null}
           </Field>
-          <Field label="Имя/ник"><input required name="name" defaultValue={initialValues?.name || ""} className="input" minLength={2} maxLength={60} /></Field>
+          <Field label="Имя"><input required name="name" defaultValue={initialValues?.name || ""} className="input" minLength={2} maxLength={60} /></Field>
           <div className={isIntercitySelected ? "grid-2" : undefined}>
             <Field label="Стоимость"><input required name="price" defaultValue={initialValues?.price || ""} type="number" min={1} inputMode="numeric" pattern="[0-9]*" className="input" /></Field>
             {isIntercitySelected ? <Field label="Свободных мест"><input name="seats" defaultValue={initialValues?.seats?.free || initialValues?.seats?.total || ""} type="number" min={1} className="input" /></Field> : null}

@@ -1197,6 +1197,35 @@ button {
   padding-right: 40px;
 }
 
+.password-input-wrap {
+  position: relative;
+}
+
+.password-input {
+  padding-right: 44px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle-btn .icon {
+  width: 16px;
+  height: 16px;
+}
+
 .loader-spinner {
   width: 14px;
   height: 14px;
