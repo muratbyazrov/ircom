@@ -62,7 +62,7 @@ export function useNavHistory({ appHistoryKey, tab, setTab, modal, setModal, onB
     sync.lastSerialized = serialized;
     const base = window.history.state && typeof window.history.state === "object" ? window.history.state : {};
     const prevNavState = normalizeNavState(base?.[appHistoryKey]);
-    const shouldReplace = isBackExcludedModal(prevNavState.modal) && !isBackExcludedModal(nextNavState.modal);
+    const shouldReplace = isBackExcludedModal(prevNavState.modal) || isBackExcludedModal(nextNavState.modal);
     const nextHistoryState = { ...base, [appHistoryKey]: normalizeNavState(nextNavState) };
     if (shouldReplace) window.history.replaceState(nextHistoryState, "");
     else window.history.pushState(nextHistoryState, "");
@@ -79,6 +79,10 @@ export function useNavHistory({ appHistoryKey, tab, setTab, modal, setModal, onB
 
     const onBackClick = () => {
       if (typeof onBackAttempt === "function" && onBackAttempt()) return;
+      if (isBackExcludedModal(modal)) {
+        setModal(modal?.payload?.returnTo || null);
+        return;
+      }
       window.history.back();
     };
     backButton.onClick(onBackClick);

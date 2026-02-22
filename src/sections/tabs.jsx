@@ -211,7 +211,11 @@ export function FoodTab({
               <div className="restaurant-list-meta">
                 <span className="food-meta-chip">
                   <Icon name="delivery" />
-                  {restaurant.deliveryMode === "paid" ? `Платная (${fmtRub.format(Number(restaurant.deliveryPrice) || 0)})` : restaurant.deliveryMode === "free" ? "Бесплатная доставка" : "Нет доставки"}
+                  {restaurant.deliveryMode === "paid"
+                    ? `Доставка: платная (${fmtRub.format(Number(restaurant.deliveryPrice) || 0)})`
+                    : restaurant.deliveryMode === "free"
+                      ? "Доставка: бесплатно"
+                      : "Доставка: нет"}
                 </span>
               </div>
             </div>

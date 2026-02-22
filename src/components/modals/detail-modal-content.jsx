@@ -36,7 +36,12 @@ export function DetailModalContent({
   );
   const REVIEWS_STEP = 3;
   const ratingValue = typeof item.ratingValue === "number" ? item.ratingValue : null;
-  const foodPrepText = type === "food" ? (item.always ? "Всегда в наличии" : `${item.prep} минут`) : "";
+  const foodPrepText = type === "food"
+    ? (Number(item.prep) > 0 ? `${item.prep} минут` : "Время не указано")
+    : "";
+  const foodAvailabilityText = type === "food"
+    ? (item.unavailable ? "Нет в наличии" : item.always ? "Всегда в наличии" : "В наличии")
+    : "";
   const foodAddressText = type === "food"
     ? String(item.restaurantAddress || item.address || "").trim()
     : "";
@@ -50,10 +55,10 @@ export function DetailModalContent({
   const isFoodOwnerView = isFoodDetail && typeof onEditDish === "function";
   const restaurantDeliveryText = isRestaurantDetail
     ? item.deliveryMode === "free"
-      ? "Бесплатно"
+      ? "Доставка: бесплатно"
       : item.deliveryMode === "paid"
-        ? `Платная (${fmtRub.format(Number(item.deliveryPrice) || 0)})`
-        : "Нет доставки"
+        ? `Доставка: платная (${fmtRub.format(Number(item.deliveryPrice) || 0)})`
+        : "Доставка: нет"
     : "";
   const restaurantDescText = isRestaurantDetail ? String(item.desc || "").trim() : "";
   const isCuisineOnlyDesc = /^Кухня:/i.test(restaurantDescText);
@@ -271,6 +276,7 @@ export function DetailModalContent({
           photos={photos}
           emptyText="Нет фотографий"
           section={type}
+          className={type === "food" ? "detail-food-media" : ""}
           overlay={favoriteButton}
           onOpen={
             type !== "food"
@@ -293,7 +299,10 @@ export function DetailModalContent({
       ) : null}
       {type === "food" ? (
         <section className="detail-food-meta">
-          <div className="detail-food-price">{fmtRub.format(item.price)}</div>
+          <div className="detail-food-head">
+            <div className="detail-food-price">{fmtRub.format(item.price)}</div>
+            <span className={`detail-food-status-chip ${item.unavailable ? "is-off" : "is-on"}`}>{foodAvailabilityText}</span>
+          </div>
           <div className="detail-food-info-list">
             <div className="detail-food-info-item">
               <Icon name="foodall" />
@@ -722,13 +731,17 @@ export function DetailModalContent({
         </div>
       ) : null}
       {isFoodOwnerView ? (
-        <div className="actions" style={{ marginTop: 8 }}>
-          <button className="primary-btn" type="button" onClick={() => onEditDish?.(item.id)}>Редактировать</button>
-          <button className={item.unavailable ? "primary-btn" : "ghost-btn"} type="button" onClick={() => onToggleDishAvailability?.(item.id)}>
-            {item.unavailable ? "В наличии" : "Нет в наличии"}
-          </button>
-          <button className="danger-btn" type="button" onClick={() => onDeleteDish?.(item.id)}>Удалить</button>
-        </div>
+        <>
+          <div className="actions detail-food-owner-actions" style={{ marginTop: 8 }}>
+            <button className="primary-btn" type="button" onClick={() => onEditDish?.(item.id)}>Редактировать</button>
+            <button className={item.unavailable ? "primary-btn" : "ghost-btn"} type="button" onClick={() => onToggleDishAvailability?.(item.id)}>
+              {item.unavailable ? "В наличии" : "Нет в наличии"}
+            </button>
+          </div>
+          <div className="detail-food-danger-row">
+            <button className="danger-ghost-btn" type="button" onClick={() => onDeleteDish?.(item.id)}>Удалить блюдо</button>
+          </div>
+        </>
       ) : null}
       {!isRestaurantDetail && isOwnerView && type !== "food" ? (
         <div className="actions" style={{ marginTop: 8 }}>
