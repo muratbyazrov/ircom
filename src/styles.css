@@ -562,6 +562,12 @@ body {
   background: #f8fafc;
 }
 
+.restaurant-dishes-badge {
+  white-space: nowrap;
+  flex: 0 0 auto;
+  line-height: 1;
+}
+
 .restaurant-list-meta {
   display: flex;
   flex-wrap: wrap;
