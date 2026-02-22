@@ -851,6 +851,7 @@ export default function App() {
 
       return {
         id,
+        restaurantId: numericRestaurantId,
         title: restaurantTitle,
         desc: categories.length ? `Кухня: ${categories.join(", ")}` : "Описание заведения не указано.",
         address: String(dishes[0]?.restaurantAddress || "").trim(),
@@ -871,6 +872,7 @@ export default function App() {
       const ownReviews = Array.isArray(feedbackByItem[ownRestaurantId]) ? feedbackByItem[ownRestaurantId] : [];
       const ownRestaurantCard = {
         id: ownRestaurantId,
+        restaurantId: toAccountId(restaurantEntity?.restaurantId),
         title: restaurantEntity.title || "Моё заведение",
         desc: restaurantEntity.desc || "",
         address: restaurantEntity.address || "",
@@ -888,7 +890,11 @@ export default function App() {
         reviewsCount: ownReviews.length,
         ratingValue: getFeedbackRating(ownReviews),
       };
-      const existingIdx = fromFood.findIndex((x) => x.id === ownRestaurantId);
+      const ownRestaurantNumericId = toAccountId(restaurantEntity?.restaurantId);
+      const existingIdx = fromFood.findIndex((x) => (
+        x.id === ownRestaurantId
+        || (ownRestaurantNumericId !== null && toAccountId(x.restaurantId) === ownRestaurantNumericId)
+      ));
       if (existingIdx >= 0) fromFood[existingIdx] = ownRestaurantCard;
       else fromFood.unshift(ownRestaurantCard);
     }

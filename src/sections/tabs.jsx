@@ -1,6 +1,7 @@
 import { CategoryTabs, Empty, Field, Icon, Section, SectionHeader, SortSelect } from "../components/ui";
 import { ItemCard, TaxiCard } from "../components/cards";
 import { sectionSortModes } from "../utils/constants";
+import { fmtRub } from "../utils/helpers";
 import { applyImageFallback, replaceImageWithEmpty } from "../utils/images";
 
 export function AdsTab({
@@ -210,7 +211,7 @@ export function FoodTab({
               <div className="restaurant-list-meta">
                 <span className="food-meta-chip">
                   <Icon name="delivery" />
-                  {restaurant.deliveryMode === "none" ? "Нет доставки" : "Есть доставка"}
+                  {restaurant.deliveryMode === "paid" ? `Платная (${fmtRub.format(Number(restaurant.deliveryPrice) || 0)})` : restaurant.deliveryMode === "free" ? "Бесплатная доставка" : "Нет доставки"}
                 </span>
               </div>
             </div>
