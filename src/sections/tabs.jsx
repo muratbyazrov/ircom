@@ -201,11 +201,11 @@ export function FoodTab({
                 )}
               </div>
               <div className="restaurant-list-head">
-                <div className="row wrap" style={{ alignItems: "center", gap: 6 }}>
-                  <div className="card-title">{restaurant.title}</div>
+                <div className="restaurant-list-main">
+                  <div className="card-title restaurant-list-title">{restaurant.title}</div>
                   {ownedRestaurantId && restaurant.id === ownedRestaurantId ? <span className="badge">Моё</span> : null}
                 </div>
-                <span className="badge">{restaurant.dishes.length} блюд</span>
+                <span className={`badge ${restaurant.dishes.length ? "" : "restaurant-dishes-badge-empty"}`}>{restaurant.dishes.length} блюд</span>
               </div>
               <div className="restaurant-list-address">{restaurant.address || "Адрес не указан"}</div>
               <div className="restaurant-list-meta">

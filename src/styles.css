@@ -502,9 +502,27 @@ body {
   gap: 8px;
 }
 
+.restaurant-list-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.restaurant-list-title {
+  min-width: 0;
+  line-height: 1.32;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .restaurant-list-photo-wrap {
   width: calc(100% + 20px);
   margin: -10px -10px 2px;
+  height: 170px;
   border-radius: 16px 16px 0 0;
   overflow: hidden;
   background: linear-gradient(145deg, #f8fafc, #eef2ff);
@@ -513,12 +531,12 @@ body {
 .restaurant-list-photo {
   display: block;
   width: 100%;
-  height: 170px;
+  height: 100%;
   object-fit: cover;
 }
 
 .restaurant-list-photo-empty {
-  height: 170px;
+  height: 100%;
   display: grid;
   place-items: center;
   font-size: 13px;
@@ -529,8 +547,19 @@ body {
 .restaurant-list-address {
   font-size: 13px;
   color: #4b5563;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.restaurant-dishes-badge-empty {
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  background: #f8fafc;
 }
 
 .restaurant-list-meta {
