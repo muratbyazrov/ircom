@@ -37,7 +37,6 @@ export function DetailModalContent({
   const REVIEWS_STEP = 3;
   const ratingValue = typeof item.ratingValue === "number" ? item.ratingValue : null;
   const foodPrepText = type === "food" ? (item.always ? "Всегда в наличии" : `${item.prep} минут`) : "";
-  const foodDeliveryText = type === "food" ? (item.delivery ? "Есть доставка" : "Только самовывоз") : "";
   const foodAddressText = type === "food"
     ? String(item.restaurantAddress || item.address || "").trim()
     : "";
@@ -313,10 +312,6 @@ export function DetailModalContent({
             <div className="detail-food-info-item">
               <Icon name="time" />
               <span>{foodPrepText}</span>
-            </div>
-            <div className="detail-food-info-item">
-              <Icon name="delivery" />
-              <span>{foodDeliveryText}</span>
             </div>
           </div>
         </section>
@@ -707,7 +702,6 @@ export function DetailModalContent({
                     <div className="detail-restaurant-dish-address">{dishAddress || "Адрес не указан"}</div>
                     <div className="detail-restaurant-dish-submeta">
                       <span>{dish.prep ? `${dish.prep} минут` : "Время не указано"}</span>
-                      <span>{dish.delivery ? "Есть доставка" : "Только самовывоз"}</span>
                       {dish.always ? <span>Всегда в наличии</span> : null}
                       {dish.unavailable ? <span>Нет в наличии</span> : null}
                     </div>

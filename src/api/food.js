@@ -6,6 +6,8 @@ export const createOrUpdateRestaurantRequest = (params) => foodApi("createOrUpda
 
 export const getMyRestaurantRequest = (params) => foodApi("getMyRestaurant", params);
 
+export const getRestaurantsRequest = (params) => foodApi("getRestaurants", params);
+
 export const createMenuItemRequest = (params) => foodApi("createMenuItem", params);
 
 export const updateMenuItemRequest = (params) => foodApi("updateMenuItem", params);

@@ -36,6 +36,7 @@ import {
   deleteMenuItemRequest,
   getMenuItemsRequest,
   getMyRestaurantRequest,
+  getRestaurantsRequest,
   toggleMenuItemFavoriteRequest,
   updateMenuItemRequest,
 } from './api/food';
@@ -165,6 +166,32 @@ const normalizeDish = (dish) => {
     address: restaurantAddress,
   };
 };
+const getRestaurantDeliveryMode = (item) => {
+  if (!item || typeof item !== "object") return "none";
+
+  const modeRaw = String(item.deliveryMode || item.delivery_mode || item.deliveryOption || item.deliveryType || item.delivery || "")
+    .trim()
+    .toLowerCase();
+
+  if (modeRaw === "paid") return "paid";
+  if (modeRaw === "free") return "free";
+  if (modeRaw === "none") return "none";
+
+  if (Object.prototype.hasOwnProperty.call(item, "hasDelivery")) return Boolean(item.hasDelivery) ? "free" : "none";
+  if (Object.prototype.hasOwnProperty.call(item, "has_delivery")) return Boolean(item.has_delivery) ? "free" : "none";
+
+  if (modeRaw === "yes" || modeRaw === "true" || modeRaw === "1") return "free";
+  return "none";
+};
+
+const getRestaurantDeliveryPrice = (item) => {
+  if (!item || typeof item !== "object") return 0;
+  const mode = getRestaurantDeliveryMode(item);
+  if (mode !== "paid") return 0;
+  const rawPrice = item.deliveryPrice ?? item.delivery_price;
+  const price = Number(rawPrice);
+  return Number.isFinite(price) && price > 0 ? price : 0;
+};
 const buildRestaurantId = (name) => {
   const normalized = String(name || "")
     .trim()
@@ -290,7 +317,6 @@ const mapMenuItemToUi = (item) => ({
   prep: Number(item.cookTimeMinutes) || 25,
   always: Boolean(item.alwaysInStock),
   unavailable: !Boolean(item.isAvailable),
-  delivery: Boolean(item.hasDelivery),
   desc: item.description || "",
   contacts: getContacts(item),
   photos: normalizeSinglePhoto(item.photos),
@@ -390,19 +416,39 @@ export default function App() {
 
   const refreshCatalog = useCallback(async () => {
     const accountId = toAccountId(authSession?.accountId);
-    const [adsRaw, servicesRaw, taxiCityRaw, taxiOutRaw, taxiInRaw, menuRaw] = await Promise.all([
+    const [adsRaw, servicesRaw, taxiCityRaw, taxiOutRaw, taxiInRaw, restaurantsRaw, menuRaw] = await Promise.all([
       getListingsRequest({ kind: 1, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
       getListingsRequest({ kind: 2, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
       getTaxiOffersRequest({ direction: 1, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
       getTaxiOffersRequest({ direction: 2, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
       getTaxiOffersRequest({ direction: 3, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
+      getRestaurantsRequest({ limit: 300 }),
       getMenuItemsRequest({ limit: 300, ...(accountId !== null ? { accountId } : {}) }),
     ]);
+
+    const restaurantDeliveryById = new Map(
+      toArray(restaurantsRaw).map((restaurant) => [
+        toAccountId(restaurant?.restaurantId),
+        {
+          mode: getRestaurantDeliveryMode(restaurant),
+          price: getRestaurantDeliveryPrice(restaurant),
+        },
+      ]).filter(([id]) => id !== null)
+    );
 
     const nextAds = toArray(adsRaw).map(mapListingToUi);
     const nextServices = toArray(servicesRaw).map(mapListingToUi);
     const nextTaxi = [...toArray(taxiCityRaw), ...toArray(taxiOutRaw), ...toArray(taxiInRaw)].map(mapTaxiToUi);
-    const nextFood = toArray(menuRaw).map(mapMenuItemToUi);
+    const nextFood = toArray(menuRaw).map((item) => {
+      const mapped = mapMenuItemToUi(item);
+      const restaurantId = toAccountId(mapped.restaurantId);
+      const restaurantDelivery = restaurantId !== null ? restaurantDeliveryById.get(restaurantId) : null;
+      return {
+        ...mapped,
+        restaurantDeliveryMode: restaurantDelivery?.mode || "none",
+        restaurantDeliveryPrice: restaurantDelivery?.price || 0,
+      };
+    });
 
     setAdsData(nextAds);
     setServicesData(nextServices);
@@ -455,14 +501,16 @@ export default function App() {
       const myRestaurantMenuRaw = await getMenuItemsRequest({ accountId, restaurantId: myRestaurantId, limit: 300 });
       const myRestaurantMenu = toArray(myRestaurantMenuRaw).map(mapMenuItemToUi);
       setHasRestaurant(true);
+      const myRestaurantDeliveryMode = getRestaurantDeliveryMode(myRestaurantRaw);
+      const myRestaurantDeliveryPrice = getRestaurantDeliveryPrice(myRestaurantRaw);
       setRestaurantEntity({
         id: `restaurant-${myRestaurantId}`,
         restaurantId: myRestaurantId,
         title: myRestaurantRaw.name || "Моё заведение",
         desc: myRestaurantRaw.description || "",
         address: myRestaurantRaw.address || "",
-        deliveryMode: myRestaurantMenu.some((dish) => dish.delivery) ? "free" : "none",
-        deliveryPrice: 0,
+        deliveryMode: myRestaurantDeliveryMode,
+        deliveryPrice: myRestaurantDeliveryPrice,
         logo: normalizePhotoReference(myRestaurantRaw.logoUrl),
         phone: myRestaurantRaw.phone || "",
         telegram: myRestaurantRaw.telegram || "",
@@ -807,8 +855,8 @@ export default function App() {
         desc: categories.length ? `Кухня: ${categories.join(", ")}` : "Описание заведения не указано.",
         address: String(dishes[0]?.restaurantAddress || "").trim(),
         logo: String(dishes[0]?.restaurantLogo || "").trim(),
-        deliveryMode: dishes.some((x) => x.delivery) ? "free" : "none",
-        deliveryPrice: 0,
+        deliveryMode: String(dishes[0]?.restaurantDeliveryMode || "none"),
+        deliveryPrice: Number(dishes[0]?.restaurantDeliveryPrice) || 0,
         contacts,
         photos: [...new Set(dishes.flatMap((x) => (Array.isArray(x.photos) ? x.photos : [])))].slice(0, 1),
         dishes,
@@ -1051,6 +1099,9 @@ export default function App() {
           name: payload.title || "Моё заведение",
           address: payload.address || "",
           description: payload.desc || "",
+          hasDelivery: String(payload.deliveryMode || "none") !== "none",
+          deliveryMode: String(payload.deliveryMode || "none"),
+          deliveryPrice: Number(payload.deliveryPrice) || 0,
           logoUrl: logo,
           phone: payload.phone || undefined,
           telegram: payload.telegram || undefined,
@@ -1123,7 +1174,6 @@ export default function App() {
             cookTimeMinutes: Number(currentDish?.prep) || 25,
             alwaysInStock: Boolean(currentDish?.always),
             price: Number(payload.price) || Number(currentDish?.price) || 1,
-            hasDelivery: Boolean(currentDish?.delivery),
             isAvailable: !Boolean(currentDish?.unavailable),
             photos: photos.length ? photos : normalizeSinglePhoto(currentDish?.photos),
           });
@@ -1136,7 +1186,6 @@ export default function App() {
             cookTimeMinutes: 25,
             alwaysInStock: true,
             price: Number(payload.price) || 1,
-            hasDelivery: Boolean(restaurantEntity && restaurantEntity.deliveryMode !== "none"),
             isAvailable: true,
             photos,
           });
@@ -1355,7 +1404,6 @@ export default function App() {
       cookTimeMinutes: Number(dish.prep) || 25,
       alwaysInStock: Boolean(dish.always),
       price: Number(dish.price) || 1,
-      hasDelivery: Boolean(dish.delivery),
       isAvailable: Boolean(dish.unavailable),
       photos: normalizeSinglePhoto(dish.photos),
     });
