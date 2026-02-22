@@ -12,7 +12,7 @@ const normalizeNavState = (value) => {
 
 const serializeNavState = (value) => JSON.stringify(normalizeNavState(value));
 
-export function useNavHistory({ appHistoryKey, tab, setTab, modal, setModal }) {
+export function useNavHistory({ appHistoryKey, tab, setTab, modal, setModal, onBackAttempt }) {
   const navHistoryRef = useRef({ ready: false, applyingPop: false, lastSerialized: "" });
 
   useEffect(() => {
@@ -67,8 +67,11 @@ export function useNavHistory({ appHistoryKey, tab, setTab, modal, setModal }) {
     if (canGoBackInsideApp) backButton.show();
     else backButton.hide();
 
-    const onBackClick = () => window.history.back();
+    const onBackClick = () => {
+      if (typeof onBackAttempt === "function" && onBackAttempt()) return;
+      window.history.back();
+    };
     backButton.onClick(onBackClick);
     return () => backButton.offClick(onBackClick);
-  }, [tab, modal]);
+  }, [tab, modal, onBackAttempt]);
 }

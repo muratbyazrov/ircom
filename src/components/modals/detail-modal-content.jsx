@@ -21,6 +21,8 @@ export function DetailModalContent({
   onDeleteDish,
   onToggleDishAvailability,
   onDeleteTaxi,
+  closeViewerSignal = 0,
+  onViewerOpenChange,
 }) {
   const { item, type } = data;
   const photos = item.photos || [];
@@ -79,6 +81,7 @@ export function DetailModalContent({
   const lastTapAt = useRef(0);
   const activeImageRef = useRef(null);
   const closeTimerRef = useRef(null);
+  const closeSignalRef = useRef(closeViewerSignal);
   const normalizePhoneDigits = (value) => {
     let digits = String(value || "").replace(/\D/g, "");
     if (digits.length === 11 && digits.startsWith("8")) digits = `7${digits.slice(1)}`;
@@ -196,10 +199,23 @@ export function DetailModalContent({
   }, [viewerIndex]);
 
   useEffect(() => {
+    if (typeof onViewerOpenChange !== "function") return;
+    onViewerOpenChange(viewerIndex !== null);
+  }, [viewerIndex, onViewerOpenChange]);
+
+  useEffect(() => {
+    if (closeSignalRef.current === closeViewerSignal) return;
+    closeSignalRef.current = closeViewerSignal;
+    if (viewerIndex === null) return;
+    setViewerIndex(null);
+  }, [closeViewerSignal, viewerIndex]);
+
+  useEffect(() => {
     return () => {
+      if (typeof onViewerOpenChange === "function") onViewerOpenChange(false);
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     };
-  }, []);
+  }, [onViewerOpenChange]);
 
   const getFocalFromTouches = (t1, t2) => {
     const stableNode = activeImageRef.current?.parentElement || activeImageRef.current;

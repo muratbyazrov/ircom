@@ -302,6 +302,8 @@ export default function App() {
   const [taxiRequestedAt, setTaxiRequestedAt] = useState("");
   const [feedbackByItem, setFeedbackByItem] = useState(() => buildInitialFeedback());
   const [modal, setModal] = useState(null);
+  const [isDetailViewerOpen, setIsDetailViewerOpen] = useState(false);
+  const [detailViewerCloseSignal, setDetailViewerCloseSignal] = useState(0);
   const [authMode, setAuthMode] = useState("signin");
   const [authPending, setAuthPending] = useState(false);
   const [authError, setAuthError] = useState("");
@@ -493,7 +495,25 @@ export default function App() {
     }
   }, [feedbackByItem]);
 
-  useNavHistory({ appHistoryKey: APP_HISTORY_KEY, tab, setTab, modal, setModal });
+  useEffect(() => {
+    if (modal?.type === "detail") return;
+    setIsDetailViewerOpen(false);
+  }, [modal?.type]);
+
+  const handleBackAttempt = useCallback(() => {
+    if (modal?.type !== "detail" || !isDetailViewerOpen) return false;
+    setDetailViewerCloseSignal((prev) => prev + 1);
+    return true;
+  }, [modal?.type, isDetailViewerOpen]);
+
+  useNavHistory({
+    appHistoryKey: APP_HISTORY_KEY,
+    tab,
+    setTab,
+    modal,
+    setModal,
+    onBackAttempt: handleBackAttempt,
+  });
   useGestureGuard();
   const toggleAuthModal = async () => {
     if (isAuth) {
@@ -1796,6 +1816,8 @@ export default function App() {
             onAddFeedback={addFeedback}
             onRequireAuth={requireAuthForFeedback}
             currentUserName={profile.name}
+            closeViewerSignal={detailViewerCloseSignal}
+            onViewerOpenChange={setIsDetailViewerOpen}
             onOpenDish={(dishId, restaurantId) => {
               if (!dishId) return;
               setModal({
