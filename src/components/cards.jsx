@@ -136,7 +136,6 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
 }
 
 export function FoodCard({ item, onOpen, onFav, activeFav }) {
-  const prepText = item.always ? "Всегда в наличии" : `${item.prep} минут`;
   const foodAddressText = String(item.restaurantAddress || item.address || "").trim();
 
   return (
@@ -185,10 +184,6 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
           <div className="food-info-item">
             <Icon name="route" />
             <span>{foodAddressText || "Адрес не указан"}</span>
-          </div>
-          <div className="food-info-item">
-            <Icon name="time" />
-            <span>{prepText}</span>
           </div>
         </div>
         <p className="small">{short(item.desc)}</p>
