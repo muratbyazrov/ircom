@@ -9,9 +9,10 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
   const postedAtText = section === "ads"
     ? formatListingPostedAt(item.createdAt, item.date)
     : `${item.date} дн. назад`;
+  const cardSectionClass = section === "ads" ? "card-ad" : section === "services" ? "card-service" : "";
   return (
     <article
-      className="card card-clickable"
+      className={`card card-clickable ${cardSectionClass}`}
       role="button"
       tabIndex={0}
       onClick={onOpen}

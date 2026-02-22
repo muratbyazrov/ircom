@@ -260,6 +260,11 @@ body {
   gap: 8px;
 }
 
+.card-ad .card-body,
+.card-service .card-body {
+  gap: 6px;
+}
+
 .fav-corner-btn {
   position: absolute;
   top: 10px;
@@ -291,6 +296,13 @@ body {
   border-color: #f5b2b8;
   background: #fff2f4;
   pointer-events: none;
+}
+
+.card-ad .fav-corner-btn.owner-corner-tag,
+.card-service .fav-corner-btn.owner-corner-tag {
+  min-height: 30px;
+  padding: 5px 9px;
+  font-size: 11px;
 }
 
 .fav-corner-btn .icon {
@@ -555,6 +567,13 @@ body {
   aspect-ratio: 16 / 10;
   min-height: 140px;
   max-height: 220px;
+}
+
+.card-ad .media-bleed,
+.card-service .media-bleed {
+  aspect-ratio: 16 / 9;
+  min-height: 126px;
+  max-height: 198px;
 }
 
 .media-bleed.media-has-image,
@@ -1419,6 +1438,12 @@ button {
 .small {
   font-size: 12px;
   color: var(--muted);
+}
+
+.card-ad .card-body > p.small,
+.card-service .card-body > p.small {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .reviews-block {
