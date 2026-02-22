@@ -2,6 +2,12 @@ import { useEffect, useRef } from "react";
 import { tabConfig } from "../utils/constants";
 
 const isValidTab = (value) => tabConfig.some(([key]) => key === value);
+const backExcludedModalTypes = new Set(["auth", "create", "editEntity", "profileEdit"]);
+
+const isBackExcludedModal = (modal) => {
+  if (!modal || typeof modal !== "object") return false;
+  return backExcludedModalTypes.has(modal.type);
+};
 
 const normalizeNavState = (value) => {
   const source = value && typeof value === "object" ? value : {};
@@ -55,7 +61,11 @@ export function useNavHistory({ appHistoryKey, tab, setTab, modal, setModal, onB
     if (serialized === sync.lastSerialized) return;
     sync.lastSerialized = serialized;
     const base = window.history.state && typeof window.history.state === "object" ? window.history.state : {};
-    window.history.pushState({ ...base, [appHistoryKey]: normalizeNavState(nextNavState) }, "");
+    const prevNavState = normalizeNavState(base?.[appHistoryKey]);
+    const shouldReplace = isBackExcludedModal(prevNavState.modal) && !isBackExcludedModal(nextNavState.modal);
+    const nextHistoryState = { ...base, [appHistoryKey]: normalizeNavState(nextNavState) };
+    if (shouldReplace) window.history.replaceState(nextHistoryState, "");
+    else window.history.pushState(nextHistoryState, "");
   }, [appHistoryKey, tab, modal]);
 
   useEffect(() => {
