@@ -64,10 +64,10 @@ export function EntityGroupModalContent({
         ) : null}
       </section>
       {group !== "taxi" && entityGroupData.items.length ? (
-        <div className="list">
+        <div className="list entity-group-list">
           {group === "restaurant" ? entityGroupData.items.map((item) => (
             <article
-              className="card card-clickable"
+              className="card card-clickable entity-group-card"
               key={item.title || "restaurant"}
               role="button"
               tabIndex={0}
@@ -98,7 +98,7 @@ export function EntityGroupModalContent({
 
           {group === "ads" ? entityGroupData.items.map((item) => (
             <article
-              className="card card-clickable"
+              className="card card-clickable entity-group-card"
               key={item.id}
               role="button"
               tabIndex={0}
@@ -122,14 +122,17 @@ export function EntityGroupModalContent({
                   )}
                 </div>
                 <div className="card-title">{item.title}</div>
-                <p className="small">{item.category} · {item.price} ₽</p>
+                <div className="entity-group-meta-row">
+                  <p className="small">{item.category}</p>
+                  <span className="entity-group-price">{item.price} ₽</span>
+                </div>
               </div>
             </article>
           )) : null}
 
           {group === "services" ? entityGroupData.items.map((item) => (
             <article
-              className="card card-clickable"
+              className="card card-clickable entity-group-card"
               key={item.id}
               role="button"
               tabIndex={0}
@@ -153,7 +156,10 @@ export function EntityGroupModalContent({
                   )}
                 </div>
                 <div className="card-title">{item.title}</div>
-                <p className="small">{item.category} · {item.price} ₽</p>
+                <div className="entity-group-meta-row">
+                  <p className="small">{item.category}</p>
+                  <span className="entity-group-price">{item.price} ₽</span>
+                </div>
               </div>
             </article>
           )) : null}
