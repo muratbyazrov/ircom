@@ -1970,6 +1970,10 @@ export default function App() {
             onOpenAd={(id) => openBusinessDetail("ads", id, "ads")}
             onOpenService={(id) => openBusinessDetail("services", id, "services")}
             onOpenTaxi={(id) => openBusinessDetail("taxi", id, "taxi")}
+            onCreateRestaurant={() => openCreate("restaurant")}
+            onCreateAd={() => openCreate("ad")}
+            onCreateService={() => openCreate("service")}
+            onCreateTaxi={() => openCreate("taxi")}
             onToggleTaxiFilled={toggleTaxiFilled}
             onOpenTaxiTemplate={viewTaxiTemplate}
             onSetTemplateStatus={setTemplateStatus}

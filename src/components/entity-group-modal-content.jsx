@@ -9,6 +9,10 @@ export function EntityGroupModalContent({
   onOpenAd,
   onOpenService,
   onOpenTaxi,
+  onCreateRestaurant,
+  onCreateAd,
+  onCreateService,
+  onCreateTaxi,
   onToggleTaxiFilled,
   onOpenTaxiTemplate,
   onSetTemplateStatus,
@@ -37,6 +41,12 @@ export function EntityGroupModalContent({
     },
   };
   const meta = groupMeta[group] || { title: entityGroupData.title, subtitle: "", icon: "ads" };
+  const groupAction = {
+    restaurant: { label: "Добавить заведение", onClick: onCreateRestaurant },
+    ads: { label: "Добавить объявление", onClick: onCreateAd },
+    services: { label: "Добавить услугу", onClick: onCreateService },
+    taxi: { label: "Добавить поездку", onClick: onCreateTaxi },
+  }[group] || null;
   const getFirstPhoto = (photos) => (Array.isArray(photos) ? photos.find((photo) => Boolean(String(photo || "").trim())) : "");
 
   return (
@@ -47,6 +57,11 @@ export function EntityGroupModalContent({
         </div>
         <h3>{meta.title}</h3>
         {meta.subtitle ? <p className="small">{meta.subtitle}</p> : null}
+        {groupAction?.onClick ? (
+          <button className="primary-btn" type="button" onClick={groupAction.onClick}>
+            {groupAction.label}
+          </button>
+        ) : null}
       </section>
       {group !== "taxi" && entityGroupData.items.length ? (
         <div className="list">
@@ -77,18 +92,6 @@ export function EntityGroupModalContent({
                 </div>
                 <div className="card-title">{item.title || "Заведение"}</div>
                 <p className="small">{item.address || "Адрес не указан"}</p>
-                <div className="actions">
-                  <button
-                    className="primary-btn"
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenRestaurant();
-                    }}
-                  >
-                    Посмотреть
-                  </button>
-                </div>
               </div>
             </article>
           )) : null}
@@ -120,18 +123,6 @@ export function EntityGroupModalContent({
                 </div>
                 <div className="card-title">{item.title}</div>
                 <p className="small">{item.category} · {item.price} ₽</p>
-                <div className="actions">
-                  <button
-                    className="primary-btn"
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenAd(item.id);
-                    }}
-                  >
-                    Посмотреть
-                  </button>
-                </div>
               </div>
             </article>
           )) : null}
@@ -163,18 +154,6 @@ export function EntityGroupModalContent({
                 </div>
                 <div className="card-title">{item.title}</div>
                 <p className="small">{item.category} · {item.price} ₽</p>
-                <div className="actions">
-                  <button
-                    className="primary-btn"
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenService(item.id);
-                    }}
-                  >
-                    Посмотреть
-                  </button>
-                </div>
               </div>
             </article>
           )) : null}
@@ -195,21 +174,11 @@ export function EntityGroupModalContent({
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") onOpenTaxi(item.id);
                     }}
-                  >
+                    >
                     <div className="card-body">
                       <div className="card-title">{item.category}</div>
-                      <p className="small">{formatTaxiWhenForDisplay(item.when) || "Дата не указана"} · {item.price} ₽</p>
+                      <p className="small">{item.price} ₽</p>
                       <div className="actions">
-                        <button
-                          className="primary-btn"
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenTaxi(item.id);
-                          }}
-                        >
-                          Посмотреть
-                        </button>
                         <button
                           className={item.isFilled ? "primary-btn" : "ghost-btn"}
                           type="button"
@@ -249,16 +218,6 @@ export function EntityGroupModalContent({
                       <div className="card-title">{item.category}</div>
                       <p className="small">{formatTaxiWhenForDisplay(item.when) || "Дата не указана"} · {item.price} ₽</p>
                       <div className="actions">
-                        <button
-                          className="primary-btn"
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenTaxi(item.id);
-                          }}
-                        >
-                          Посмотреть
-                        </button>
                         <button
                           className={item.isFilled ? "primary-btn" : "ghost-btn"}
                           type="button"
@@ -301,16 +260,6 @@ export function EntityGroupModalContent({
                         <span className="badge">{item.status === "paused" ? "На паузе" : "Активна"}</span>
                       </div>
                       <div className="actions">
-                        <button
-                          className="primary-btn"
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenTaxiTemplate(item.id);
-                          }}
-                        >
-                          Посмотреть
-                        </button>
                         {item.status === "paused" ? (
                           <button
                             className="ghost-btn"
