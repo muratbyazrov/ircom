@@ -7,6 +7,11 @@ import restaurantHero from "../../assets/restaurant-hero.svg";
 import taxiHero from "../../assets/taxi-hero.svg";
 import serviceHero from "../../assets/service-hero.svg";
 
+const TITLE_MAX = 60;
+const TAXI_NAME_MAX = 50;
+const RESTAURANT_TITLE_MAX = 40;
+const DESCRIPTION_MAX = 4000;
+
 export function CreateForm({
   type,
   onSubmit,
@@ -239,8 +244,12 @@ export function CreateForm({
         <form className="list" onSubmit={(e) => onSubmit(e, "restaurant")}>
           {isEdit && editMeta?.id ? <input type="hidden" name="editEntityId" value={editMeta.id} /> : null}
           {isEdit && editMeta?.kind ? <input type="hidden" name="editEntityKind" value={editMeta.kind} /> : null}
-          <Field label="Название"><input required name="title" defaultValue={initialValues?.title || ""} className="input" minLength={2} maxLength={100} /></Field>
-          <Field label="Описание"><textarea required name="desc" defaultValue={initialValues?.desc || ""} className="textarea" maxLength={2000} /></Field>
+          <Field label="Название"><input required name="title" defaultValue={initialValues?.title || ""} className="input" minLength={2} maxLength={RESTAURANT_TITLE_MAX} onInput={(e) => {
+            if (e.currentTarget.value.length > RESTAURANT_TITLE_MAX) {
+              e.currentTarget.value = e.currentTarget.value.slice(0, RESTAURANT_TITLE_MAX);
+            }
+          }} /></Field>
+          <Field label="Описание"><textarea required name="desc" defaultValue={initialValues?.desc || ""} className="textarea" maxLength={DESCRIPTION_MAX} /></Field>
           <Field label="Адрес"><input required name="address" defaultValue={initialValues?.address || ""} className="input" minLength={5} maxLength={200} /></Field>
           <div className="grid-2">
             <Field label="Телефон">
@@ -444,7 +453,7 @@ export function CreateForm({
               defaultValue={initialValues?.name || ""}
               className={`input ${taxiFieldErrors.name ? "is-invalid" : ""}`}
               minLength={2}
-              maxLength={60}
+              maxLength={TAXI_NAME_MAX}
               onInput={() => setTaxiFieldErrors((prev) => ({ ...prev, name: "" }))}
             />
             {taxiFieldErrors.name ? <p className="small field-invalid-note">{taxiFieldErrors.name}</p> : null}
@@ -629,7 +638,7 @@ export function CreateForm({
               name="desc"
               defaultValue={initialValues?.desc || ""}
               className={`textarea ${taxiFieldErrors.desc ? "is-invalid" : ""}`}
-              maxLength={2000}
+              maxLength={DESCRIPTION_MAX}
               onInput={() => setTaxiFieldErrors((prev) => ({ ...prev, desc: "" }))}
             />
             {taxiFieldErrors.desc ? <p className="small field-invalid-note">{taxiFieldErrors.desc}</p> : null}
@@ -735,10 +744,10 @@ export function CreateForm({
       <form className="list" onSubmit={(e) => onSubmit(e, type)}>
         {isEdit && editMeta?.id ? <input type="hidden" name="editEntityId" value={editMeta.id} /> : null}
         {isEdit && editMeta?.kind ? <input type="hidden" name="editEntityKind" value={editMeta.kind} /> : null}
-        <Field label="Название"><input required name="title" defaultValue={initialValues?.title || ""} className="input" minLength={3} maxLength={80} /></Field>
+        <Field label="Название"><input required name="title" defaultValue={initialValues?.title || ""} className="input" minLength={3} maxLength={TITLE_MAX} /></Field>
         <Field label="Категория"><select className="select" name="category" defaultValue={initialValues?.category || categories[0]}>{categories.map((x) => <option key={x}>{x}</option>)}</select></Field>
         <Field label="Цена, ₽"><input required name="price" defaultValue={initialValues?.price || ""} type="number" min={1} inputMode="numeric" pattern="[0-9]*" className="input" /></Field>
-        <Field label="Описание"><textarea required name="desc" defaultValue={initialValues?.desc || ""} className="textarea" minLength={10} maxLength={2000} /></Field>
+        <Field label="Описание"><textarea required name="desc" defaultValue={initialValues?.desc || ""} className="textarea" minLength={10} maxLength={DESCRIPTION_MAX} /></Field>
         <Field label={`Фото (до ${maxPhotos})`}>
           <div className="input-with-clear">
             <input

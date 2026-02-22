@@ -529,6 +529,8 @@ body {
 .restaurant-list-address {
   font-size: 13px;
   color: #4b5563;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .restaurant-list-meta {
@@ -654,6 +656,8 @@ body {
 .card-title {
   font-weight: 700;
   font-size: 15px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .price {
@@ -1131,6 +1135,10 @@ button {
 
 .entity-group-meta-row .small {
   margin: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .entity-group-price {
@@ -1145,6 +1153,11 @@ button {
   font-weight: 800;
   line-height: 1;
   white-space: nowrap;
+}
+
+.entity-group-card .small {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .food-group {
