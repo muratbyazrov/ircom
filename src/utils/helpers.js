@@ -34,3 +34,21 @@ export function contactLabel(key) {
   if (key === "tg") return "TG:";
   return `${key}:`;
 }
+
+export function formatListingPostedAt(createdAt, daysAgo) {
+  const numericDays = Number.isFinite(Number(daysAgo)) ? Math.max(0, Math.floor(Number(daysAgo))) : 0;
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return `${numericDays} дн. назад`;
+
+  const now = new Date();
+  const isToday = now.getFullYear() === date.getFullYear()
+    && now.getMonth() === date.getMonth()
+    && now.getDate() === date.getDate();
+
+  if (isToday) {
+    const timeText = new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" }).format(date);
+    return `Сегодня в ${timeText}`;
+  }
+
+  return `${numericDays} дн. назад`;
+}

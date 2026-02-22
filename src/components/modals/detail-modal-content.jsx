@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { clamp, fmtRub, getTouchDistance } from "../../utils/helpers";
+import { clamp, fmtRub, getTouchDistance, formatListingPostedAt } from "../../utils/helpers";
 import { applyImageFallback, replaceImageWithEmpty } from "../../utils/images";
 import { formatTaxiWhenForDisplay } from "../../utils/taxi";
 import { Icon, Field } from "../ui";
@@ -43,6 +43,7 @@ export function DetailModalContent({
   const taxiWhenText = isTaxiDetail ? formatTaxiWhenForDisplay(item.when) : "";
   const isServicesDetail = type === "services";
   const isAdsDetail = type === "ads";
+  const adsPostedAtText = isAdsDetail ? formatListingPostedAt(item.createdAt, item.date) : "";
   const isBasicDetail = !isRestaurantDetail && !isTaxiDetail && !isFoodDetail;
   const isFoodOwnerView = isFoodDetail && typeof onEditDish === "function";
   const restaurantDeliveryText = isRestaurantDetail
@@ -434,7 +435,7 @@ export function DetailModalContent({
               {typeof item.date === "number" ? (
                 <div className="detail-basic-meta-item">
                   <Icon name="time" />
-                  <span>{item.date} дн. назад</span>
+                  <span>{adsPostedAtText}</span>
                 </div>
               ) : null}
               {ratingValue !== null ? (

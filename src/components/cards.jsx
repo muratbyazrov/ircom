@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { clamp, fmtRub, short } from "../utils/helpers";
+import { clamp, fmtRub, short, formatListingPostedAt } from "../utils/helpers";
 import { applyImageFallback } from "../utils/images";
 import { formatTaxiWhenForDisplay } from "../utils/taxi";
 import { Icon } from "./ui";
 
 export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, section = "ads", isOwn = false, canFavorite = true }) {
   const hasRating = typeof item.ratingValue === "number" && Number(item.reviewsCount) > 0;
+  const postedAtText = section === "ads"
+    ? formatListingPostedAt(item.createdAt, item.date)
+    : `${item.date} дн. назад`;
   return (
     <article
       className="card card-clickable"
@@ -47,7 +50,7 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
             <div className="row wrap" style={{ alignItems: "center", gap: 6 }}>
               <div className="card-title">{item.title}</div>
             </div>
-            <div className="meta">{item.category} · {item.date} дн. назад</div>
+            <div className="meta">{item.category} · {postedAtText}</div>
           </div>
           <div className="price">{fmtRub.format(item.price)}</div>
         </div>
