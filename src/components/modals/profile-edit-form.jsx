@@ -52,7 +52,6 @@ export function ProfileEditForm({ profile, onSubmit, onClose }) {
             onFocus={syncPhonePrev}
           />
         </Field>
-        <Field label="О себе"><textarea name="about" defaultValue={profile.about} className="textarea" maxLength={500} /></Field>
         <FormActions onClose={onClose} />
       </form>
     </>

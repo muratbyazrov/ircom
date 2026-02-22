@@ -918,11 +918,6 @@ button {
   overflow-wrap: anywhere;
 }
 
-.profile-about-text {
-  font-size: 14px;
-  line-height: 1.35;
-}
-
 .profile-grid .section {
   min-width: 0;
 }

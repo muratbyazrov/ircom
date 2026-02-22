@@ -1,27 +1,27 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
-import { CreateForm, DetailModalContent, ProfileEditForm } from "./components/modals";
-import { EntityGroupModalContent } from "./components/entity-group-modal-content";
-import { Icon, Modal } from "./components/ui";
-import { useAuthState } from "./hooks/use-auth-state";
-import { useGestureGuard } from "./hooks/use-gesture-guard";
-import { useNavHistory } from "./hooks/use-nav-history";
-import { useTaxiCatalog } from "./hooks/use-taxi-catalog";
-import { AdsTab, FoodTab, ProfileTab, ServicesTab, TaxiTab } from "./sections/tabs";
+import {useCallback, useEffect, useMemo, useState} from 'react';
+import {Eye, EyeOff} from 'lucide-react';
+import {CreateForm, DetailModalContent, ProfileEditForm} from './components/modals';
+import {EntityGroupModalContent} from './components/entity-group-modal-content';
+import {Icon, Modal} from './components/ui';
+import {useAuthState} from './hooks/use-auth-state';
+import {useGestureGuard} from './hooks/use-gesture-guard';
+import {useNavHistory} from './hooks/use-nav-history';
+import {useTaxiCatalog} from './hooks/use-taxi-catalog';
+import {AdsTab, FoodTab, ProfileTab, ServicesTab, TaxiTab} from './sections/tabs';
 import {
   createOrUpdateAccountRequest,
   getSessionRequest,
   registerRequest,
   signInRequest,
   signOutRequest,
-} from "./api/auth";
+} from './api/auth';
 import {
   createListingRequest,
   getListingsRequest,
   getMyListingsRequest,
   toggleListingFavoriteRequest,
   updateListingRequest,
-} from "./api/listing";
+} from './api/listing';
 import {
   createTaxiOfferRequest,
   deleteTaxiOfferRequest,
@@ -29,7 +29,7 @@ import {
   getTaxiOffersRequest,
   toggleTaxiFavoriteRequest,
   updateTaxiOfferRequest,
-} from "./api/taxi";
+} from './api/taxi';
 import {
   createMenuItemRequest,
   createOrUpdateRestaurantRequest,
@@ -38,18 +38,18 @@ import {
   getMyRestaurantRequest,
   toggleMenuItemFavoriteRequest,
   updateMenuItemRequest,
-} from "./api/food";
-import { uploadImagesToS3 } from "./utils/s3-upload";
-import { tabConfig } from "./utils/constants";
-import { sortItems } from "./utils/helpers";
-import { toTaxiDepartureAtApiValue } from "./utils/taxi";
+} from './api/food';
+import {uploadImagesToS3} from './utils/s3-upload';
+import {tabConfig} from './utils/constants';
+import {sortItems} from './utils/helpers';
+import {toTaxiDepartureAtApiValue} from './utils/taxi';
 import {
   formatPhoneValueCompact,
   handlePhoneInputCompact,
   PHONE_COMPACT_PATTERN,
   PHONE_COMPACT_PLACEHOLDER,
   syncPhonePrev,
-} from "./utils/phone";
+} from './utils/phone';
 
 const FEEDBACK_SEED = {
   t1: [
@@ -815,7 +815,6 @@ export default function App() {
     if (hasRestaurant && restaurantEntity) {
       const ownRestaurantId = restaurantEntity?.id || "restaurant-own";
       const ownReviews = Array.isArray(feedbackByItem[ownRestaurantId]) ? feedbackByItem[ownRestaurantId] : [];
-      const ownDishes = normalizedUserRestaurantDishes;
       const ownRestaurantCard = {
         id: ownRestaurantId,
         title: restaurantEntity.title || "Моё заведение",
@@ -830,7 +829,7 @@ export default function App() {
           ...(restaurantEntity.whatsapp ? { wa: restaurantEntity.whatsapp } : {}),
         },
         photos: normalizeSinglePhoto(restaurantEntity.photos),
-        dishes: ownDishes,
+        dishes: normalizedUserRestaurantDishes,
         reviews: ownReviews,
         reviewsCount: ownReviews.length,
         ratingValue: getFeedbackRating(ownReviews),
@@ -1154,7 +1153,6 @@ export default function App() {
           phone: payload.phone || "-",
           telegram: payload.telegram || "-",
           whatsapp: payload.whatsapp || "-",
-          about: payload.about || "-",
         }));
         await refreshCatalog();
       }

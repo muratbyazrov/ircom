@@ -5,7 +5,6 @@ const GUEST_PROFILE = {
   phone: "-",
   telegram: "-",
   whatsapp: "-",
-  about: "Авторизуйтесь, чтобы управлять профилем.",
 };
 
 const normalizeSinglePhoto = (photos) => {
@@ -31,7 +30,6 @@ const profileOrGuest = (account) => ({
   phone: account?.phone || "-",
   telegram: account?.telegram || "-",
   whatsapp: account?.whatsapp || "-",
-  about: account?.about || "",
 });
 
 export function useAuthState({ deepCopy }) {
