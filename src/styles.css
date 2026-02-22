@@ -1375,6 +1375,7 @@ button {
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
   padding: 12px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-card-full {

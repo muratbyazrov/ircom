@@ -263,9 +263,6 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
       }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
-      onTouchMove={(e) => {
-        if (items.length > 1) e.stopPropagation();
-      }}
     >
       {hasPhotos ? (
         <>
