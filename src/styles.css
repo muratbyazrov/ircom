@@ -1573,6 +1573,12 @@ button {
   min-height: 180px;
 }
 
+.detail-ad-unified-block .media {
+  min-height: 0;
+  aspect-ratio: 16 / 10;
+  max-height: 250px;
+}
+
 .detail-service-unified-block .media.media-has-image,
 .detail-service-unified-block .media-slide,
 .detail-service-unified-block .media-img,
