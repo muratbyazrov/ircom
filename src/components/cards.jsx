@@ -46,7 +46,6 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
           <div>
             <div className="row wrap" style={{ alignItems: "center", gap: 6 }}>
               <div className="card-title">{item.title}</div>
-              {isOwn ? <span className="badge">Моё</span> : null}
             </div>
             <div className="meta">{item.category} · {item.date} дн. назад</div>
           </div>
