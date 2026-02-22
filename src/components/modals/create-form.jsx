@@ -47,6 +47,7 @@ export function CreateForm({
   })();
   const [isPreparingPhotos, setIsPreparingPhotos] = useState(false);
   const [selectedPhotoCount, setSelectedPhotoCount] = useState(0);
+  const [selectedPhotoPreviews, setSelectedPhotoPreviews] = useState([]);
   const [photosLimitError, setPhotosLimitError] = useState("");
   const [attemptedTaxiSubmit, setAttemptedTaxiSubmit] = useState(false);
   const [taxiFieldErrors, setTaxiFieldErrors] = useState({});
@@ -70,6 +71,7 @@ export function CreateForm({
   const [isTimeDragging, setIsTimeDragging] = useState(false);
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
+  const selectedPhotoPreviewsRef = useRef([]);
   const wasIntercityOneTimeCreateRef = useRef(false);
   const restaurantPhoneRef = useRef(null);
   const restaurantWhatsappRef = useRef(null);
@@ -77,16 +79,28 @@ export function CreateForm({
   const taxiWhatsappRef = useRef(null);
   const maxPhotos = type === "ad" || type === "service" ? 5 : 1;
 
+  const replaceSelectedPhotoPreviews = (nextPreviewUrls) => {
+    setSelectedPhotoPreviews((prev) => {
+      prev.forEach((url) => URL.revokeObjectURL(url));
+      selectedPhotoPreviewsRef.current = nextPreviewUrls;
+      return nextPreviewUrls;
+    });
+  };
+
   useEffect(() => {
     return () => {
       if (prepTimerRef.current) clearTimeout(prepTimerRef.current);
+      selectedPhotoPreviewsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      selectedPhotoPreviewsRef.current = [];
     };
   }, []);
 
   const handleImagesChange = (e) => {
-    const count = e.target.files?.length || 0;
+    const files = Array.from(e.target.files || []);
+    const count = files.length;
     setSelectedPhotoCount(count);
     setPhotosLimitError(count > maxPhotos ? `Можно загрузить не более ${maxPhotos} фото` : "");
+    replaceSelectedPhotoPreviews(files.map((file) => URL.createObjectURL(file)));
     if (count > 0) {
       setTaxiFieldErrors((prev) => {
         if (!prev.images) return prev;
@@ -110,6 +124,7 @@ export function CreateForm({
     if (imagesInputRef.current) imagesInputRef.current.value = "";
     setIsPreparingPhotos(false);
     setSelectedPhotoCount(0);
+    replaceSelectedPhotoPreviews([]);
     setPhotosLimitError("");
   };
 
@@ -345,6 +360,13 @@ export function CreateForm({
                 ) : (
                   <>Выбрано фото: {selectedPhotoCount}</>
                 )}
+              </div>
+            ) : null}
+            {selectedPhotoPreviews.length > 0 && !isPreparingPhotos ? (
+              <div className="upload-preview-grid" aria-live="polite">
+                {selectedPhotoPreviews.map((photoUrl, index) => (
+                  <img key={photoUrl} className="upload-preview-thumb" src={photoUrl} alt={`Предпросмотр фото ${index + 1}`} />
+                ))}
               </div>
             ) : null}
             {photosLimitError ? <p className="small" style={{ color: "var(--danger)" }}>{photosLimitError}</p> : null}
@@ -644,6 +666,13 @@ export function CreateForm({
                 )}
               </div>
             ) : null}
+            {selectedPhotoPreviews.length > 0 && !isPreparingPhotos ? (
+              <div className="upload-preview-grid" aria-live="polite">
+                {selectedPhotoPreviews.map((photoUrl, index) => (
+                  <img key={photoUrl} className="upload-preview-thumb" src={photoUrl} alt={`Предпросмотр фото ${index + 1}`} />
+                ))}
+              </div>
+            ) : null}
             {photosLimitError ? <p className="small" style={{ color: "var(--danger)" }}>{photosLimitError}</p> : null}
             {taxiFieldErrors.images ? <p className="small field-invalid-note">{taxiFieldErrors.images}</p> : null}
           </Field>
@@ -740,6 +769,13 @@ export function CreateForm({
               ) : (
                 <>Выбрано фото: {selectedPhotoCount}</>
               )}
+            </div>
+          ) : null}
+          {selectedPhotoPreviews.length > 0 && !isPreparingPhotos ? (
+            <div className="upload-preview-grid" aria-live="polite">
+              {selectedPhotoPreviews.map((photoUrl, index) => (
+                <img key={photoUrl} className="upload-preview-thumb" src={photoUrl} alt={`Предпросмотр фото ${index + 1}`} />
+              ))}
             </div>
           ) : null}
         </Field>

@@ -1237,6 +1237,22 @@ button {
   gap: 8px;
 }
 
+.upload-preview-grid {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.upload-preview-thumb {
+  width: 76px;
+  height: 76px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  object-fit: cover;
+  background: #f8fafc;
+}
+
 .input-with-clear {
   position: relative;
 }
