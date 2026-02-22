@@ -38,6 +38,9 @@ export function DetailModalContent({
   const ratingValue = typeof item.ratingValue === "number" ? item.ratingValue : null;
   const foodPrepText = type === "food" ? (item.always ? "Всегда в наличии" : `${item.prep} минут`) : "";
   const foodDeliveryText = type === "food" ? (item.delivery ? "Есть доставка" : "Только самовывоз") : "";
+  const foodAddressText = type === "food"
+    ? String(item.restaurantAddress || item.address || "").trim()
+    : "";
   const isFoodDetail = type === "food";
   const isTaxiDetail = type === "taxi";
   const taxiWhenText = isTaxiDetail ? formatTaxiWhenForDisplay(item.when) : "";
@@ -303,6 +306,10 @@ export function DetailModalContent({
                 <span>{item.restaurant}</span>
               </div>
             ) : null}
+            <div className="detail-food-info-item">
+              <Icon name="route" />
+              <span>{foodAddressText || "Адрес не указан"}</span>
+            </div>
             <div className="detail-food-info-item">
               <Icon name="time" />
               <span>{foodPrepText}</span>
@@ -669,7 +676,9 @@ export function DetailModalContent({
             </div>
             {(item.dishes || []).length ? (
               <div className="detail-restaurant-dishes-list">
-                {item.dishes.map((dish) => (
+                {item.dishes.map((dish) => {
+                  const dishAddress = String(dish.restaurantAddress || dish.address || item.address || "").trim();
+                  return (
                   <article
                     className="detail-restaurant-dish-item card-clickable"
                     key={dish.id || `${dish.title}-${dish.price}`}
@@ -695,6 +704,7 @@ export function DetailModalContent({
                     </div>
                     <div className="detail-restaurant-dish-price">{fmtRub.format(Number(dish.price) || 0)}</div>
                     <div className="detail-restaurant-dish-title">{dish.title || "Блюдо"}</div>
+                    <div className="detail-restaurant-dish-address">{dishAddress || "Адрес не указан"}</div>
                     <div className="detail-restaurant-dish-submeta">
                       <span>{dish.prep ? `${dish.prep} минут` : "Время не указано"}</span>
                       <span>{dish.delivery ? "Есть доставка" : "Только самовывоз"}</span>
@@ -702,7 +712,8 @@ export function DetailModalContent({
                       {dish.unavailable ? <span>Нет в наличии</span> : null}
                     </div>
                   </article>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="small" style={{ marginTop: 6 }}>В этом заведении пока нет добавленных блюд.</p>

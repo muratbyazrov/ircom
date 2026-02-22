@@ -157,9 +157,14 @@ const normalizeEntityPhotos = (item) => ({
   ...item,
   photos: normalizeSinglePhoto(item?.photos),
 });
-const normalizeDish = (dish) => ({
-  ...normalizeEntityPhotos(dish),
-});
+const normalizeDish = (dish) => {
+  const restaurantAddress = pickFirstText(dish?.restaurantAddress, dish?.address, dish?.restaurant_address);
+  return {
+    ...normalizeEntityPhotos(dish),
+    restaurantAddress,
+    address: restaurantAddress,
+  };
+};
 const buildRestaurantId = (name) => {
   const normalized = String(name || "")
     .trim()
@@ -277,7 +282,8 @@ const mapMenuItemToUi = (item) => ({
   restaurantId: item.restaurantId,
   category: item.category || "Другое",
   restaurant: item.restaurantName || "Без названия заведения",
-  restaurantAddress: item.restaurantAddress || "",
+  restaurantAddress: pickFirstText(item.restaurantAddress, item.address, item.restaurant_address),
+  address: pickFirstText(item.restaurantAddress, item.address, item.restaurant_address),
   restaurantLogo: normalizePhotoReference(item.restaurantLogo || item.restaurantLogoUrl),
   title: item.name,
   price: Number(item.price) || 0,
@@ -1723,7 +1729,7 @@ export default function App() {
                 Регистрация
               </button>
             </div>
-            <form className="list" style={{ marginTop: 10 }} onSubmit={handleAuthSubmit}>
+            <form key={authMode} className="list" style={{ marginTop: 10 }} onSubmit={handleAuthSubmit}>
               {authMode === "signin" && (
                 <label className="field">
                   <span className="small">Телефон</span>
