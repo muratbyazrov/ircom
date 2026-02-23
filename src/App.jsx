@@ -314,7 +314,6 @@ const mapMenuItemToUi = (item) => ({
   restaurantLogo: normalizePhotoReference(item.restaurantLogo || item.restaurantLogoUrl),
   title: item.name,
   price: Number(item.price) || 0,
-  always: Boolean(item.alwaysInStock),
   unavailable: !Boolean(item.isAvailable),
   desc: item.description || "",
   contacts: getContacts(item),
@@ -1166,6 +1165,7 @@ export default function App() {
 
       if (type === "dish") {
         const photos = await uploadPhotos("images", 1, "dish");
+        const payloadAvailability = String(payload.isAvailable || "").trim().toLowerCase();
         if (isEdit && editEntityId && editEntityKind === "dish") {
           const menuItemId = Number(String(editEntityId).split("-").pop());
           if (!menuItemId) throw new Error("Некорректный идентификатор блюда");
@@ -1176,9 +1176,8 @@ export default function App() {
             category: payload.category || currentDish?.category || "Другое",
             name: payload.title || currentDish?.title || "Блюдо",
             description: payload.desc || currentDish?.desc || "",
-            alwaysInStock: Boolean(currentDish?.always),
             price: Number(payload.price) || Number(currentDish?.price) || 1,
-            isAvailable: !Boolean(currentDish?.unavailable),
+            isAvailable: payloadAvailability === "true" ? true : payloadAvailability === "false" ? false : !Boolean(currentDish?.unavailable),
             photos: photos.length ? photos : normalizeSinglePhoto(currentDish?.photos),
           });
         } else {
@@ -1187,9 +1186,8 @@ export default function App() {
             category: payload.category || "Другое",
             name: payload.title || "Новое блюдо",
             description: payload.desc || "",
-            alwaysInStock: true,
             price: Number(payload.price) || 1,
-            isAvailable: true,
+            isAvailable: payloadAvailability === "false" ? false : true,
             photos,
           });
         }
@@ -1404,7 +1402,6 @@ export default function App() {
       category: dish.category,
       name: dish.title,
       description: dish.desc || "",
-      alwaysInStock: Boolean(dish.always),
       price: Number(dish.price) || 1,
       isAvailable: Boolean(dish.unavailable),
       photos: normalizeSinglePhoto(dish.photos),

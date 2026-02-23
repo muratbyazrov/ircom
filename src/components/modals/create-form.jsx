@@ -73,6 +73,10 @@ export function CreateForm({
     const price = Number(initialValues?.deliveryPrice);
     return Number.isFinite(price) && price > 0 ? String(price) : "";
   });
+  const [dishIsAvailable, setDishIsAvailable] = useState(() => {
+    if (type !== "dish") return true;
+    return !Boolean(initialValues?.unavailable);
+  });
   const [isTimeDragging, setIsTimeDragging] = useState(false);
   const prepTimerRef = useRef(null);
   const imagesInputRef = useRef(null);
@@ -748,6 +752,29 @@ export function CreateForm({
         <Field label="Категория"><select className="select" name="category" defaultValue={initialValues?.category || categories[0]}>{categories.map((x) => <option key={x}>{x}</option>)}</select></Field>
         <Field label="Цена, ₽"><input required name="price" defaultValue={initialValues?.price || ""} type="number" min={1} inputMode="numeric" pattern="[0-9]*" className="input" /></Field>
         <Field label="Описание"><textarea required name="desc" defaultValue={initialValues?.desc || ""} className="textarea" minLength={10} maxLength={DESCRIPTION_MAX} /></Field>
+        {type === "dish" ? (
+          <Field label="Наличие">
+            <div className="multi-select-buttons">
+              <button
+                type="button"
+                className={`multi-select-btn ${dishIsAvailable ? "active" : ""}`}
+                onClick={() => setDishIsAvailable(true)}
+                aria-pressed={dishIsAvailable}
+              >
+                В наличии
+              </button>
+              <button
+                type="button"
+                className={`multi-select-btn ${!dishIsAvailable ? "active" : ""}`}
+                onClick={() => setDishIsAvailable(false)}
+                aria-pressed={!dishIsAvailable}
+              >
+                Нет в наличии
+              </button>
+            </div>
+            <input type="hidden" name="isAvailable" value={dishIsAvailable ? "true" : "false"} />
+          </Field>
+        ) : null}
         <Field label={`Фото (до ${maxPhotos})`}>
           <div className="input-with-clear">
             <input

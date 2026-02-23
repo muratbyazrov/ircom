@@ -37,7 +37,7 @@ export function DetailModalContent({
   const REVIEWS_STEP = 3;
   const ratingValue = typeof item.ratingValue === "number" ? item.ratingValue : null;
   const foodAvailabilityText = type === "food"
-    ? (item.unavailable ? "Нет в наличии" : item.always ? "Всегда в наличии" : "В наличии")
+    ? (item.unavailable ? "Нет в наличии" : "В наличии")
     : "";
   const foodAddressText = type === "food"
     ? String(item.restaurantAddress || item.address || "").trim()
@@ -703,7 +703,6 @@ export function DetailModalContent({
                     <div className="detail-restaurant-dish-title">{dish.title || "Блюдо"}</div>
                     <div className="detail-restaurant-dish-address">{dishAddress || "Адрес не указан"}</div>
                     <div className="detail-restaurant-dish-submeta">
-                      {dish.always ? <span>Всегда в наличии</span> : null}
                       {dish.unavailable ? <span>Нет в наличии</span> : null}
                     </div>
                   </article>
