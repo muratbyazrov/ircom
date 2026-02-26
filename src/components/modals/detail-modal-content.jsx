@@ -285,10 +285,9 @@ export function DetailModalContent({
       ) : null}
       {!isRestaurantDetail && !isTaxiDetail && !isFoodDetail && !isServicesDetail && !isAdsDetail && photos.length > 1 ? (
         <div className="gallery" style={{ marginTop: 8 }}>
-          {photos.slice(1).map((photo, thumbIndex) => {
-            const index = thumbIndex + 1;
+          {photos.map((photo, index) => {
             return (
-              <button key={photo} className="gallery-btn" type="button" onClick={() => setViewerIndex(index)}>
+              <button key={`${photo}-${index}`} className="gallery-btn" type="button" onClick={() => setViewerIndex(index)}>
                 <img className="gallery-img" src={photo} alt="gallery" loading="lazy" onError={(e) => applyImageFallback(e, type)} />
               </button>
             );
@@ -358,10 +357,9 @@ export function DetailModalContent({
           />
           {photos.length > 1 ? (
             <div className="gallery detail-service-gallery">
-              {photos.slice(1).map((photo, thumbIndex) => {
-                const index = thumbIndex + 1;
+              {photos.map((photo, index) => {
                 return (
-                  <button key={photo} className="gallery-btn" type="button" onClick={() => setViewerIndex(index)}>
+                  <button key={`${photo}-${index}`} className="gallery-btn" type="button" onClick={() => setViewerIndex(index)}>
                     <img className="gallery-img" src={photo} alt="gallery" loading="lazy" onError={(e) => applyImageFallback(e, type)} />
                   </button>
                 );
@@ -415,10 +413,9 @@ export function DetailModalContent({
           />
           {photos.length > 1 ? (
             <div className="gallery detail-ad-gallery">
-              {photos.slice(1).map((photo, thumbIndex) => {
-                const index = thumbIndex + 1;
+              {photos.map((photo, index) => {
                 return (
-                  <button key={photo} className="gallery-btn" type="button" onClick={() => setViewerIndex(index)}>
+                  <button key={`${photo}-${index}`} className="gallery-btn" type="button" onClick={() => setViewerIndex(index)}>
                     <img className="gallery-img" src={photo} alt="gallery" loading="lazy" onError={(e) => applyImageFallback(e, type)} />
                   </button>
                 );
