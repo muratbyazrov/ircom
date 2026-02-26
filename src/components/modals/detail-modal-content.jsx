@@ -497,7 +497,7 @@ export function DetailModalContent({
             {item.seats ? (
               <div className="detail-taxi-info-item">
                 <span>Места</span>
-                <b>{item.seats.free}/{item.seats.total}</b>
+                <b>{item.seats.total ?? item.seats.free}</b>
               </div>
             ) : null}
             {item.isFilled ? (
