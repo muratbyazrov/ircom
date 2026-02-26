@@ -40,7 +40,7 @@ import {
   toggleMenuItemFavoriteRequest,
   updateMenuItemRequest,
 } from './api/food';
-import {uploadImagesToS3} from './utils/s3-upload';
+import {deleteImagesFromS3, uploadImagesToS3} from './utils/s3-upload';
 import {tabConfig} from './utils/constants';
 import {sortItems} from './utils/helpers';
 import {toTaxiDepartureAtApiValue} from './utils/taxi';
@@ -844,6 +844,20 @@ export default function App() {
         entityType,
       });
     };
+    const normalizeSubmittedPhotos = (value, limit) => {
+      return toArray(value)
+        .map((photo) => normalizePhotoReference(photo))
+        .filter(Boolean)
+        .slice(0, limit);
+    };
+    const removePhotosFromS3 = async (value) => {
+      const removedPhotos = normalizeSubmittedPhotos(value, 100);
+      if (!removedPhotos.length) return;
+      await deleteImagesFromS3({
+        photos: removedPhotos,
+        accountId,
+      });
+    };
 
     if (accountId === null) return;
 
@@ -860,7 +874,8 @@ export default function App() {
         const currentRestaurantId = toAccountId(restaurantEntity?.restaurantId);
         const restaurantIdForUpdate = editRestaurantId || currentRestaurantId || modalReturnRestaurantId;
         const uploadedLogo = await uploadPhotos("logo", 1, "restaurant");
-        const logo = uploadedLogo[0] || String(restaurantEntity?.logo || "").trim() || undefined;
+        const keptExistingLogo = normalizeSubmittedPhotos(payload.existingPhotos, 1);
+        const logo = uploadedLogo[0] || keptExistingLogo[0] || undefined;
         const restaurantResponse = await createOrUpdateRestaurantRequest({
           accountId,
           ...(isEdit && restaurantIdForUpdate ? { restaurantId: restaurantIdForUpdate } : {}),
@@ -875,6 +890,9 @@ export default function App() {
           telegram: payload.telegram || undefined,
           whatsapp: payload.whatsapp || undefined,
         });
+        if (isEdit) {
+          await removePhotosFromS3(payload.removedPhotos);
+        }
         await refreshMyData();
         await refreshCatalog();
 
@@ -902,6 +920,7 @@ export default function App() {
           const listingId = Number(String(editEntityId).split("-")[1]);
           if (!listingId) throw new Error("Некорректный идентификатор объявления/услуги");
           const currentItem = (type === "ad" ? customAds : customServices).find((x) => x.id === editEntityId);
+          const keptExistingPhotos = normalizeSubmittedPhotos(payload.existingPhotos, 8);
           await updateListingRequest({
             accountId,
             listingId,
@@ -910,8 +929,9 @@ export default function App() {
             title: payload.title || currentItem?.title || (type === "ad" ? "Объявление" : "Услуга"),
             description: payload.desc || currentItem?.desc || "",
             price: Number(payload.price) || Number(currentItem?.price) || 1,
-            photos: uploadedListingPhotos.length ? uploadedListingPhotos : normalizeFivePhotos(currentItem?.photos),
+            photos: [...keptExistingPhotos, ...uploadedListingPhotos].slice(0, 8),
           });
+          await removePhotosFromS3(payload.removedPhotos);
         } else {
           await createListingRequest({
             accountId,
@@ -934,6 +954,7 @@ export default function App() {
           const menuItemId = Number(String(editEntityId).split("-").pop());
           if (!menuItemId) throw new Error("Некорректный идентификатор блюда");
           const currentDish = userRestaurantDishes.find((x) => x.id === editEntityId);
+          const keptExistingPhotos = normalizeSubmittedPhotos(payload.existingPhotos, 1);
           await updateMenuItemRequest({
             accountId,
             menuItemId,
@@ -942,8 +963,9 @@ export default function App() {
             description: payload.desc || currentDish?.desc || "",
             price: Number(payload.price) || Number(currentDish?.price) || 1,
             isAvailable: payloadAvailability === "true" ? true : payloadAvailability === "false" ? false : !Boolean(currentDish?.unavailable),
-            photos: photos.length ? photos : normalizeSinglePhoto(currentDish?.photos),
+            photos: [...keptExistingPhotos, ...photos].slice(0, 1),
           });
+          await removePhotosFromS3(payload.removedPhotos);
         } else {
           await createMenuItemRequest({
             accountId,
@@ -997,6 +1019,7 @@ export default function App() {
         if (isEdit && editEntityKind === "taxi-one-time") {
           const taxiOfferId = Number(String(editEntityId).split("-")[1]);
           if (!taxiOfferId) throw new Error("Некорректный идентификатор поездки");
+          const keptExistingPhotos = normalizeSubmittedPhotos(payload.existingPhotos, 1);
           await updateTaxiOfferRequest({
             accountId,
             taxiOfferId,
@@ -1010,8 +1033,9 @@ export default function App() {
             departureAt: departureAt === undefined ? undefined : departureAt,
             seatsTotal: seats,
             seatsFree: seats,
-            carPhotos: uploadedTaxiPhotos.length ? uploadedTaxiPhotos : normalizeSinglePhoto(currentTaxi?.photos),
+            carPhotos: [...keptExistingPhotos, ...uploadedTaxiPhotos].slice(0, 1),
           });
+          await removePhotosFromS3(payload.removedPhotos);
         } else {
           await createTaxiOfferRequest({
             accountId,

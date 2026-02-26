@@ -54,6 +54,8 @@ export function CreateForm({
   const [selectedPhotoCount, setSelectedPhotoCount] = useState(0);
   const [selectedPhotoFiles, setSelectedPhotoFiles] = useState([]);
   const [selectedPhotoPreviews, setSelectedPhotoPreviews] = useState([]);
+  const [existingPhotos, setExistingPhotos] = useState([]);
+  const [removedExistingPhotos, setRemovedExistingPhotos] = useState([]);
   const [photosLimitError, setPhotosLimitError] = useState("");
   const [attemptedTaxiSubmit, setAttemptedTaxiSubmit] = useState(false);
   const [taxiFieldErrors, setTaxiFieldErrors] = useState({});
@@ -89,6 +91,24 @@ export function CreateForm({
   const taxiWhatsappRef = useRef(null);
   const maxPhotos = type === "ad" || type === "service" ? 8 : 1;
 
+  const collectInitialPhotos = () => {
+    if (!isEdit) return [];
+    if (type === "restaurant") {
+      const logo = String(initialValues?.logo || "").trim();
+      return logo ? [logo] : [];
+    }
+    const photos = Array.isArray(initialValues?.photos) ? initialValues.photos : [];
+    return photos
+      .map((photo) => String(photo || "").trim())
+      .filter(Boolean)
+      .slice(0, maxPhotos);
+  };
+
+  const buildPhotosLimitError = (newCount, keptExistingCount = existingPhotos.length) => {
+    const total = Number(newCount || 0) + Number(keptExistingCount || 0);
+    return total > maxPhotos ? `Можно загрузить не более ${maxPhotos} фото` : "";
+  };
+
   const replaceSelectedPhotoPreviews = (nextPreviewUrls) => {
     setSelectedPhotoPreviews((prev) => {
       prev.forEach((url) => URL.revokeObjectURL(url));
@@ -105,12 +125,18 @@ export function CreateForm({
     };
   }, []);
 
+  useEffect(() => {
+    const nextInitial = collectInitialPhotos();
+    setExistingPhotos(nextInitial);
+    setRemovedExistingPhotos([]);
+  }, [isEdit, type, initialValues, maxPhotos]);
+
   const handleImagesChange = (e) => {
     const files = Array.from(e.target.files || []);
     const count = files.length;
     setSelectedPhotoFiles(files);
     setSelectedPhotoCount(count);
-    setPhotosLimitError(count > maxPhotos ? `Можно загрузить не более ${maxPhotos} фото` : "");
+    setPhotosLimitError(buildPhotosLimitError(count));
     replaceSelectedPhotoPreviews(files.map((file) => URL.createObjectURL(file)));
     if (count > 0) {
       setTaxiFieldErrors((prev) => {
@@ -137,7 +163,7 @@ export function CreateForm({
     setSelectedPhotoFiles([]);
     setSelectedPhotoCount(0);
     replaceSelectedPhotoPreviews([]);
-    setPhotosLimitError("");
+    setPhotosLimitError(buildPhotosLimitError(0));
   };
 
   const removeSelectedImage = (indexToRemove) => {
@@ -158,10 +184,22 @@ export function CreateForm({
     setIsPreparingPhotos(false);
     setSelectedPhotoFiles(nextFiles);
     setSelectedPhotoCount(nextFiles.length);
-    setPhotosLimitError(nextFiles.length > maxPhotos ? `Можно загрузить не более ${maxPhotos} фото` : "");
+    setPhotosLimitError(buildPhotosLimitError(nextFiles.length));
     if (removedPreviewUrl) URL.revokeObjectURL(removedPreviewUrl);
     selectedPhotoPreviewsRef.current = nextPreviewUrls;
     setSelectedPhotoPreviews(nextPreviewUrls);
+  };
+
+  const removeExistingImage = (indexToRemove) => {
+    if (indexToRemove < 0 || indexToRemove >= existingPhotos.length) return;
+    const removedPhoto = existingPhotos[indexToRemove];
+    const nextExisting = existingPhotos.filter((_, index) => index !== indexToRemove);
+    setExistingPhotos(nextExisting);
+    setRemovedExistingPhotos((prev) => {
+      if (!removedPhoto || prev.includes(removedPhoto)) return prev;
+      return [...prev, removedPhoto];
+    });
+    setPhotosLimitError(buildPhotosLimitError(selectedPhotoFiles.length, nextExisting.length));
   };
 
   const startTimeDrag = () => setIsTimeDragging(true);
@@ -275,6 +313,8 @@ export function CreateForm({
         <form className="list" onSubmit={(e) => onSubmit(e, "restaurant")}>
           {isEdit && editMeta?.id ? <input type="hidden" name="editEntityId" value={editMeta.id} /> : null}
           {isEdit && editMeta?.kind ? <input type="hidden" name="editEntityKind" value={editMeta.kind} /> : null}
+          {existingPhotos.map((photo, index) => <input key={`existing-restaurant-${photo}-${index}`} type="hidden" name="existingPhotos" value={photo} />)}
+          {removedExistingPhotos.map((photo, index) => <input key={`removed-restaurant-${photo}-${index}`} type="hidden" name="removedPhotos" value={photo} />)}
           <Field label="Название"><input required name="title" defaultValue={initialValues?.title || ""} className="input" minLength={2} maxLength={RESTAURANT_TITLE_MAX} onInput={(e) => {
             if (e.currentTarget.value.length > RESTAURANT_TITLE_MAX) {
               e.currentTarget.value = e.currentTarget.value.slice(0, RESTAURANT_TITLE_MAX);
@@ -396,6 +436,23 @@ export function CreateForm({
                 Подготавливаем {selectedPhotoCount} фото...
               </div>
             ) : null}
+            {existingPhotos.length > 0 ? (
+              <div className="upload-preview-grid" aria-live="polite">
+                {existingPhotos.map((photoUrl, index) => (
+                  <div key={`existing-restaurant-preview-${photoUrl}-${index}`} className="upload-preview-item">
+                    <img className="upload-preview-thumb" src={photoUrl} alt={`Текущее фото ${index + 1}`} onError={(e) => applyImageFallback(e, "food")} />
+                    <button
+                      type="button"
+                      className="upload-preview-remove-btn"
+                      onClick={() => removeExistingImage(index)}
+                      aria-label={`Убрать текущее фото ${index + 1}`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
             {selectedPhotoPreviews.length > 0 && !isPreparingPhotos ? (
               <div className="upload-preview-grid" aria-live="polite">
                 {selectedPhotoPreviews.map((photoUrl, index) => (
@@ -457,6 +514,8 @@ export function CreateForm({
         <form className={`list ${attemptedTaxiSubmit ? "form-attempted" : ""}`} onSubmit={handleTaxiSubmit}>
           {isEdit && editMeta?.id ? <input type="hidden" name="editEntityId" value={editMeta.id} /> : null}
           {isEdit && editMeta?.kind ? <input type="hidden" name="editEntityKind" value={editMeta.kind} /> : null}
+          {existingPhotos.map((photo, index) => <input key={`existing-taxi-${photo}-${index}`} type="hidden" name="existingPhotos" value={photo} />)}
+          {removedExistingPhotos.map((photo, index) => <input key={`removed-taxi-${photo}-${index}`} type="hidden" name="removedPhotos" value={photo} />)}
           <Field label="Направления">
             <div className={`multi-select-buttons ${showTaxiDirectionError ? "is-invalid" : ""}`}>
               {taxiCategories.map((x) => {
@@ -704,6 +763,23 @@ export function CreateForm({
                 Подготавливаем {selectedPhotoCount} фото...
               </div>
             ) : null}
+            {existingPhotos.length > 0 ? (
+              <div className="upload-preview-grid" aria-live="polite">
+                {existingPhotos.map((photoUrl, index) => (
+                  <div key={`existing-taxi-preview-${photoUrl}-${index}`} className="upload-preview-item">
+                    <img className="upload-preview-thumb" src={photoUrl} alt={`Текущее фото ${index + 1}`} onError={(e) => applyImageFallback(e, "taxi")} />
+                    <button
+                      type="button"
+                      className="upload-preview-remove-btn"
+                      onClick={() => removeExistingImage(index)}
+                      aria-label={`Убрать текущее фото ${index + 1}`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
             {selectedPhotoPreviews.length > 0 && !isPreparingPhotos ? (
               <div className="upload-preview-grid" aria-live="polite">
                 {selectedPhotoPreviews.map((photoUrl, index) => (
@@ -783,6 +859,8 @@ export function CreateForm({
       <form className="list" onSubmit={(e) => onSubmit(e, type)}>
         {isEdit && editMeta?.id ? <input type="hidden" name="editEntityId" value={editMeta.id} /> : null}
         {isEdit && editMeta?.kind ? <input type="hidden" name="editEntityKind" value={editMeta.kind} /> : null}
+        {existingPhotos.map((photo, index) => <input key={`existing-${type}-${photo}-${index}`} type="hidden" name="existingPhotos" value={photo} />)}
+        {removedExistingPhotos.map((photo, index) => <input key={`removed-${type}-${photo}-${index}`} type="hidden" name="removedPhotos" value={photo} />)}
         <Field label="Название"><input required name="title" defaultValue={initialValues?.title || ""} className="input" minLength={3} maxLength={TITLE_MAX} /></Field>
         <Field label="Категория"><select className="select" name="category" defaultValue={initialValues?.category || categories[0]}>{categories.map((x) => <option key={x}>{x}</option>)}</select></Field>
         <Field label="Цена, ₽"><input required name="price" defaultValue={initialValues?.price || ""} type="number" min={1} inputMode="numeric" pattern="[0-9]*" className="input" /></Field>
@@ -834,6 +912,23 @@ export function CreateForm({
             <div className="upload-status" aria-live="polite">
               <span className="loader-spinner" aria-hidden="true" />
               Подготавливаем {selectedPhotoCount} фото...
+            </div>
+          ) : null}
+          {existingPhotos.length > 0 ? (
+            <div className="upload-preview-grid" aria-live="polite">
+              {existingPhotos.map((photoUrl, index) => (
+                <div key={`existing-generic-preview-${photoUrl}-${index}`} className="upload-preview-item">
+                  <img className="upload-preview-thumb" src={photoUrl} alt={`Текущее фото ${index + 1}`} onError={(e) => applyImageFallback(e, type === "ad" ? "ads" : type === "service" ? "services" : "food")} />
+                  <button
+                    type="button"
+                    className="upload-preview-remove-btn"
+                    onClick={() => removeExistingImage(index)}
+                    aria-label={`Убрать текущее фото ${index + 1}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
             </div>
           ) : null}
           {selectedPhotoPreviews.length > 0 && !isPreparingPhotos ? (

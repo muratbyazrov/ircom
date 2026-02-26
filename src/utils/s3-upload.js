@@ -1,4 +1,4 @@
-import { buildPhotoUrlRequest, initPhotoUploadRequest } from "../api/media";
+import { buildPhotoUrlRequest, deletePhotoRequest, initPhotoUploadRequest } from "../api/media";
 
 const ENTITY_TYPES = new Set(["listing", "taxi", "dish", "restaurant"]);
 const MAX_SIZE_BYTES = Number(import.meta.env.VITE_S3_MAX_UPLOAD_BYTES || 10485760);
@@ -15,6 +15,20 @@ const normalizePhotoReference = (value) => {
   if (/^https?:\/\//i.test(raw)) return raw;
   if (!FALLBACK_PUBLIC_BASE_URL) return raw;
   return `${FALLBACK_PUBLIC_BASE_URL}/${encodeURIComponent(raw).replace(/%2F/g, "/")}`;
+};
+
+const extractObjectKey = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (!/^https?:\/\//i.test(raw)) return raw;
+
+  try {
+    const url = new URL(raw);
+    const key = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
+    return key;
+  } catch {
+    return "";
+  }
 };
 
 const buildPhotoUrlFromUpload = ({ uploadUrl, objectKey }) => {
@@ -116,4 +130,25 @@ export async function uploadImagesToS3({ files, accountId, entityType }) {
   }
 
   return uploaded.filter(Boolean);
+}
+
+export async function deleteImagesFromS3({ photos, accountId }) {
+  const normalizedPhotos = (Array.isArray(photos) ? photos : [])
+    .map((photo) => String(photo || "").trim())
+    .filter(Boolean);
+  if (!normalizedPhotos.length) return;
+
+  const seenKeys = new Set();
+  const tasks = normalizedPhotos.map(async (photo) => {
+    const objectKey = extractObjectKey(photo);
+    if (!objectKey) return;
+    if (seenKeys.has(objectKey)) return;
+    seenKeys.add(objectKey);
+    await deletePhotoRequest({
+      accountId,
+      objectKey,
+    });
+  });
+
+  await Promise.all(tasks);
 }
