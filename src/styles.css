@@ -1362,6 +1362,30 @@ button {
   background: #f8fafc;
 }
 
+.upload-preview-item {
+  position: relative;
+  width: 76px;
+  height: 76px;
+}
+
+.upload-preview-remove-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #d7dee8;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font-size: 16px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+}
+
 .input-with-clear {
   position: relative;
 }

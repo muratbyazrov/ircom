@@ -52,6 +52,7 @@ export function CreateForm({
   })();
   const [isPreparingPhotos, setIsPreparingPhotos] = useState(false);
   const [selectedPhotoCount, setSelectedPhotoCount] = useState(0);
+  const [selectedPhotoFiles, setSelectedPhotoFiles] = useState([]);
   const [selectedPhotoPreviews, setSelectedPhotoPreviews] = useState([]);
   const [photosLimitError, setPhotosLimitError] = useState("");
   const [attemptedTaxiSubmit, setAttemptedTaxiSubmit] = useState(false);
@@ -107,6 +108,7 @@ export function CreateForm({
   const handleImagesChange = (e) => {
     const files = Array.from(e.target.files || []);
     const count = files.length;
+    setSelectedPhotoFiles(files);
     setSelectedPhotoCount(count);
     setPhotosLimitError(count > maxPhotos ? `Можно загрузить не более ${maxPhotos} фото` : "");
     replaceSelectedPhotoPreviews(files.map((file) => URL.createObjectURL(file)));
@@ -132,9 +134,30 @@ export function CreateForm({
     if (prepTimerRef.current) clearTimeout(prepTimerRef.current);
     if (imagesInputRef.current) imagesInputRef.current.value = "";
     setIsPreparingPhotos(false);
+    setSelectedPhotoFiles([]);
     setSelectedPhotoCount(0);
     replaceSelectedPhotoPreviews([]);
     setPhotosLimitError("");
+  };
+
+  const removeSelectedImage = (indexToRemove) => {
+    if (indexToRemove < 0 || indexToRemove >= selectedPhotoFiles.length) return;
+    const nextFiles = selectedPhotoFiles.filter((_, index) => index !== indexToRemove);
+    if (imagesInputRef.current) {
+      if (!nextFiles.length) {
+        imagesInputRef.current.value = "";
+      } else {
+        const dataTransfer = new DataTransfer();
+        nextFiles.forEach((file) => dataTransfer.items.add(file));
+        imagesInputRef.current.files = dataTransfer.files;
+      }
+    }
+    if (prepTimerRef.current) clearTimeout(prepTimerRef.current);
+    setIsPreparingPhotos(false);
+    setSelectedPhotoFiles(nextFiles);
+    setSelectedPhotoCount(nextFiles.length);
+    setPhotosLimitError(nextFiles.length > maxPhotos ? `Можно загрузить не более ${maxPhotos} фото` : "");
+    replaceSelectedPhotoPreviews(nextFiles.map((file) => URL.createObjectURL(file)));
   };
 
   const startTimeDrag = () => setIsTimeDragging(true);
@@ -363,22 +386,26 @@ export function CreateForm({
                 </button>
               ) : null}
             </div>
-            {selectedPhotoCount > 0 ? (
+            {isPreparingPhotos && selectedPhotoCount > 0 ? (
               <div className="upload-status" aria-live="polite">
-                {isPreparingPhotos ? (
-                  <>
-                    <span className="loader-spinner" aria-hidden="true" />
-                    Подготавливаем {selectedPhotoCount} фото...
-                  </>
-                ) : (
-                  <>Выбрано фото: {selectedPhotoCount}</>
-                )}
+                <span className="loader-spinner" aria-hidden="true" />
+                Подготавливаем {selectedPhotoCount} фото...
               </div>
             ) : null}
             {selectedPhotoPreviews.length > 0 && !isPreparingPhotos ? (
               <div className="upload-preview-grid" aria-live="polite">
                 {selectedPhotoPreviews.map((photoUrl, index) => (
-                  <img key={photoUrl} className="upload-preview-thumb" src={photoUrl} alt={`Предпросмотр фото ${index + 1}`} />
+                  <div key={photoUrl} className="upload-preview-item">
+                    <img className="upload-preview-thumb" src={photoUrl} alt={`Предпросмотр фото ${index + 1}`} />
+                    <button
+                      type="button"
+                      className="upload-preview-remove-btn"
+                      onClick={() => removeSelectedImage(index)}
+                      aria-label={`Удалить фото ${index + 1}`}
+                    >
+                      ×
+                    </button>
+                  </div>
                 ))}
               </div>
             ) : null}
@@ -667,22 +694,26 @@ export function CreateForm({
                 </button>
               ) : null}
             </div>
-            {selectedPhotoCount > 0 ? (
+            {isPreparingPhotos && selectedPhotoCount > 0 ? (
               <div className="upload-status" aria-live="polite">
-                {isPreparingPhotos ? (
-                  <>
-                    <span className="loader-spinner" aria-hidden="true" />
-                    Подготавливаем {selectedPhotoCount} фото...
-                  </>
-                ) : (
-                  <>Выбрано фото: {selectedPhotoCount}</>
-                )}
+                <span className="loader-spinner" aria-hidden="true" />
+                Подготавливаем {selectedPhotoCount} фото...
               </div>
             ) : null}
             {selectedPhotoPreviews.length > 0 && !isPreparingPhotos ? (
               <div className="upload-preview-grid" aria-live="polite">
                 {selectedPhotoPreviews.map((photoUrl, index) => (
-                  <img key={photoUrl} className="upload-preview-thumb" src={photoUrl} alt={`Предпросмотр фото ${index + 1}`} />
+                  <div key={photoUrl} className="upload-preview-item">
+                    <img className="upload-preview-thumb" src={photoUrl} alt={`Предпросмотр фото ${index + 1}`} />
+                    <button
+                      type="button"
+                      className="upload-preview-remove-btn"
+                      onClick={() => removeSelectedImage(index)}
+                      aria-label={`Удалить фото ${index + 1}`}
+                    >
+                      ×
+                    </button>
+                  </div>
                 ))}
               </div>
             ) : null}
@@ -795,22 +826,26 @@ export function CreateForm({
               </button>
             ) : null}
           </div>
-          {selectedPhotoCount > 0 ? (
+          {isPreparingPhotos && selectedPhotoCount > 0 ? (
             <div className="upload-status" aria-live="polite">
-              {isPreparingPhotos ? (
-                <>
-                  <span className="loader-spinner" aria-hidden="true" />
-                  Подготавливаем {selectedPhotoCount} фото...
-                </>
-              ) : (
-                <>Выбрано фото: {selectedPhotoCount}</>
-              )}
+              <span className="loader-spinner" aria-hidden="true" />
+              Подготавливаем {selectedPhotoCount} фото...
             </div>
           ) : null}
           {selectedPhotoPreviews.length > 0 && !isPreparingPhotos ? (
             <div className="upload-preview-grid" aria-live="polite">
               {selectedPhotoPreviews.map((photoUrl, index) => (
-                <img key={photoUrl} className="upload-preview-thumb" src={photoUrl} alt={`Предпросмотр фото ${index + 1}`} />
+                <div key={photoUrl} className="upload-preview-item">
+                  <img className="upload-preview-thumb" src={photoUrl} alt={`Предпросмотр фото ${index + 1}`} />
+                  <button
+                    type="button"
+                    className="upload-preview-remove-btn"
+                    onClick={() => removeSelectedImage(index)}
+                    aria-label={`Удалить фото ${index + 1}`}
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
             </div>
           ) : null}
