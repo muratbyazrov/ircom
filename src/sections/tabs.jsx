@@ -243,12 +243,17 @@ export function ProfileTab({
   openEditProfile,
   toggleAuth,
 }) {
+  const isPresentContactValue = (value) => {
+    const text = String(value || "").trim();
+    return Boolean(text) && text !== "-";
+  };
+
   const contactRows = [
     { key: "name", label: "Имя", value: profile.name, icon: null },
     { key: "phone", label: "Телефон", value: profile.phone, icon: "phone" },
     { key: "telegram", label: "Telegram", value: profile.telegram, icon: "telegram" },
     { key: "whatsapp", label: "WhatsApp", value: profile.whatsapp, icon: "whatsapp" },
-  ].filter((entry) => String(entry.value || "").trim());
+  ].filter((entry) => isPresentContactValue(entry.value));
 
   const entityGroups = [
     { key: "restaurant", label: "Заведения", count: hasRestaurant ? 1 : 0, icon: "food" },

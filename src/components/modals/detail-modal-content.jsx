@@ -112,8 +112,13 @@ export function DetailModalContent({
     return null;
   };
 
+  const isPresentContactValue = (value) => {
+    const text = String(value || "").trim();
+    return Boolean(text) && text !== "-";
+  };
+
   const contactButtons = Object.entries(item.contacts || {})
-    .filter(([, value]) => Boolean(String(value || "").trim()))
+    .filter(([, value]) => isPresentContactValue(value))
     .map(([k, v]) => {
       const contactType = k === "tg" ? "telegram" : k === "wa" ? "whatsapp" : "phone";
       const contactLabel = k === "tg" ? "Telegram" : k === "wa" ? "WhatsApp" : "Телефон";
@@ -396,10 +401,12 @@ export function DetailModalContent({
             <div className="detail-content-title">Описание</div>
             <p>{item.desc || "Нет описания"}</p>
           </div>
-          <div className="detail-contacts-block detail-contacts-block-basic detail-service-contacts">
-            <div className="detail-contacts-title">Контакты</div>
-            <div className="detail-contact-grid">{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
-          </div>
+          {contactButtons.length ? (
+            <div className="detail-contacts-block detail-contacts-block-basic detail-service-contacts">
+              <div className="detail-contacts-title">Контакты</div>
+              <div className="detail-contact-grid">{contactButtons}</div>
+            </div>
+          ) : null}
         </section>
       ) : null}
       {isAdsDetail ? (
@@ -452,10 +459,12 @@ export function DetailModalContent({
             <div className="detail-content-title">Описание</div>
             <p>{item.desc || "Нет описания"}</p>
           </div>
-          <div className="detail-contacts-block detail-contacts-block-basic detail-ad-contacts">
-            <div className="detail-contacts-title">Контакты</div>
-            <div className="detail-contact-grid">{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
-          </div>
+          {contactButtons.length ? (
+            <div className="detail-contacts-block detail-contacts-block-basic detail-ad-contacts">
+              <div className="detail-contacts-title">Контакты</div>
+              <div className="detail-contact-grid">{contactButtons}</div>
+            </div>
+          ) : null}
         </section>
       ) : null}
       {isTaxiDetail ? (
@@ -505,10 +514,12 @@ export function DetailModalContent({
             ) : null}
           </div>
           <p className="detail-taxi-desc"><b>Описание:</b> {item.desc || "Нет описания"}</p>
-          <div className="detail-taxi-contacts-title">Контакты водителя</div>
-          <div className="detail-contact-grid">
-            {contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}
-          </div>
+          {contactButtons.length ? (
+            <>
+              <div className="detail-taxi-contacts-title">Контакты водителя</div>
+              <div className="detail-contact-grid">{contactButtons}</div>
+            </>
+          ) : null}
         </section>
       ) : null}
       {hasRestaurantMeta ? (
@@ -656,10 +667,10 @@ export function DetailModalContent({
           )}
         </section>
       ) : null}
-      {!isRestaurantDetail && !isTaxiDetail && !isServicesDetail && !isAdsDetail && !isFoodOwnerView ? (
+      {!isRestaurantDetail && !isTaxiDetail && !isServicesDetail && !isAdsDetail && !isFoodOwnerView && contactButtons.length ? (
         <section className={`detail-contacts-block ${isFoodDetail ? "detail-contacts-block-food" : "detail-contacts-block-basic"}`}>
           <div className="detail-contacts-title">{isFoodDetail ? "Контакты заведения" : "Контакты"}</div>
-          <div className="detail-contact-grid">{contactButtons.length ? contactButtons : <p className="small">Контакты не указаны</p>}</div>
+          <div className="detail-contact-grid">{contactButtons}</div>
         </section>
       ) : null}
       {isRestaurantDetail ? (
