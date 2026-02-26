@@ -1195,7 +1195,7 @@ export default function App() {
   const addFeedback = ({ itemId, rating, text }) => {
     const normalizedItemId = String(itemId || "").trim();
     const message = String(text || "").trim();
-    if (!normalizedItemId || !message) return false;
+    if (!normalizedItemId) return false;
 
     ensureAuth(() => {
       const authorName = String(profile.name || "Пользователь").trim();

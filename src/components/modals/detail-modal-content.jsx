@@ -611,10 +611,8 @@ export function DetailModalContent({
                   className="textarea"
                   value={reviewText}
                   onChange={(e) => setReviewText(e.currentTarget.value)}
-                  minLength={5}
                   maxLength={500}
-                  required
-                  placeholder="Напишите коротко о вашем опыте"
+                  placeholder="Напишите коротко о вашем опыте (необязательно)"
                 />
               </Field>
               <button className="primary-btn" type="submit">Оставить отзыв</button>
@@ -639,7 +637,9 @@ export function DetailModalContent({
                       <b>{review.author || "Пользователь"}</b>
                       <span className="small">{review.rating}/5</span>
                     </div>
-                    <p style={{ margin: "4px 0 0" }}>{review.text}</p>
+                    {String(review.text || "").trim() ? (
+                      <p style={{ margin: "4px 0 0" }}>{review.text}</p>
+                    ) : null}
                     {review.createdAt ? <p className="small" style={{ marginTop: 4 }}>{formatReviewDate(review.createdAt)}</p> : null}
                   </article>
                 ))}
