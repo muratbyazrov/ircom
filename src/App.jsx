@@ -1783,6 +1783,8 @@ export default function App() {
                   <input
                     required
                     name="phone"
+                    type="tel"
+                    inputMode="numeric"
                     className="input"
                     placeholder={PHONE_COMPACT_PLACEHOLDER}
                     pattern={PHONE_COMPACT_PATTERN}
@@ -1812,6 +1814,8 @@ export default function App() {
                     <input
                       required
                       name="phone"
+                      type="tel"
+                      inputMode="numeric"
                       className="input"
                       placeholder={PHONE_COMPACT_PLACEHOLDER}
                       pattern={PHONE_COMPACT_PATTERN}
