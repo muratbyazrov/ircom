@@ -14,33 +14,31 @@ const normalizePhoneDigits = (raw) => {
 const formatPhoneDigits = (digits, { allowEmpty = true } = {}) => {
   if (!digits) return allowEmpty ? "" : "+7";
 
+  const len = digits.length;
   let result = "+7";
-  if (digits.length < 3) return `${result} ${digits}`;
 
-  result += ` (${digits.slice(0, 3)})`;
-  if (digits.length < 6) return `${result} ${digits.slice(3)}`;
+  result += ` (${digits.slice(0, Math.min(3, len))}`;
+  if (len >= 3) result += ")";
+  if (len > 3) result += ` ${digits.slice(3, Math.min(6, len))}`;
+  if (len > 6) result += `-${digits.slice(6, Math.min(8, len))}`;
+  if (len > 8) result += `-${digits.slice(8, 10)}`;
 
-  result += ` ${digits.slice(3, 6)}`;
-  if (digits.length < 8) return `${result}-${digits.slice(6)}`;
-
-  result += `-${digits.slice(6, 8)}`;
-  return `${result}-${digits.slice(8, 10)}`;
+  return result;
 };
 
 const formatPhoneDigitsCompact = (digits, { allowEmpty = true } = {}) => {
   if (!digits) return allowEmpty ? "" : "+7";
 
+  const len = digits.length;
   let result = "+7";
-  if (digits.length < 3) return `${result}(${digits}`;
 
-  result += `(${digits.slice(0, 3)})`;
-  if (digits.length < 6) return `${result}${digits.slice(3)}`;
+  result += `(${digits.slice(0, Math.min(3, len))}`;
+  if (len >= 3) result += ")";
+  if (len > 3) result += `${digits.slice(3, Math.min(6, len))}`;
+  if (len > 6) result += `-${digits.slice(6, Math.min(8, len))}`;
+  if (len > 8) result += `-${digits.slice(8, 10)}`;
 
-  result += `${digits.slice(3, 6)}`;
-  if (digits.length < 8) return `${result}-${digits.slice(6)}`;
-
-  result += `-${digits.slice(6, 8)}`;
-  return `${result}-${digits.slice(8, 10)}`;
+  return result;
 };
 
 export const formatPhoneValue = (raw, options = {}) => formatPhoneDigits(normalizePhoneDigits(raw), options);
@@ -50,10 +48,13 @@ export const handlePhoneInput = (e, options = {}) => {
   const input = e.currentTarget;
   const prev = input.dataset.prevValue || "";
   const raw = input.value;
+  const prevDigits = normalizePhoneDigits(prev);
   let digits = normalizePhoneDigits(raw);
-  const isDelete = raw.length < prev.length;
+  const inputType = e?.nativeEvent?.inputType || "";
+  const isDelete = inputType.startsWith("delete") || raw.length < prev.length;
 
-  if (isDelete && raw && !/\d$/.test(raw)) {
+  // If user deletes a formatting symbol, drop one real digit instead of restoring the mask.
+  if (isDelete && digits.length === prevDigits.length && digits.length > 0) {
     digits = digits.slice(0, -1);
   }
 
@@ -66,10 +67,13 @@ export const handlePhoneInputCompact = (e, options = {}) => {
   const input = e.currentTarget;
   const prev = input.dataset.prevValue || "";
   const raw = input.value;
+  const prevDigits = normalizePhoneDigits(prev);
   let digits = normalizePhoneDigits(raw);
-  const isDelete = raw.length < prev.length;
+  const inputType = e?.nativeEvent?.inputType || "";
+  const isDelete = inputType.startsWith("delete") || raw.length < prev.length;
 
-  if (isDelete && raw && !/\d$/.test(raw)) {
+  // If user deletes a formatting symbol, drop one real digit instead of restoring the mask.
+  if (isDelete && digits.length === prevDigits.length && digits.length > 0) {
     digits = digits.slice(0, -1);
   }
 
