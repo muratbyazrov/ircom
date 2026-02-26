@@ -143,6 +143,8 @@ export function CreateForm({
   const removeSelectedImage = (indexToRemove) => {
     if (indexToRemove < 0 || indexToRemove >= selectedPhotoFiles.length) return;
     const nextFiles = selectedPhotoFiles.filter((_, index) => index !== indexToRemove);
+    const removedPreviewUrl = selectedPhotoPreviewsRef.current[indexToRemove];
+    const nextPreviewUrls = selectedPhotoPreviewsRef.current.filter((_, index) => index !== indexToRemove);
     if (imagesInputRef.current) {
       if (!nextFiles.length) {
         imagesInputRef.current.value = "";
@@ -157,7 +159,9 @@ export function CreateForm({
     setSelectedPhotoFiles(nextFiles);
     setSelectedPhotoCount(nextFiles.length);
     setPhotosLimitError(nextFiles.length > maxPhotos ? `Можно загрузить не более ${maxPhotos} фото` : "");
-    replaceSelectedPhotoPreviews(nextFiles.map((file) => URL.createObjectURL(file)));
+    if (removedPreviewUrl) URL.revokeObjectURL(removedPreviewUrl);
+    selectedPhotoPreviewsRef.current = nextPreviewUrls;
+    setSelectedPhotoPreviews(nextPreviewUrls);
   };
 
   const startTimeDrag = () => setIsTimeDragging(true);
