@@ -57,10 +57,11 @@ export function DetailModalContent({
         ? `Доставка: платная (${fmtRub.format(Number(item.deliveryPrice) || 0)})`
         : "Доставка: нет"
     : "";
-  const restaurantDescText = isRestaurantDetail ? String(item.desc || "").trim() : "";
+  const restaurantDescRaw = isRestaurantDetail ? String(item.desc || "") : "";
+  const restaurantDescText = restaurantDescRaw.trim();
   const isCuisineOnlyDesc = /^Кухня:/i.test(restaurantDescText);
   const cuisineText = isCuisineOnlyDesc ? restaurantDescText.replace(/^Кухня:\s*/i, "").trim() : "";
-  const restaurantAboutText = !isCuisineOnlyDesc ? restaurantDescText : "";
+  const restaurantAboutText = !isCuisineOnlyDesc ? restaurantDescRaw : "";
   const hasRestaurantMeta = isRestaurantDetail;
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");

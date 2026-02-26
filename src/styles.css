@@ -1678,6 +1678,8 @@ button {
   margin: 0;
   color: #374151;
   line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .detail-food-owner-actions {
@@ -2008,10 +2010,8 @@ button {
   color: #6b7280;
   line-height: 1.4;
   padding: 2px 0 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .detail-contact-grid {
@@ -2269,6 +2269,8 @@ button {
   color: #374151;
   font-size: 13px;
   line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .detail-taxi-contacts-title {
