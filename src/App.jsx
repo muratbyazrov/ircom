@@ -896,7 +896,7 @@ export default function App() {
       }
 
       if (type === "ad" || type === "service") {
-        const uploadedListingPhotos = await uploadPhotos("images", 5, "listing");
+        const uploadedListingPhotos = await uploadPhotos("images", 8, "listing");
         const kind = type === "ad" ? 1 : 2;
         if (isEdit) {
           const listingId = Number(String(editEntityId).split("-")[1]);

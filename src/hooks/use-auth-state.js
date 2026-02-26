@@ -17,7 +17,7 @@ const normalizeFivePhotos = (photos) => {
   if (!Array.isArray(photos)) return [];
   return photos
     .filter((photo) => Boolean(String(photo || "").trim()))
-    .slice(0, 5);
+    .slice(0, 8);
 };
 
 const normalizeEntityPhotos = (item) => ({

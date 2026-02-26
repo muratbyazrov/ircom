@@ -87,7 +87,7 @@ export function CreateForm({
   const restaurantWhatsappRef = useRef(null);
   const taxiPhoneRef = useRef(null);
   const taxiWhatsappRef = useRef(null);
-  const maxPhotos = type === "ad" || type === "service" ? 5 : 1;
+  const maxPhotos = type === "ad" || type === "service" ? 8 : 1;
 
   const replaceSelectedPhotoPreviews = (nextPreviewUrls) => {
     setSelectedPhotoPreviews((prev) => {

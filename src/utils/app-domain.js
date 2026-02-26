@@ -99,7 +99,7 @@ export const normalizePhotos = (photos, limit = 1) => {
     .slice(0, limit);
 };
 export const normalizeSinglePhoto = (photos) => normalizePhotos(photos, 1);
-export const normalizeFivePhotos = (photos) => normalizePhotos(photos, 5);
+export const normalizeFivePhotos = (photos) => normalizePhotos(photos, 8);
 export const normalizeEntityPhotos = (item) => ({
   ...item,
   photos: normalizeSinglePhoto(item?.photos),
