@@ -57,8 +57,6 @@ import {
   ADS_CATEGORIES,
   APP_HISTORY_KEY,
   AUTH_SESSION_STORAGE_KEY,
-  DIRECTION_TO_TAXI_CATEGORY,
-  FEEDBACK_SEED,
   FEEDBACK_STORAGE_KEY,
   FOOD_CATEGORIES,
   SERVICE_CATEGORIES,
@@ -1010,7 +1008,7 @@ export default function App() {
             name: payload.title || currentDish?.title || "Блюдо",
             description: payload.desc || currentDish?.desc || "",
             price: Number(payload.price) || Number(currentDish?.price) || 1,
-            isAvailable: payloadAvailability === "true" ? true : payloadAvailability === "false" ? false : !Boolean(currentDish?.unavailable),
+            isAvailable: payloadAvailability === "true" ? true : payloadAvailability === "false" ? false : !currentDish?.unavailable,
             photos: [...keptExistingPhotos, ...photos].slice(0, 1),
           });
           await removePhotosFromS3(payload.removedPhotos);

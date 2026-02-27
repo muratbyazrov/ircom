@@ -2,7 +2,7 @@ import { CategoryTabs, Empty, Field, Icon, Section, SectionHeader, SortSelect } 
 import { ItemCard, TaxiCard } from "../components/cards";
 import { sectionSortModes } from "../utils/constants";
 import { fmtRub } from "../utils/helpers";
-import { applyImageFallback, replaceImageWithEmpty } from "../utils/images";
+import { replaceImageWithEmpty } from "../utils/images";
 
 export function AdsTab({
   adsCategoriesVisible,
@@ -34,7 +34,7 @@ export function AdsTab({
             onFav={() => toggleFavorite(x.id)}
             activeFav={favorites.has(x.id)}
             isOwn={Boolean(currentOwner && x.owner === currentOwner)}
-            canFavorite={!Boolean(currentOwner && x.owner === currentOwner)}
+            canFavorite={!(currentOwner && x.owner === currentOwner)}
           />
         )) : <Empty text="Пока нет объявлений" />}
       </section>
@@ -73,7 +73,7 @@ export function ServicesTab({
             activeFav={favorites.has(x.id)}
             showRating
             isOwn={Boolean(currentOwner && x.owner === currentOwner)}
-            canFavorite={!Boolean(currentOwner && x.owner === currentOwner)}
+            canFavorite={!(currentOwner && x.owner === currentOwner)}
           />
         )) : <Empty text="Пока нет услуг" />}
       </section>
@@ -157,7 +157,6 @@ export function FoodTab({
   foodCategories,
   isAuth,
   hasRestaurant,
-  ownedRestaurantId,
   openCreate,
   openEntityGroup,
   openDetail,
@@ -229,11 +228,8 @@ export function FoodTab({
 export function ProfileTab({
   isAuth,
   profile,
-  myAdsCount,
-  myServicesCount,
   myAds,
   hasRestaurant,
-  restaurantEntity,
   isTaxiDriver,
   taxiTemplates,
   oneTimeIntercityOffers,

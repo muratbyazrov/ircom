@@ -18,7 +18,7 @@ export async function callApi({ domain, event, params }) {
       },
       body: JSON.stringify({ domain, event, params: params || {} }),
     });
-  } catch (error) {
+  } catch {
     throw new Error(`Network error: cannot reach API at ${API_URL}`);
   }
 

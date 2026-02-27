@@ -61,7 +61,7 @@ const postFileToS3 = async ({ url, fields, file }) => {
       method: "POST",
       body: formData,
     });
-  } catch (error) {
+  } catch {
     throw new Error("Не удалось загрузить фото в S3 (проверь CORS и доступность бакета)");
   }
 

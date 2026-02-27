@@ -78,7 +78,7 @@ export function CreateForm({
   });
   const [dishIsAvailable, setDishIsAvailable] = useState(() => {
     if (type !== "dish") return true;
-    return !Boolean(initialValues?.unavailable);
+    return !initialValues?.unavailable;
   });
   const [isTimeDragging, setIsTimeDragging] = useState(false);
   const prepTimerRef = useRef(null);

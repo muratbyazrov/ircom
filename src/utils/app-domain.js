@@ -123,8 +123,8 @@ export const getRestaurantDeliveryMode = (item) => {
   if (modeRaw === "free") return "free";
   if (modeRaw === "none") return "none";
 
-  if (Object.prototype.hasOwnProperty.call(item, "hasDelivery")) return Boolean(item.hasDelivery) ? "free" : "none";
-  if (Object.prototype.hasOwnProperty.call(item, "has_delivery")) return Boolean(item.has_delivery) ? "free" : "none";
+  if (Object.prototype.hasOwnProperty.call(item, "hasDelivery")) return item.hasDelivery ? "free" : "none";
+  if (Object.prototype.hasOwnProperty.call(item, "has_delivery")) return item.has_delivery ? "free" : "none";
 
   if (modeRaw === "yes" || modeRaw === "true" || modeRaw === "1") return "free";
   return "none";
@@ -260,7 +260,7 @@ export const mapMenuItemToUi = (item) => ({
   restaurantLogo: normalizePhotoReference(item.restaurantLogo || item.restaurantLogoUrl),
   title: item.name,
   price: Number(item.price) || 0,
-  unavailable: !Boolean(item.isAvailable),
+  unavailable: !item.isAvailable,
   desc: item.description || "",
   contacts: getContacts(item),
   photos: normalizeSinglePhoto(item.photos),
