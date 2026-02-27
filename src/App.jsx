@@ -40,6 +40,7 @@ import {
   toggleMenuItemFavoriteRequest,
   updateMenuItemRequest,
 } from './api/food';
+import {getDictionariesRequest} from './api/dictionary';
 import {deleteImagesFromS3, uploadImagesToS3} from './utils/s3-upload';
 import {tabConfig} from './utils/constants';
 import {sortItems} from './utils/helpers';
@@ -84,9 +85,22 @@ import {
   toArray,
 } from './utils/app-domain';
 
+const normalizeDictionaryNames = (dictionaryList) => {
+  return [...new Set(
+    toArray(dictionaryList)
+      .map((entry) => String(entry?.name || "").trim())
+      .filter(Boolean)
+  )];
+};
+const withAllCategory = (categories) => ["Все", ...categories.filter((item) => item !== "Все")];
+const withMyAdsCategory = (categories) => categories.includes("Мои объявления") ? categories : [...categories, "Мои объявления"];
+
 export default function App() {
   const [tab, setTab] = useState("ads");
   const [favorites, setFavorites] = useState(new Set());
+  const [adsCategories, setAdsCategories] = useState(ADS_CATEGORIES);
+  const [serviceCategories, setServiceCategories] = useState(SERVICE_CATEGORIES);
+  const [foodCategories, setFoodCategories] = useState(FOOD_CATEGORIES);
   const [adsCategory, setAdsCategory] = useState("Все");
   const [serviceCategory, setServiceCategory] = useState("Все");
   const [foodCategory, setFoodCategory] = useState("Все");
@@ -134,7 +148,10 @@ export default function App() {
     applyAuthSession,
   } = useAuthState({ deepCopy });
 
-  const adsCategoriesVisible = isAuth ? ADS_CATEGORIES : ADS_CATEGORIES.filter((x) => x !== "Мои объявления");
+  const adsCategoriesVisible = useMemo(
+    () => (isAuth ? adsCategories : adsCategories.filter((x) => x !== "Мои объявления")),
+    [isAuth, adsCategories]
+  );
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
@@ -226,6 +243,23 @@ export default function App() {
     setFavorites(nextFavorites);
   }, [authSession?.accountId]);
 
+  const refreshDictionaries = useCallback(async () => {
+    try {
+      const dictionaries = await getDictionariesRequest({});
+      const listingCategories = withMyAdsCategory(
+        withAllCategory(normalizeDictionaryNames(dictionaries?.listingCategories || []))
+      );
+      const nextServiceCategories = withAllCategory(normalizeDictionaryNames(dictionaries?.serviceCategories || []));
+      const nextFoodCategories = withAllCategory(normalizeDictionaryNames(dictionaries?.kitchenCategories || []));
+
+      if (listingCategories.length > 1) setAdsCategories(listingCategories);
+      if (nextServiceCategories.length > 1) setServiceCategories(nextServiceCategories);
+      if (nextFoodCategories.length > 1) setFoodCategories(nextFoodCategories);
+    } catch {
+      // keep local fallback categories
+    }
+  }, []);
+
   const refreshMyData = useCallback(async () => {
     const accountId = toAccountId(authSession?.accountId);
     if (accountId === null) {
@@ -295,6 +329,10 @@ export default function App() {
     setRestaurantEntity,
     setIsTaxiDriver,
   ]);
+
+  useEffect(() => {
+    refreshDictionaries().catch(() => {});
+  }, [refreshDictionaries]);
 
   useEffect(() => {
     refreshCatalog().catch(() => {});
@@ -573,8 +611,15 @@ export default function App() {
   );
 
   const servicesItems = useMemo(
-    () => sortItems(servicesCatalog.filter((x) => serviceCategory === "Все" || x.category === serviceCategory), servicesSort, favorites),
-    [serviceCategory, servicesSort, favorites, servicesCatalog]
+    () => {
+      const category = serviceCategories.includes(serviceCategory) ? serviceCategory : "Все";
+      return sortItems(
+        servicesCatalog.filter((x) => category === "Все" || x.category === category),
+        servicesSort,
+        favorites
+      );
+    },
+    [serviceCategories, serviceCategory, servicesSort, favorites, servicesCatalog]
   );
   const normalizedUserRestaurantDishes = useMemo(
     () => (Array.isArray(userRestaurantDishes) ? userRestaurantDishes : []).map((dish) => normalizeDish(dish)),
@@ -665,13 +710,16 @@ export default function App() {
   }, [hasRestaurant, restaurantEntity, feedbackByItem, normalizedUserRestaurantDishes, foodCatalog]);
 
   const visibleFoodRestaurants = useMemo(
-    () => foodRestaurants
-      .map((restaurant) => ({
-        ...restaurant,
-        dishes: restaurant.dishes.filter((dish) => foodCategory === "Все" || dish.category === foodCategory),
-      }))
-      .filter((restaurant) => restaurant.dishes.length > 0 || (foodCategory === "Все" && restaurant.id === restaurantEntity?.id)),
-    [foodRestaurants, foodCategory, restaurantEntity?.id]
+    () => {
+      const category = foodCategories.includes(foodCategory) ? foodCategory : "Все";
+      return foodRestaurants
+        .map((restaurant) => ({
+          ...restaurant,
+          dishes: restaurant.dishes.filter((dish) => category === "Все" || dish.category === category),
+        }))
+        .filter((restaurant) => restaurant.dishes.length > 0 || (category === "Все" && restaurant.id === restaurantEntity?.id));
+    },
+    [foodCategories, foodRestaurants, foodCategory, restaurantEntity?.id]
   );
 
   const normalizedTaxiFeedItems = useMemo(
@@ -1459,7 +1507,7 @@ export default function App() {
             openDetail={openDetail}
             toggleFavorite={toggleFavorite}
             favorites={favorites}
-            serviceCategories={SERVICE_CATEGORIES}
+            serviceCategories={serviceCategories}
             currentOwner={currentOwner}
           />
         )}
@@ -1488,7 +1536,7 @@ export default function App() {
             foodCategory={foodCategory}
             setFoodCategory={setFoodCategory}
             restaurants={visibleFoodRestaurants}
-            foodCategories={FOOD_CATEGORIES}
+            foodCategories={foodCategories}
             isAuth={isAuth}
             hasRestaurant={hasRestaurant}
             ownedRestaurantId={restaurantEntity?.id || null}
@@ -1783,9 +1831,9 @@ export default function App() {
             onClose={closeModal}
             submitPending={submitPending}
             taxiCategories={TAXI_CATEGORIES}
-            adsCategories={ADS_CATEGORIES}
-            serviceCategories={SERVICE_CATEGORIES}
-            foodCategories={FOOD_CATEGORIES}
+            adsCategories={adsCategories}
+            serviceCategories={serviceCategories}
+            foodCategories={foodCategories}
           />
         )}
 
@@ -1799,9 +1847,9 @@ export default function App() {
             onClose={closeModal}
             submitPending={submitPending}
             taxiCategories={TAXI_CATEGORIES}
-            adsCategories={ADS_CATEGORIES}
-            serviceCategories={SERVICE_CATEGORIES}
-            foodCategories={FOOD_CATEGORIES}
+            adsCategories={adsCategories}
+            serviceCategories={serviceCategories}
+            foodCategories={foodCategories}
           />
         )}
 
