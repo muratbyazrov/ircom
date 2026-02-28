@@ -17,6 +17,10 @@ const normalizeNavState = (value) => {
 };
 
 const serializeNavState = (value) => JSON.stringify(normalizeNavState(value));
+const isRootNavState = (value) => {
+  const normalized = normalizeNavState(value);
+  return normalized.tab === "ads" && !normalized.modal;
+};
 
 export function useNavHistory({ appHistoryKey, tab, setTab, modal, setModal, onBackAttempt }) {
   const navHistoryRef = useRef({ ready: false, applyingPop: false, lastSerialized: "" });
@@ -30,14 +34,24 @@ export function useNavHistory({ appHistoryKey, tab, setTab, modal, setModal, onB
 
     const initialNavState = readNavStateFromHistory(window.history.state);
     const initialSerialized = serializeNavState(initialNavState);
+    const isTelegramWebApp = Boolean(window.Telegram?.WebApp);
+    const initialHistoryState = normalizeHistoryState(window.history.state, initialNavState);
     navHistoryRef.current.lastSerialized = initialSerialized;
-    window.history.replaceState(normalizeHistoryState(window.history.state, initialNavState), "");
+    window.history.replaceState(initialHistoryState, "");
+    if (isTelegramWebApp && isRootNavState(initialNavState)) {
+      // Keep an extra root entry so Android hardware back does not collapse the mini app.
+      window.history.pushState(initialHistoryState, "");
+    }
     if (initialNavState.tab !== tab) setTab(initialNavState.tab);
     if (serializeNavState({ tab, modal }) !== initialSerialized) setModal(initialNavState.modal);
     navHistoryRef.current.ready = true;
 
     const onPopState = (event) => {
       const nextNavState = readNavStateFromHistory(event.state);
+      if (isTelegramWebApp && isRootNavState(nextNavState)) {
+        const nextHistoryState = normalizeHistoryState(event.state, nextNavState);
+        window.history.pushState(nextHistoryState, "");
+      }
       navHistoryRef.current.applyingPop = true;
       navHistoryRef.current.lastSerialized = serializeNavState(nextNavState);
       setTab(nextNavState.tab);
