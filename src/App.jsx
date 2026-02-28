@@ -154,6 +154,10 @@ export default function App() {
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
     const root = document.documentElement;
+    let fullscreenRetryTimer = null;
+    let fullscreenAttempts = 0;
+    const MAX_FULLSCREEN_ATTEMPTS = 6;
+    const FULLSCREEN_RETRY_DELAY = 180;
     const clampInset = (value) => {
       const numeric = Number(value);
       if (!Number.isFinite(numeric)) return 0;
@@ -189,20 +193,61 @@ export default function App() {
       };
     }
 
+    const enforceFullscreen = () => {
+      tg.expand?.();
+      tg.disableVerticalSwipes?.();
+      tg.requestFullscreen?.();
+    };
+    const scheduleFullscreenRetry = () => {
+      if (fullscreenAttempts >= MAX_FULLSCREEN_ATTEMPTS) return;
+      if (fullscreenRetryTimer) return;
+      fullscreenRetryTimer = window.setTimeout(() => {
+        fullscreenRetryTimer = null;
+        fullscreenAttempts += 1;
+        enforceFullscreen();
+      }, FULLSCREEN_RETRY_DELAY);
+    };
+    const handleViewportChanged = () => {
+      applyViewportVars();
+      const isExpanded = tg.isExpanded !== false;
+      const isFullscreen = tg.isFullscreen !== false;
+      if (!isExpanded || !isFullscreen) {
+        enforceFullscreen();
+        scheduleFullscreenRetry();
+      }
+    };
+    const handleFullscreenChanged = () => {
+      if (tg.isFullscreen === false) {
+        enforceFullscreen();
+        scheduleFullscreenRetry();
+      }
+    };
+    const handleFullscreenFailed = () => {
+      scheduleFullscreenRetry();
+    };
+
     tg.ready();
-    tg.disableVerticalSwipes?.();
+    enforceFullscreen();
     tg.enableClosingConfirmation?.();
     applyViewportVars();
+    scheduleFullscreenRetry();
 
-    tg.onEvent?.("viewportChanged", applyViewportVars);
+    tg.onEvent?.("viewportChanged", handleViewportChanged);
     tg.onEvent?.("safeAreaChanged", applyViewportVars);
     tg.onEvent?.("contentSafeAreaChanged", applyViewportVars);
+    tg.onEvent?.("fullscreenChanged", handleFullscreenChanged);
+    tg.onEvent?.("fullscreenFailed", handleFullscreenFailed);
     window.addEventListener("resize", applyViewportVars);
 
     return () => {
-      tg.offEvent?.("viewportChanged", applyViewportVars);
+      if (fullscreenRetryTimer) {
+        window.clearTimeout(fullscreenRetryTimer);
+      }
+      tg.offEvent?.("viewportChanged", handleViewportChanged);
       tg.offEvent?.("safeAreaChanged", applyViewportVars);
       tg.offEvent?.("contentSafeAreaChanged", applyViewportVars);
+      tg.offEvent?.("fullscreenChanged", handleFullscreenChanged);
+      tg.offEvent?.("fullscreenFailed", handleFullscreenFailed);
       window.removeEventListener("resize", applyViewportVars);
     };
   }, []);
