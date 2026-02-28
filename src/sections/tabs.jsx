@@ -237,6 +237,7 @@ export function ProfileTab({
   onOpenEntityGroup,
   openCreate,
   openEditProfile,
+  onOpenSupport,
   toggleAuth,
 }) {
   const isPresentContactValue = (value) => {
@@ -318,6 +319,10 @@ export function ProfileTab({
         <Section>
           <h4 className="profile-section-title">Быстрые действия</h4>
           <div className="quick-actions" style={{ marginTop: 8 }}>
+            <button className="ghost-btn quick-action-btn" type="button" onClick={onOpenSupport}>
+              <span className="quick-action-icon"><Icon name="open" /></span>
+              <span>Сообщить о проблеме</span>
+            </button>
             <button
               className="ghost-btn quick-action-btn"
               type="button"

@@ -92,6 +92,7 @@ const normalizeDictionaryNames = (dictionaryList) => {
 };
 const withAllCategory = (categories) => ["Все", ...categories.filter((item) => item !== "Все")];
 const withMyAdsCategory = (categories) => categories.includes("Мои объявления") ? categories : [...categories, "Мои объявления"];
+const SUPPORT_TELEGRAM_URL = "https://t.me/+Bqm7XK8ISl4yMmNi";
 
 export default function App() {
   const [tab, setTab] = useState("ads");
@@ -150,6 +151,14 @@ export default function App() {
     () => (isAuth ? adsCategories : adsCategories.filter((x) => x !== "Мои объявления")),
     [isAuth, adsCategories]
   );
+  const openSupport = useCallback(() => {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.openTelegramLink) {
+      tg.openTelegramLink(SUPPORT_TELEGRAM_URL);
+      return;
+    }
+    window.open(SUPPORT_TELEGRAM_URL, "_blank", "noopener,noreferrer");
+  }, []);
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
@@ -1578,7 +1587,9 @@ export default function App() {
           <h1>{tab === "profile" ? profile.name : "ircom"}</h1>
         </div>
         <div className="topbar-actions">
-          <span className="topbar-status">{isAuth ? "Онлайн" : "Гость"}</span>
+          <button className="ghost-btn topbar-support-btn" onClick={openSupport} type="button">
+            Проблема
+          </button>
           <button className="ghost-btn topbar-auth-btn" onClick={toggleAuthModal} type="button">
             {isAuth ? "Выйти" : "Войти"}
           </button>
@@ -1668,6 +1679,7 @@ export default function App() {
             onOpenEntityGroup={openEntityGroup}
             openCreate={openCreate}
             openEditProfile={openEditProfile}
+            onOpenSupport={openSupport}
             toggleAuth={toggleAuthModal}
           />
         )}
