@@ -20,6 +20,7 @@
   --tg-safe-area-bottom: 0px;
   --topbar-global-offset: 52px;
   --bottom-nav-lift: 0px;
+  --full-screen-global-top-offset: 64px;
 }
 
 * {
@@ -1510,7 +1511,7 @@ button {
   max-height: none;
   border-radius: 0;
   border: none;
-  padding: calc(max(env(safe-area-inset-top), var(--tg-safe-area-top)) + 10px) 14px
+  padding: calc(max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--full-screen-global-top-offset)) + 10px) 14px
     calc(max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom)) + 14px);
 }
 
@@ -2651,7 +2652,7 @@ button {
 
 .viewer-close {
   position: absolute;
-  top: calc(max(env(safe-area-inset-top), var(--tg-safe-area-top)) + 12px);
+  top: calc(max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--full-screen-global-top-offset)) + 12px);
   right: 12px;
   z-index: 3;
   width: 38px;
