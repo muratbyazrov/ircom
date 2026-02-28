@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { tabConfig } from "../utils/constants";
 
 const isValidTab = (value) => tabConfig.some(([key]) => key === value);
-const backExcludedModalTypes = new Set(["auth", "create", "editEntity", "profileEdit"]);
+const backExcludedModalTypes = new Set(["create", "editEntity", "profileEdit"]);
 
 const isBackExcludedModal = (modal) => {
   if (!modal || typeof modal !== "object") return false;
@@ -74,11 +74,11 @@ export function useNavHistory({ appHistoryKey, tab, setTab, modal, setModal, onB
     if (!backButton) return;
 
     const canGoBackInsideApp = Boolean(modal) || tab !== "ads";
-    if (canGoBackInsideApp) backButton.show();
-    else backButton.hide();
+    backButton.show();
 
     const onBackClick = () => {
       if (typeof onBackAttempt === "function" && onBackAttempt()) return;
+      if (!canGoBackInsideApp) return;
       if (isBackExcludedModal(modal)) {
         setModal(modal?.payload?.returnTo || null);
         return;

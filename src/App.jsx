@@ -156,6 +156,7 @@ export default function App() {
     if (!tg) return;
     tg.ready();
     tg.expand();
+    tg.enableClosingConfirmation?.();
   }, []);
 
   useEffect(() => {
@@ -354,10 +355,16 @@ export default function App() {
   }, [modal?.type]);
 
   const handleBackAttempt = useCallback(() => {
+    if (modal?.type === "auth") {
+      const navModalType = window.history.state?.[APP_HISTORY_KEY]?.modal?.type;
+      if (navModalType === "auth") window.history.back();
+      else setModal(modal?.payload?.returnTo || null);
+      return true;
+    }
     if (modal?.type !== "detail" || !isDetailViewerOpen) return false;
     setDetailViewerCloseSignal((prev) => prev + 1);
     return true;
-  }, [modal?.type, isDetailViewerOpen]);
+  }, [modal, isDetailViewerOpen]);
 
   useNavHistory({
     appHistoryKey: APP_HISTORY_KEY,
