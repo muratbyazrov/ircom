@@ -154,6 +154,19 @@ export default function App() {
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
     const root = document.documentElement;
+    const activeTimers = new Set();
+    const schedule = (callback, timeout = 0) => {
+      const timerId = window.setTimeout(() => {
+        activeTimers.delete(timerId);
+        callback();
+      }, timeout);
+      activeTimers.add(timerId);
+      return timerId;
+    };
+    const clearScheduled = () => {
+      activeTimers.forEach((timerId) => window.clearTimeout(timerId));
+      activeTimers.clear();
+    };
     const clampInset = (value) => {
       const numeric = Number(value);
       if (!Number.isFinite(numeric)) return 0;
@@ -184,40 +197,74 @@ export default function App() {
     if (!tg) {
       applyViewportVars();
       window.addEventListener("resize", applyViewportVars);
-      return () => window.removeEventListener("resize", applyViewportVars);
+      return () => {
+        clearScheduled();
+        window.removeEventListener("resize", applyViewportVars);
+      };
     }
+
+    const supportsFullscreen = typeof tg.requestFullscreen === "function";
+    const tryEnterFullscreen = () => {
+      tg.expand();
+      if (!supportsFullscreen) return;
+      if (tg.isFullscreen) return;
+      tg.setHeaderColor?.("bg_color");
+      try {
+        tg.requestFullscreen();
+      } catch {
+        // Some clients can throw if fullscreen isn't currently allowed.
+      }
+    };
 
     tg.ready();
     tg.disableVerticalSwipes?.();
-    tg.expand();
-    tg.requestFullscreen?.();
     tg.enableClosingConfirmation?.();
+    tryEnterFullscreen();
     applyViewportVars();
 
     tg.onEvent?.("viewportChanged", applyViewportVars);
     tg.onEvent?.("safeAreaChanged", applyViewportVars);
     tg.onEvent?.("contentSafeAreaChanged", applyViewportVars);
+    const onFullscreenChanged = () => {
+      applyViewportVars();
+      if (!tg.isFullscreen) schedule(tryEnterFullscreen, 240);
+    };
+    const onFullscreenFailed = () => {
+      schedule(tryEnterFullscreen, 360);
+    };
+    tg.onEvent?.("fullscreenChanged", onFullscreenChanged);
+    tg.onEvent?.("fullscreenFailed", onFullscreenFailed);
     window.addEventListener("resize", applyViewportVars);
 
-    const expandTimer = setTimeout(() => {
-      tg.expand();
-      tg.requestFullscreen?.();
+    [120, 320, 760, 1500].forEach((timeout) => {
+      schedule(() => {
+        tryEnterFullscreen();
+        applyViewportVars();
+      }, timeout);
+    });
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      tryEnterFullscreen();
       applyViewportVars();
-    }, 300);
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     const requestFullscreenOnGesture = () => {
-      tg.expand();
-      tg.requestFullscreen?.();
+      tryEnterFullscreen();
       applyViewportVars();
     };
     window.addEventListener("pointerdown", requestFullscreenOnGesture, { once: true, passive: true });
     window.addEventListener("touchstart", requestFullscreenOnGesture, { once: true, passive: true });
 
     return () => {
-      clearTimeout(expandTimer);
+      clearScheduled();
       tg.offEvent?.("viewportChanged", applyViewportVars);
       tg.offEvent?.("safeAreaChanged", applyViewportVars);
       tg.offEvent?.("contentSafeAreaChanged", applyViewportVars);
+      tg.offEvent?.("fullscreenChanged", onFullscreenChanged);
+      tg.offEvent?.("fullscreenFailed", onFullscreenFailed);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("pointerdown", requestFullscreenOnGesture);
       window.removeEventListener("touchstart", requestFullscreenOnGesture);
       window.removeEventListener("resize", applyViewportVars);
