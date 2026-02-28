@@ -160,6 +160,8 @@ export default function App() {
       return Math.max(0, Math.min(numeric, 96));
     };
     const applyViewportVars = () => {
+      const isTelegram = Boolean(tg);
+      const isAndroidTelegram = isTelegram && String(tg?.platform || "").toLowerCase() === "android";
       const stableHeight = Number(tg?.viewportStableHeight);
       const viewportHeight = Number(tg?.viewportHeight);
       const appHeight = Number.isFinite(stableHeight) && stableHeight > 0
@@ -169,11 +171,14 @@ export default function App() {
       const safeTopFromTg = clampInset(tg?.contentSafeAreaInset?.top ?? tg?.safeAreaInset?.top);
       const safeBottomFromTg = clampInset(tg?.contentSafeAreaInset?.bottom ?? tg?.safeAreaInset?.bottom);
       const topFallback = clampInset(window.innerHeight - appHeight);
-      const safeTop = safeTopFromTg > 0 ? safeTopFromTg : topFallback;
+      const minTopInset = isAndroidTelegram ? 58 : (isTelegram ? 44 : 0);
+      const safeTop = Math.max(safeTopFromTg, topFallback, minTopInset);
 
       root.style.setProperty("--app-height", `${Math.max(appHeight, 320)}px`);
       root.style.setProperty("--tg-safe-area-top", `${safeTop}px`);
       root.style.setProperty("--tg-safe-area-bottom", `${safeBottomFromTg}px`);
+      root.classList.toggle("is-telegram", isTelegram);
+      root.classList.toggle("is-tg-android", isAndroidTelegram);
     };
 
     if (!tg) {
@@ -183,6 +188,7 @@ export default function App() {
     }
 
     tg.ready();
+    tg.disableVerticalSwipes?.();
     tg.expand();
     tg.requestFullscreen?.();
     tg.enableClosingConfirmation?.();
@@ -199,11 +205,21 @@ export default function App() {
       applyViewportVars();
     }, 300);
 
+    const requestFullscreenOnGesture = () => {
+      tg.expand();
+      tg.requestFullscreen?.();
+      applyViewportVars();
+    };
+    window.addEventListener("pointerdown", requestFullscreenOnGesture, { once: true, passive: true });
+    window.addEventListener("touchstart", requestFullscreenOnGesture, { once: true, passive: true });
+
     return () => {
       clearTimeout(expandTimer);
       tg.offEvent?.("viewportChanged", applyViewportVars);
       tg.offEvent?.("safeAreaChanged", applyViewportVars);
       tg.offEvent?.("contentSafeAreaChanged", applyViewportVars);
+      window.removeEventListener("pointerdown", requestFullscreenOnGesture);
+      window.removeEventListener("touchstart", requestFullscreenOnGesture);
       window.removeEventListener("resize", applyViewportVars);
     };
   }, []);
