@@ -173,14 +173,6 @@ export default function App() {
       return Math.max(0, Math.min(numeric, 96));
     };
     const applyViewportVars = () => {
-      const isTelegram = Boolean(tg);
-      const isAndroidTelegram = isTelegram && String(tg?.platform || "").toLowerCase() === "android";
-      const telegramPlatform = String(tg?.platform || "").toLowerCase();
-      const ua = String(window.navigator?.userAgent || "");
-      const isAndroidUa = /Android/i.test(ua);
-      const isIosUa = /iPhone|iPad|iPod/i.test(ua);
-      const isAndroidPlatform = telegramPlatform === "android" || (!isTelegram && isAndroidUa);
-      const isIosPlatform = telegramPlatform === "ios" || (!isTelegram && isIosUa);
       const stableHeight = Number(tg?.viewportStableHeight);
       const viewportHeight = Number(tg?.viewportHeight);
       const appHeight = Number.isFinite(stableHeight) && stableHeight > 0
@@ -190,16 +182,11 @@ export default function App() {
       const safeTopFromTg = clampInset(tg?.contentSafeAreaInset?.top ?? tg?.safeAreaInset?.top);
       const safeBottomFromTg = clampInset(tg?.contentSafeAreaInset?.bottom ?? tg?.safeAreaInset?.bottom);
       const topFallback = clampInset(window.innerHeight - appHeight);
-      const minTopInset = isAndroidTelegram ? 86 : (isTelegram ? 74 : 0);
-      const safeTop = Math.max(safeTopFromTg, topFallback, minTopInset);
+      const safeTop = Math.max(safeTopFromTg, topFallback);
 
       root.style.setProperty("--app-height", `${Math.max(appHeight, 320)}px`);
       root.style.setProperty("--tg-safe-area-top", `${safeTop}px`);
       root.style.setProperty("--tg-safe-area-bottom", `${safeBottomFromTg}px`);
-      root.style.setProperty("--topbar-global-offset", `${isAndroidPlatform ? 68 : (isIosPlatform ? 38 : 52)}px`);
-      root.style.setProperty("--bottom-nav-lift", `${isAndroidPlatform ? 12 : 0}px`);
-      root.classList.toggle("is-telegram", isTelegram);
-      root.classList.toggle("is-tg-android", isAndroidTelegram);
     };
 
     if (!tg) {
