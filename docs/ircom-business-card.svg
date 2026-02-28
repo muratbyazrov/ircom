@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1050" height="600" viewBox="0 0 1050 600" role="img" aria-labelledby="title desc">
+  <title id="title">IRCOM business card</title>
+  <desc id="desc">Minimal promotional card for IRCOM app</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="55%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0b3a5b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="20" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1050" height="600" fill="url(#bg)" rx="32"/>
+  <circle cx="910" cy="-40" r="220" fill="#38bdf8" opacity="0.12"/>
+  <circle cx="140" cy="620" r="240" fill="#22d3ee" opacity="0.1"/>
+
+  <rect x="78" y="82" width="894" height="436" rx="26" fill="#0b1224" opacity="0.46" stroke="#334155"/>
+
+  <g transform="translate(126 130)">
+    <rect x="0" y="0" width="74" height="74" rx="18" fill="url(#accent)" filter="url(#softGlow)"/>
+    <path d="M20 21h34v6H38v28h-6V27H20z" fill="#0b1224"/>
+    <text x="94" y="30" fill="#f8fafc" font-family="'Segoe UI', sans-serif" font-size="46" font-weight="700" letter-spacing="1.2">IRCOM</text>
+    <text x="96" y="60" fill="#94a3b8" font-family="'Segoe UI', sans-serif" font-size="18">Сервис объявлений, услуг, еды и такси</text>
+  </g>
+
+  <g transform="translate(126 276)">
+    <text x="0" y="0" fill="#e2e8f0" font-family="'Segoe UI', sans-serif" font-size="28" font-weight="600">Одно приложение для локальных задач</text>
+    <text x="0" y="44" fill="#cbd5e1" font-family="'Segoe UI', sans-serif" font-size="21">Публикуйте объявления, находите услуги, заказывайте еду и поездки.</text>
+    <text x="0" y="80" fill="#7dd3fc" font-family="'Segoe UI', sans-serif" font-size="20">ircom.app</text>
+  </g>
+
+  <g transform="translate(690 284)">
+    <rect x="0" y="0" width="220" height="220" rx="20" fill="#0f172a" stroke="#334155"/>
+    <rect x="16" y="16" width="188" height="188" rx="10" fill="#f8fafc"/>
+    <g fill="#0f172a">
+      <rect x="34" y="34" width="16" height="16"/>
+      <rect x="50" y="34" width="16" height="16"/>
+      <rect x="66" y="34" width="16" height="16"/>
+      <rect x="98" y="34" width="16" height="16"/>
+      <rect x="114" y="34" width="16" height="16"/>
+      <rect x="34" y="50" width="16" height="16"/>
+      <rect x="66" y="50" width="16" height="16"/>
+      <rect x="114" y="50" width="16" height="16"/>
+      <rect x="146" y="50" width="16" height="16"/>
+      <rect x="34" y="66" width="16" height="16"/>
+      <rect x="50" y="66" width="16" height="16"/>
+      <rect x="66" y="66" width="16" height="16"/>
+      <rect x="98" y="66" width="16" height="16"/>
+      <rect x="130" y="66" width="16" height="16"/>
+      <rect x="146" y="66" width="16" height="16"/>
+      <rect x="34" y="98" width="16" height="16"/>
+      <rect x="66" y="98" width="16" height="16"/>
+      <rect x="82" y="98" width="16" height="16"/>
+      <rect x="98" y="98" width="16" height="16"/>
+      <rect x="130" y="98" width="16" height="16"/>
+      <rect x="34" y="114" width="16" height="16"/>
+      <rect x="50" y="114" width="16" height="16"/>
+      <rect x="82" y="114" width="16" height="16"/>
+      <rect x="114" y="114" width="16" height="16"/>
+      <rect x="146" y="114" width="16" height="16"/>
+      <rect x="34" y="130" width="16" height="16"/>
+      <rect x="66" y="130" width="16" height="16"/>
+      <rect x="98" y="130" width="16" height="16"/>
+      <rect x="130" y="130" width="16" height="16"/>
+      <rect x="146" y="130" width="16" height="16"/>
+      <rect x="34" y="146" width="16" height="16"/>
+      <rect x="50" y="146" width="16" height="16"/>
+      <rect x="66" y="146" width="16" height="16"/>
+      <rect x="98" y="146" width="16" height="16"/>
+      <rect x="114" y="146" width="16" height="16"/>
+      <rect x="130" y="146" width="16" height="16"/>
+      <rect x="146" y="146" width="16" height="16"/>
+    </g>
+    <text x="110" y="212" text-anchor="middle" fill="#94a3b8" font-family="'Segoe UI', sans-serif" font-size="12">QR / app link</text>
+  </g>
+
+  <text x="126" y="534" fill="#64748b" font-family="'Segoe UI', sans-serif" font-size="15">IRCOM • web app • 2026</text>
+</svg>

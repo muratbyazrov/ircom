@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1050" height="600" viewBox="0 0 1050 600" role="img" aria-labelledby="title desc">
+  <title id="title">IRCOM business card in app style</title>
+  <desc id="desc">Business card matching IRCOM app design tokens</desc>
+
+  <defs>
+    <linearGradient id="pageBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffe7ea"/>
+      <stop offset="58%" stop-color="#f8f8fa"/>
+      <stop offset="100%" stop-color="#fff4f4"/>
+    </linearGradient>
+    <linearGradient id="topbarBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f7f8fc" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#f7f8fc" stop-opacity="0.55"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#021429" flood-opacity="0.09"/>
+    </filter>
+  </defs>
+
+  <rect width="1050" height="600" fill="url(#pageBg)"/>
+
+  <rect x="180" y="36" width="690" height="528" rx="30" fill="transparent"/>
+
+  <rect x="200" y="56" width="650" height="488" rx="30" fill="#f8f8fa"/>
+
+  <rect x="220" y="76" width="610" height="76" rx="18" fill="url(#topbarBg)" stroke="#e3e8ef"/>
+  <text x="252" y="123" fill="#111827" font-family="Manrope, 'Segoe UI', sans-serif" font-size="34" font-weight="800">IRCOM</text>
+  <rect x="665" y="95" width="145" height="36" rx="18" fill="#ffffff" fill-opacity="0.82" stroke="#e3e8ef"/>
+  <text x="737" y="119" text-anchor="middle" fill="#7b8696" font-family="Manrope, 'Segoe UI', sans-serif" font-size="14" font-weight="700">app active</text>
+
+  <rect x="220" y="170" width="610" height="170" rx="18" fill="#ffffff" stroke="#e5e7eb" filter="url(#shadow)"/>
+  <text x="250" y="222" fill="#111827" font-family="Manrope, 'Segoe UI', sans-serif" font-size="34" font-weight="800">Объявления • Услуги • Еда • Такси</text>
+  <text x="250" y="256" fill="#6b7280" font-family="Manrope, 'Segoe UI', sans-serif" font-size="21" font-weight="600">Локальный супер-апп для Цхинвала</text>
+
+  <rect x="250" y="278" width="178" height="40" rx="20" fill="#ffe7e9" stroke="#f7a7ad"/>
+  <text x="339" y="304" text-anchor="middle" fill="#991b1b" font-family="Manrope, 'Segoe UI', sans-serif" font-size="16" font-weight="800">Быстрый старт</text>
+
+  <rect x="220" y="360" width="398" height="164" rx="18" fill="#ffffff" stroke="#e5e7eb" filter="url(#shadow)"/>
+  <text x="250" y="404" fill="#111827" font-family="Manrope, 'Segoe UI', sans-serif" font-size="24" font-weight="800">Для пользователей</text>
+  <text x="250" y="434" fill="#6b7280" font-family="Manrope, 'Segoe UI', sans-serif" font-size="18">Публикации, избранное, профиль</text>
+  <text x="250" y="462" fill="#6b7280" font-family="Manrope, 'Segoe UI', sans-serif" font-size="18">в одном интерфейсе как в приложении</text>
+
+  <rect x="640" y="360" width="190" height="164" rx="18" fill="#ffffff" stroke="#e5e7eb" filter="url(#shadow)"/>
+  <rect x="673" y="392" width="124" height="124" rx="12" fill="#fff1f2" stroke="#f7a7ad"/>
+  <g fill="#e3262e">
+    <rect x="689" y="408" width="12" height="12"/>
+    <rect x="701" y="408" width="12" height="12"/>
+    <rect x="725" y="408" width="12" height="12"/>
+    <rect x="737" y="408" width="12" height="12"/>
+    <rect x="761" y="408" width="12" height="12"/>
+    <rect x="689" y="420" width="12" height="12"/>
+    <rect x="725" y="420" width="12" height="12"/>
+    <rect x="749" y="420" width="12" height="12"/>
+    <rect x="773" y="420" width="12" height="12"/>
+    <rect x="689" y="432" width="12" height="12"/>
+    <rect x="701" y="432" width="12" height="12"/>
+    <rect x="713" y="432" width="12" height="12"/>
+    <rect x="761" y="432" width="12" height="12"/>
+    <rect x="689" y="456" width="12" height="12"/>
+    <rect x="713" y="456" width="12" height="12"/>
+    <rect x="725" y="456" width="12" height="12"/>
+    <rect x="749" y="456" width="12" height="12"/>
+    <rect x="773" y="456" width="12" height="12"/>
+    <rect x="689" y="468" width="12" height="12"/>
+    <rect x="701" y="468" width="12" height="12"/>
+    <rect x="725" y="468" width="12" height="12"/>
+    <rect x="761" y="468" width="12" height="12"/>
+    <rect x="773" y="468" width="12" height="12"/>
+    <rect x="689" y="480" width="12" height="12"/>
+    <rect x="713" y="480" width="12" height="12"/>
+    <rect x="737" y="480" width="12" height="12"/>
+    <rect x="749" y="480" width="12" height="12"/>
+    <rect x="773" y="480" width="12" height="12"/>
+  </g>
+
+  <rect x="220" y="532" width="610" height="12" rx="6" fill="#e5e7eb"/>
+  <rect x="430" y="532" width="190" height="12" rx="6" fill="#e3262e"/>
+</svg>
