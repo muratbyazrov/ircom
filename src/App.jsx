@@ -187,8 +187,8 @@ export default function App() {
       root.style.setProperty("--app-height", `${Math.max(appHeight, 320)}px`);
       root.style.setProperty("--tg-safe-area-top", `${safeTop}px`);
       root.style.setProperty("--tg-safe-area-bottom", `${safeBottomFromTg}px`);
-      root.style.setProperty("--topbar-global-offset", `${isAndroidPlatform ? 68 : (isIosPlatform ? 44 : 52)}px`);
-      root.style.setProperty("--bottom-nav-lift", `${isAndroidPlatform ? 8 : 0}px`);
+      root.style.setProperty("--topbar-global-offset", `${isAndroidPlatform ? 68 : (isIosPlatform ? 38 : 52)}px`);
+      root.style.setProperty("--bottom-nav-lift", `${isAndroidPlatform ? 12 : 0}px`);
       root.classList.toggle("is-telegram", isTelegram);
       root.classList.toggle("is-tg-android", isAndroidTelegram);
     };
