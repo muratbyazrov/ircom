@@ -153,10 +153,59 @@ export default function App() {
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
-    if (!tg) return;
+    const root = document.documentElement;
+    const clampInset = (value) => {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) return 0;
+      return Math.max(0, Math.min(numeric, 96));
+    };
+    const applyViewportVars = () => {
+      const stableHeight = Number(tg?.viewportStableHeight);
+      const viewportHeight = Number(tg?.viewportHeight);
+      const appHeight = Number.isFinite(stableHeight) && stableHeight > 0
+        ? stableHeight
+        : (Number.isFinite(viewportHeight) && viewportHeight > 0 ? viewportHeight : window.innerHeight);
+
+      const safeTopFromTg = clampInset(tg?.contentSafeAreaInset?.top ?? tg?.safeAreaInset?.top);
+      const safeBottomFromTg = clampInset(tg?.contentSafeAreaInset?.bottom ?? tg?.safeAreaInset?.bottom);
+      const topFallback = clampInset(window.innerHeight - appHeight);
+      const safeTop = safeTopFromTg > 0 ? safeTopFromTg : topFallback;
+
+      root.style.setProperty("--app-height", `${Math.max(appHeight, 320)}px`);
+      root.style.setProperty("--tg-safe-area-top", `${safeTop}px`);
+      root.style.setProperty("--tg-safe-area-bottom", `${safeBottomFromTg}px`);
+    };
+
+    if (!tg) {
+      applyViewportVars();
+      window.addEventListener("resize", applyViewportVars);
+      return () => window.removeEventListener("resize", applyViewportVars);
+    }
+
     tg.ready();
     tg.expand();
+    tg.requestFullscreen?.();
     tg.enableClosingConfirmation?.();
+    applyViewportVars();
+
+    tg.onEvent?.("viewportChanged", applyViewportVars);
+    tg.onEvent?.("safeAreaChanged", applyViewportVars);
+    tg.onEvent?.("contentSafeAreaChanged", applyViewportVars);
+    window.addEventListener("resize", applyViewportVars);
+
+    const expandTimer = setTimeout(() => {
+      tg.expand();
+      tg.requestFullscreen?.();
+      applyViewportVars();
+    }, 300);
+
+    return () => {
+      clearTimeout(expandTimer);
+      tg.offEvent?.("viewportChanged", applyViewportVars);
+      tg.offEvent?.("safeAreaChanged", applyViewportVars);
+      tg.offEvent?.("contentSafeAreaChanged", applyViewportVars);
+      window.removeEventListener("resize", applyViewportVars);
+    };
   }, []);
 
   useEffect(() => {

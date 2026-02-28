@@ -15,6 +15,9 @@
   --z-bottom-nav: 40;
   --z-modal: 70;
   --z-viewer: 90;
+  --app-height: 100dvh;
+  --tg-safe-area-top: 0px;
+  --tg-safe-area-bottom: 0px;
 }
 
 * {
@@ -41,7 +44,7 @@ body {
 
 .app-shell {
   width: min(100vw, 560px);
-  min-height: 100vh;
+  min-height: var(--app-height);
   background: transparent;
   display: flex;
   flex-direction: column;
@@ -55,7 +58,7 @@ body {
   justify-content: space-between;
   gap: 12px;
   align-items: center;
-  padding: calc(env(safe-area-inset-top) + 10px) 16px 10px;
+  padding: calc(max(env(safe-area-inset-top), var(--tg-safe-area-top)) + 10px) 16px 10px;
   backdrop-filter: blur(12px);
   background: linear-gradient(180deg, rgba(247, 248, 252, 0.95) 60%, rgba(247, 248, 252, 0.55) 100%);
 }
@@ -89,7 +92,7 @@ body {
 }
 
 .screen {
-  padding: 8px 14px calc(90px + env(safe-area-inset-bottom));
+  padding: 8px 14px calc(90px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom)));
   display: grid;
   gap: 14px;
 }
@@ -799,7 +802,7 @@ button {
   bottom: 0;
   z-index: var(--z-bottom-nav);
   width: min(100vw, 560px);
-  padding: 5px 6px calc(4px + env(safe-area-inset-bottom));
+  padding: 5px 6px calc(4px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom)));
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 4px;
