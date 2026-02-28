@@ -153,10 +153,122 @@ export default function App() {
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
-    if (!tg) return;
+    const root = document.documentElement;
+    const activeTimers = new Set();
+    const schedule = (callback, timeout = 0) => {
+      const timerId = window.setTimeout(() => {
+        activeTimers.delete(timerId);
+        callback();
+      }, timeout);
+      activeTimers.add(timerId);
+      return timerId;
+    };
+    const clearScheduled = () => {
+      activeTimers.forEach((timerId) => window.clearTimeout(timerId));
+      activeTimers.clear();
+    };
+    const clampInset = (value) => {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) return 0;
+      return Math.max(0, Math.min(numeric, 96));
+    };
+    const applyViewportVars = () => {
+      const isTelegram = Boolean(tg);
+      const isAndroidTelegram = isTelegram && String(tg?.platform || "").toLowerCase() === "android";
+      const stableHeight = Number(tg?.viewportStableHeight);
+      const viewportHeight = Number(tg?.viewportHeight);
+      const appHeight = Number.isFinite(stableHeight) && stableHeight > 0
+        ? stableHeight
+        : (Number.isFinite(viewportHeight) && viewportHeight > 0 ? viewportHeight : window.innerHeight);
+
+      const safeTopFromTg = clampInset(tg?.contentSafeAreaInset?.top ?? tg?.safeAreaInset?.top);
+      const safeBottomFromTg = clampInset(tg?.contentSafeAreaInset?.bottom ?? tg?.safeAreaInset?.bottom);
+      const topFallback = clampInset(window.innerHeight - appHeight);
+      const minTopInset = isAndroidTelegram ? 86 : (isTelegram ? 74 : 0);
+      const safeTop = Math.max(safeTopFromTg, topFallback, minTopInset);
+
+      root.style.setProperty("--app-height", `${Math.max(appHeight, 320)}px`);
+      root.style.setProperty("--tg-safe-area-top", `${safeTop}px`);
+      root.style.setProperty("--tg-safe-area-bottom", `${safeBottomFromTg}px`);
+      root.classList.toggle("is-telegram", isTelegram);
+      root.classList.toggle("is-tg-android", isAndroidTelegram);
+    };
+
+    if (!tg) {
+      applyViewportVars();
+      window.addEventListener("resize", applyViewportVars);
+      return () => {
+        clearScheduled();
+        window.removeEventListener("resize", applyViewportVars);
+      };
+    }
+
+    const supportsFullscreen = typeof tg.requestFullscreen === "function";
+    const tryEnterFullscreen = () => {
+      tg.expand();
+      if (!supportsFullscreen) return;
+      if (tg.isFullscreen) return;
+      tg.setHeaderColor?.("bg_color");
+      try {
+        tg.requestFullscreen();
+      } catch {
+        // Some clients can throw if fullscreen isn't currently allowed.
+      }
+    };
+
     tg.ready();
-    tg.expand();
+    tg.disableVerticalSwipes?.();
     tg.enableClosingConfirmation?.();
+    tryEnterFullscreen();
+    applyViewportVars();
+
+    tg.onEvent?.("viewportChanged", applyViewportVars);
+    tg.onEvent?.("safeAreaChanged", applyViewportVars);
+    tg.onEvent?.("contentSafeAreaChanged", applyViewportVars);
+    const onFullscreenChanged = () => {
+      applyViewportVars();
+      if (!tg.isFullscreen) schedule(tryEnterFullscreen, 240);
+    };
+    const onFullscreenFailed = () => {
+      schedule(tryEnterFullscreen, 360);
+    };
+    tg.onEvent?.("fullscreenChanged", onFullscreenChanged);
+    tg.onEvent?.("fullscreenFailed", onFullscreenFailed);
+    window.addEventListener("resize", applyViewportVars);
+
+    [120, 320, 760, 1500].forEach((timeout) => {
+      schedule(() => {
+        tryEnterFullscreen();
+        applyViewportVars();
+      }, timeout);
+    });
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      tryEnterFullscreen();
+      applyViewportVars();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    const requestFullscreenOnGesture = () => {
+      tryEnterFullscreen();
+      applyViewportVars();
+    };
+    window.addEventListener("pointerdown", requestFullscreenOnGesture, { once: true, passive: true });
+    window.addEventListener("touchstart", requestFullscreenOnGesture, { once: true, passive: true });
+
+    return () => {
+      clearScheduled();
+      tg.offEvent?.("viewportChanged", applyViewportVars);
+      tg.offEvent?.("safeAreaChanged", applyViewportVars);
+      tg.offEvent?.("contentSafeAreaChanged", applyViewportVars);
+      tg.offEvent?.("fullscreenChanged", onFullscreenChanged);
+      tg.offEvent?.("fullscreenFailed", onFullscreenFailed);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pointerdown", requestFullscreenOnGesture);
+      window.removeEventListener("touchstart", requestFullscreenOnGesture);
+      window.removeEventListener("resize", applyViewportVars);
+    };
   }, []);
 
   useEffect(() => {
