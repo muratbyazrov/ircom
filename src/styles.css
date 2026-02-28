@@ -22,7 +22,7 @@
   --android-nav-buffer: 0px;
   --topbar-global-offset: 52px;
   --bottom-nav-lift: 0px;
-  --full-screen-global-top-offset: 64px;
+  --full-screen-global-top-offset: 84px;
 }
 
 * {

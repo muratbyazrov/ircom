@@ -200,6 +200,7 @@ export default function App() {
       root.style.setProperty("--tg-safe-area-bottom", `${safeBottom}px`);
       root.style.setProperty("--dynamic-safe-area-bottom", `${visualViewportBottomInset}px`);
       root.style.setProperty("--android-nav-buffer", `${isAndroidPlatform ? (isAndroidTelegram ? 10 : 6) : 0}px`);
+      root.style.setProperty("--topbar-global-offset", `${isAndroidPlatform ? 72 : 52}px`);
     };
 
     if (!tg) {
