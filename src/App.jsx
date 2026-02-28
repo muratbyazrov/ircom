@@ -171,7 +171,7 @@ export default function App() {
       const safeTopFromTg = clampInset(tg?.contentSafeAreaInset?.top ?? tg?.safeAreaInset?.top);
       const safeBottomFromTg = clampInset(tg?.contentSafeAreaInset?.bottom ?? tg?.safeAreaInset?.bottom);
       const topFallback = clampInset(window.innerHeight - appHeight);
-      const minTopInset = isAndroidTelegram ? 58 : (isTelegram ? 44 : 0);
+      const minTopInset = isAndroidTelegram ? 86 : (isTelegram ? 74 : 0);
       const safeTop = Math.max(safeTopFromTg, topFallback, minTopInset);
 
       root.style.setProperty("--app-height", `${Math.max(appHeight, 320)}px`);
