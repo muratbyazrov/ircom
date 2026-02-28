@@ -18,6 +18,8 @@
   --app-height: 100dvh;
   --tg-safe-area-top: 0px;
   --tg-safe-area-bottom: 0px;
+  --dynamic-safe-area-bottom: 0px;
+  --android-nav-buffer: 0px;
   --topbar-global-offset: 52px;
   --bottom-nav-lift: 0px;
   --full-screen-global-top-offset: 64px;
@@ -100,7 +102,7 @@ body {
 }
 
 .screen {
-  padding: 8px 14px calc(102px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom)));
+  padding: 8px 14px calc(102px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom), var(--dynamic-safe-area-bottom)) + var(--android-nav-buffer));
   display: grid;
   gap: 14px;
 }
@@ -810,7 +812,7 @@ button {
   bottom: var(--bottom-nav-lift);
   z-index: var(--z-bottom-nav);
   width: min(100vw, 560px);
-  padding: 6px 6px calc(5px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom)));
+  padding: 6px 6px calc(5px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom), var(--dynamic-safe-area-bottom)) + var(--android-nav-buffer));
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 4px;
@@ -1512,7 +1514,7 @@ button {
   border-radius: 0;
   border: none;
   padding: calc(max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--full-screen-global-top-offset)) + 10px) 14px
-    calc(max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom)) + 14px);
+    calc(max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom), var(--dynamic-safe-area-bottom)) + var(--android-nav-buffer) + 14px);
 }
 
 .modal-close-inline {

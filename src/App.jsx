@@ -173,6 +173,11 @@ export default function App() {
       return Math.max(0, Math.min(numeric, 96));
     };
     const applyViewportVars = () => {
+      const telegramPlatform = String(tg?.platform || "").toLowerCase();
+      const ua = String(window.navigator?.userAgent || "");
+      const isAndroidUa = /Android/i.test(ua);
+      const isAndroidTelegram = Boolean(tg) && telegramPlatform === "android";
+      const isAndroidPlatform = telegramPlatform === "android" || (!tg && isAndroidUa);
       const stableHeight = Number(tg?.viewportStableHeight);
       const viewportHeight = Number(tg?.viewportHeight);
       const appHeight = Number.isFinite(stableHeight) && stableHeight > 0
@@ -183,17 +188,29 @@ export default function App() {
       const safeBottomFromTg = clampInset(tg?.contentSafeAreaInset?.bottom ?? tg?.safeAreaInset?.bottom);
       const topFallback = clampInset(window.innerHeight - appHeight);
       const safeTop = Math.max(safeTopFromTg, topFallback);
+      const visualViewportHeight = Number(window.visualViewport?.height);
+      const visualViewportOffsetTop = Number(window.visualViewport?.offsetTop);
+      const visualViewportBottomInset = Number.isFinite(visualViewportHeight) && visualViewportHeight > 0
+        ? clampInset(window.innerHeight - (visualViewportHeight + (Number.isFinite(visualViewportOffsetTop) ? visualViewportOffsetTop : 0)))
+        : 0;
+      const safeBottom = Math.max(safeBottomFromTg, visualViewportBottomInset);
 
       root.style.setProperty("--app-height", `${Math.max(appHeight, 320)}px`);
       root.style.setProperty("--tg-safe-area-top", `${safeTop}px`);
-      root.style.setProperty("--tg-safe-area-bottom", `${safeBottomFromTg}px`);
+      root.style.setProperty("--tg-safe-area-bottom", `${safeBottom}px`);
+      root.style.setProperty("--dynamic-safe-area-bottom", `${visualViewportBottomInset}px`);
+      root.style.setProperty("--android-nav-buffer", `${isAndroidPlatform ? (isAndroidTelegram ? 10 : 6) : 0}px`);
     };
 
     if (!tg) {
       applyViewportVars();
       window.addEventListener("resize", applyViewportVars);
+      window.visualViewport?.addEventListener("resize", applyViewportVars);
+      window.visualViewport?.addEventListener("scroll", applyViewportVars);
       return () => {
         window.removeEventListener("resize", applyViewportVars);
+        window.visualViewport?.removeEventListener("resize", applyViewportVars);
+        window.visualViewport?.removeEventListener("scroll", applyViewportVars);
       };
     }
 
@@ -242,6 +259,8 @@ export default function App() {
     tg.onEvent?.("fullscreenChanged", handleFullscreenChanged);
     tg.onEvent?.("fullscreenFailed", handleFullscreenFailed);
     window.addEventListener("resize", applyViewportVars);
+    window.visualViewport?.addEventListener("resize", applyViewportVars);
+    window.visualViewport?.addEventListener("scroll", applyViewportVars);
 
     return () => {
       if (fullscreenRetryTimer) {
@@ -253,6 +272,8 @@ export default function App() {
       tg.offEvent?.("fullscreenChanged", handleFullscreenChanged);
       tg.offEvent?.("fullscreenFailed", handleFullscreenFailed);
       window.removeEventListener("resize", applyViewportVars);
+      window.visualViewport?.removeEventListener("resize", applyViewportVars);
+      window.visualViewport?.removeEventListener("scroll", applyViewportVars);
     };
   }, []);
 
