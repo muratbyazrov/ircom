@@ -18,6 +18,7 @@
   --app-height: 100dvh;
   --tg-safe-area-top: 0px;
   --tg-safe-area-bottom: 0px;
+  --tg-header-extra-top: 0px;
 }
 
 * {
@@ -58,7 +59,7 @@ body {
   justify-content: space-between;
   gap: 12px;
   align-items: center;
-  padding: calc(max(env(safe-area-inset-top), var(--tg-safe-area-top)) + 10px) 16px 10px;
+  padding: calc(max(env(safe-area-inset-top), var(--tg-safe-area-top)) + var(--tg-header-extra-top) + 10px) 16px 10px;
   backdrop-filter: blur(12px);
   background: linear-gradient(180deg, rgba(247, 248, 252, 0.95) 60%, rgba(247, 248, 252, 0.55) 100%);
 }
@@ -92,7 +93,7 @@ body {
 }
 
 .screen {
-  padding: 8px 14px calc(90px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom)));
+  padding: 8px 14px calc(102px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom)));
   display: grid;
   gap: 14px;
 }
@@ -802,7 +803,7 @@ button {
   bottom: 0;
   z-index: var(--z-bottom-nav);
   width: min(100vw, 560px);
-  padding: 5px 6px calc(4px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom)));
+  padding: 6px 6px calc(5px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom)));
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 4px;
@@ -812,11 +813,11 @@ button {
 }
 
 .tab-btn {
-  padding: 4px 2px;
+  padding: 6px 2px;
   border-radius: 11px;
   background: #fff;
   border: 1px solid #e4e8ef;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 650;
   color: #64748b;
   display: flex;
@@ -824,7 +825,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  min-height: 46px;
+  min-height: 54px;
 }
 
 .tab-btn .icon {

@@ -181,6 +181,7 @@ export default function App() {
       root.style.setProperty("--app-height", `${Math.max(appHeight, 320)}px`);
       root.style.setProperty("--tg-safe-area-top", `${safeTop}px`);
       root.style.setProperty("--tg-safe-area-bottom", `${safeBottomFromTg}px`);
+      root.style.setProperty("--tg-header-extra-top", `${isTelegram ? (isAndroidTelegram ? 14 : 10) : 0}px`);
       root.classList.toggle("is-telegram", isTelegram);
       root.classList.toggle("is-tg-android", isAndroidTelegram);
     };
