@@ -102,7 +102,7 @@ body {
 }
 
 .screen {
-  padding: 8px 14px calc(102px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom), var(--dynamic-safe-area-bottom)) + var(--android-nav-buffer));
+  padding: 8px 14px calc(102px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom), var(--dynamic-safe-area-bottom)) + var(--android-nav-buffer) + var(--bottom-nav-lift));
   display: grid;
   gap: 14px;
 }

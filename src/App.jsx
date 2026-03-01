@@ -176,8 +176,10 @@ export default function App() {
       const telegramPlatform = String(tg?.platform || "").toLowerCase();
       const ua = String(window.navigator?.userAgent || "");
       const isAndroidUa = /Android/i.test(ua);
+      const isIosUa = /iPhone|iPad|iPod/i.test(ua);
       const isAndroidTelegram = Boolean(tg) && telegramPlatform === "android";
       const isAndroidPlatform = telegramPlatform === "android" || (!tg && isAndroidUa);
+      const isIosPlatform = telegramPlatform === "ios" || (!tg && isIosUa);
       const stableHeight = Number(tg?.viewportStableHeight);
       const viewportHeight = Number(tg?.viewportHeight);
       const appHeight = Number.isFinite(stableHeight) && stableHeight > 0
@@ -209,7 +211,8 @@ export default function App() {
       root.style.setProperty("--tg-safe-area-bottom", `${safeBottom}px`);
       root.style.setProperty("--dynamic-safe-area-bottom", `${visualViewportBottomInset}px`);
       root.style.setProperty("--android-nav-buffer", `${isAndroidPlatform ? (isAndroidTelegram ? 10 : 6) : 0}px`);
-      root.style.setProperty("--topbar-global-offset", `${isAndroidPlatform ? 72 : 52}px`);
+      root.style.setProperty("--bottom-nav-lift", `${isAndroidPlatform ? 48 : 0}px`);
+      root.style.setProperty("--topbar-global-offset", `${isAndroidPlatform ? 72 : (isIosPlatform ? 46 : 0)}px`);
     };
 
     if (!tg) {
