@@ -818,6 +818,7 @@ button {
   gap: 4px;
   background: rgba(247, 248, 252, 0.93);
   border-top: 1px solid var(--line);
+  box-shadow: 0 var(--bottom-nav-lift) 0 0 rgba(247, 248, 252, 0.93);
   backdrop-filter: blur(10px);
 }
 
