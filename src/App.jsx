@@ -190,10 +190,19 @@ export default function App() {
       const safeTop = Math.max(safeTopFromTg, topFallback);
       const visualViewportHeight = Number(window.visualViewport?.height);
       const visualViewportOffsetTop = Number(window.visualViewport?.offsetTop);
-      const visualViewportBottomInset = Number.isFinite(visualViewportHeight) && visualViewportHeight > 0
-        ? clampInset(window.innerHeight - (visualViewportHeight + (Number.isFinite(visualViewportOffsetTop) ? visualViewportOffsetTop : 0)))
+      const visualViewportBottomEdge = Number.isFinite(visualViewportHeight) && visualViewportHeight > 0
+        ? (visualViewportHeight + (Number.isFinite(visualViewportOffsetTop) ? visualViewportOffsetTop : 0))
+        : null;
+      const visualViewportBottomInset = visualViewportBottomEdge !== null
+        ? clampInset(Math.max(
+          window.innerHeight - visualViewportBottomEdge,
+          appHeight - visualViewportBottomEdge
+        ))
         : 0;
-      const safeBottom = Math.max(safeBottomFromTg, visualViewportBottomInset);
+      const viewportGapFromTg = Number.isFinite(stableHeight) && stableHeight > 0 && Number.isFinite(viewportHeight) && viewportHeight > 0
+        ? clampInset(stableHeight - viewportHeight)
+        : 0;
+      const safeBottom = Math.max(safeBottomFromTg, visualViewportBottomInset, viewportGapFromTg);
 
       root.style.setProperty("--app-height", `${Math.max(appHeight, 320)}px`);
       root.style.setProperty("--tg-safe-area-top", `${safeTop}px`);
