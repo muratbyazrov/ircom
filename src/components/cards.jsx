@@ -195,6 +195,7 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
 export function Media({ photos, emptyText, compact = false, onOpen, bleed = false, section = "ads", className = "", blockParentClick = false, overlay = null }) {
   const items = Array.isArray(photos) ? photos.filter(Boolean) : [];
   const hasPhotos = items.length > 0;
+  const showGrid = hasPhotos && !onOpen;
   const [index, setIndex] = useState(0);
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
@@ -233,7 +234,7 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
 
   return (
     <div
-      className={`media ${compact ? "media-compact" : ""} ${bleed ? "media-bleed" : ""} ${hasPhotos ? "media-has-image" : ""} ${hasPhotos && onOpen ? "media-clickable" : ""} ${className}`}
+      className={`media ${compact ? "media-compact" : ""} ${bleed ? "media-bleed" : ""} ${hasPhotos ? "media-has-image" : ""} ${showGrid ? "media-grid-mode" : ""} ${hasPhotos && onOpen ? "media-clickable" : ""} ${className}`}
       role={hasPhotos && onOpen ? "button" : undefined}
       tabIndex={hasPhotos && onOpen ? 0 : undefined}
       onClick={
@@ -256,14 +257,14 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
       onKeyDown={(e) => {
         if (hasPhotos && onOpen && (e.key === "Enter" || e.key === " ")) onOpen(index);
       }}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
+      onTouchStart={showGrid ? undefined : onTouchStart}
+      onTouchEnd={showGrid ? undefined : onTouchEnd}
     >
       {hasPhotos ? (
-        <>
-          <div className="media-slider" style={{ transform: `translate3d(-${index * 100}%, 0, 0)` }}>
-            {items.map((photo) => (
-              <div className="media-slide" key={photo}>
+        showGrid ? (
+          <div className={`media-grid media-grid-${Math.min(items.length, 4)}`}>
+            {items.slice(0, 4).map((photo, photoIndex) => (
+              <div className="media-grid-item" key={`${photo}-${photoIndex}`}>
                 <img
                   className="media-img"
                   src={photo}
@@ -272,17 +273,37 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
                   draggable={false}
                   onError={(e) => applyImageFallback(e, section)}
                 />
+                {photoIndex === 3 && items.length > 4 ? (
+                  <span className="media-grid-more">+{items.length - 4}</span>
+                ) : null}
               </div>
             ))}
           </div>
-          {items.length > 1 ? (
-            <div className="media-dots" aria-hidden="true">
-              {items.map((_, dotIndex) => (
-                <span className={`media-dot ${dotIndex === index ? "active" : ""}`} key={`dot-${dotIndex}`} />
+        ) : (
+          <>
+            <div className="media-slider" style={{ transform: `translate3d(-${index * 100}%, 0, 0)` }}>
+              {items.map((photo, photoIndex) => (
+                <div className="media-slide" key={`${photo}-${photoIndex}`}>
+                  <img
+                    className="media-img"
+                    src={photo}
+                    alt="preview"
+                    loading="lazy"
+                    draggable={false}
+                    onError={(e) => applyImageFallback(e, section)}
+                  />
+                </div>
               ))}
             </div>
-          ) : null}
-        </>
+            {items.length > 1 ? (
+              <div className="media-dots" aria-hidden="true">
+                {items.map((_, dotIndex) => (
+                  <span className={`media-dot ${dotIndex === index ? "active" : ""}`} key={`dot-${dotIndex}`} />
+                ))}
+              </div>
+            ) : null}
+          </>
+        )
       ) : (
         <div className="media-empty">{emptyText}</div>
       )}
