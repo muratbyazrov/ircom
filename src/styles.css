@@ -1817,11 +1817,13 @@ button {
 .detail-ad-unified-block {
   margin-top: 8px;
   border: 1px solid #f0d0d4;
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 10px;
-  background: linear-gradient(180deg, #fff, #fff9fa);
+  background:
+    radial-gradient(120% 160% at 50% -20%, rgba(190, 24, 93, 0.1), transparent 42%),
+    linear-gradient(180deg, #fff, #fff9fa);
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .detail-service-unified-block .media,
@@ -1829,25 +1831,119 @@ button {
   min-height: 180px;
 }
 
-.detail-ad-unified-block .media {
-  min-height: 0;
-  aspect-ratio: 16 / 10;
-  max-height: 250px;
+.detail-photo-tiles-shell {
+  position: relative;
 }
 
-.detail-service-unified-block .media {
-  min-height: 0;
-  aspect-ratio: 16 / 10;
-  max-height: 250px;
+.detail-photo-fav {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
 }
 
-.detail-service-unified-block .media.media-has-image,
-.detail-service-unified-block .media-slide,
-.detail-service-unified-block .media-img,
-.detail-ad-unified-block .media.media-has-image,
-.detail-ad-unified-block .media-slide,
-.detail-ad-unified-block .media-img {
-  border-radius: 12px;
+.detail-photo-fav .detail-media-fav-btn {
+  background: rgba(2, 6, 23, 0.52);
+  border-color: rgba(226, 232, 240, 0.52);
+  color: #f8fafc;
+  backdrop-filter: blur(6px);
+}
+
+.detail-photo-fav .detail-media-fav-btn.active {
+  background: rgba(190, 24, 93, 0.86);
+  border-color: rgba(255, 228, 230, 0.7);
+  color: #fff;
+}
+
+.detail-photo-tiles {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  height: clamp(240px, 42vh, 520px);
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top, rgba(30, 41, 59, 0.42), rgba(15, 23, 42, 0.9)),
+    linear-gradient(180deg, #0f172a, #111827);
+}
+
+.detail-photo-tiles-1 {
+  grid-template-columns: 1fr;
+}
+
+.detail-photo-tiles-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detail-photo-tiles-3,
+.detail-photo-tiles-4 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.detail-photo-tiles-3 .detail-photo-tile:first-child {
+  grid-row: span 2;
+}
+
+.detail-photo-tile {
+  position: relative;
+  border: none;
+  margin: 0;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.7);
+  cursor: zoom-in;
+  overflow: hidden;
+}
+
+.detail-photo-tile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.detail-photo-tile-more {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(2, 6, 23, 0.52);
+}
+
+.detail-photo-empty {
+  min-height: 220px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  color: #cbd5e1;
+  font-weight: 700;
+  background:
+    radial-gradient(circle at top, rgba(30, 41, 59, 0.42), rgba(15, 23, 42, 0.9)),
+    linear-gradient(180deg, #0f172a, #111827);
+}
+
+.detail-hero-caption {
+  display: grid;
+  gap: 4px;
+}
+
+.detail-hero-title {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(22px, 4.8vw, 34px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.detail-hero-price {
+  color: #9f1239;
+  font-size: clamp(19px, 4vw, 30px);
+  font-weight: 800;
 }
 
 .detail-service-unified-block .detail-basic-meta,
@@ -1866,23 +1962,12 @@ button {
 .detail-ad-unified-block .detail-basic-desc-card,
 .detail-ad-unified-block .detail-contacts-block-basic {
   border-color: #f1d5d8;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.94);
 }
 
-.detail-service-gallery {
-  margin-top: 0;
-}
-
-.detail-service-gallery .gallery-img {
-  border-radius: 12px;
-}
-
-.detail-ad-gallery {
-  margin-top: 0;
-}
-
-.detail-ad-gallery .gallery-img {
-  border-radius: 12px;
+.detail-service-unified-block .detail-basic-meta-price,
+.detail-ad-unified-block .detail-basic-meta-price {
+  display: none;
 }
 
 .detail-service-contacts {
@@ -2407,6 +2492,15 @@ button {
   .detail-taxi-fav-btn {
     align-self: auto;
   }
+
+  .detail-photo-tiles {
+    min-height: clamp(220px, 38vh, 360px);
+    height: clamp(220px, 38vh, 360px);
+  }
+
+  .detail-hero-title {
+    font-size: clamp(20px, 6vw, 28px);
+  }
 }
 
 .reviews-block-standalone {
@@ -2679,11 +2773,14 @@ button {
   z-index: var(--z-viewer);
   background: #000;
   overscroll-behavior: contain;
+  width: 100vw;
+  height: 100dvh;
 }
 
 .viewer-content {
   position: relative;
   z-index: 1;
+  width: 100%;
   height: 100%;
   overflow: hidden;
   touch-action: none;
@@ -2691,6 +2788,7 @@ button {
 }
 
 .viewer-track {
+  width: 100%;
   height: 100%;
   display: flex;
   will-change: transform;
@@ -2702,12 +2800,12 @@ button {
   flex: 0 0 100%;
   display: grid;
   place-items: center;
-  padding: 16px;
+  padding: 0;
 }
 
 .viewer-img {
-  width: min(96vw, 900px);
-  max-height: 75vh;
+  width: 100vw;
+  height: 100dvh;
   object-fit: contain;
   border-radius: 0;
   touch-action: none;

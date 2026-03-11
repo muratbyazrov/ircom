@@ -154,6 +154,36 @@ export function DetailModalContent({
       {isFav(item.id) ? <><Icon name="heart-fill" /> В избранном</> : <><Icon name="heart" /> В избранное</>}
     </button>
   ) : null;
+  const renderDetailPhotoTiles = () => {
+    if (!photos.length) return <div className="detail-photo-empty">Нет фотографий</div>;
+
+    const visiblePhotos = photos.slice(0, 4);
+    const tilesClass = `detail-photo-tiles detail-photo-tiles-${Math.min(visiblePhotos.length, 4)}`;
+
+    return (
+      <div className={tilesClass}>
+        {visiblePhotos.map((photo, index) => (
+          <button
+            key={`${photo}-${index}`}
+            className="detail-photo-tile"
+            type="button"
+            onClick={() => setViewerIndex(index)}
+          >
+            <img
+              className="detail-photo-tile-img"
+              src={photo}
+              alt="gallery"
+              loading="lazy"
+              onError={(e) => applyImageFallback(e, type)}
+            />
+            {index === 3 && photos.length > 4 ? (
+              <span className="detail-photo-tile-more">+{photos.length - 4}</span>
+            ) : null}
+          </button>
+        ))}
+      </div>
+    );
+  };
 
   const showPrev = () => setViewerIndex((prev) => Math.max(0, prev - 1));
   const showNext = () => setViewerIndex((prev) => Math.min(photos.length - 1, prev + 1));
@@ -270,9 +300,9 @@ export function DetailModalContent({
           <div className="detail-taxi-head">
             <h3 className="detail-taxi-title" style={{ marginBottom: 0 }}>{item.title || item.name}</h3>
           </div>
-        ) : (
+        ) : !isServicesDetail && !isAdsDetail ? (
           <h3 className="detail-main-title">{item.title || item.name}</h3>
-        )
+        ) : null
       ) : null}
       {!isRestaurantDetail && !isTaxiDetail && !isServicesDetail && !isAdsDetail ? (
         <Media
@@ -353,29 +383,15 @@ export function DetailModalContent({
       ) : null}
       {isServicesDetail ? (
         <section className="detail-service-unified-block">
-          <Media
-            photos={photos}
-            emptyText="Нет фотографий"
-            section={type}
-            overlay={favoriteButton}
-            onOpen={(startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)}
-          />
-          {photos.length > 1 ? (
-            <div className="gallery detail-service-gallery">
-              {photos.map((photo, index) => {
-                return (
-                  <button key={`${photo}-${index}`} className="gallery-btn" type="button" onClick={() => setViewerIndex(index)}>
-                    <img className="gallery-img" src={photo} alt="gallery" loading="lazy" onError={(e) => applyImageFallback(e, type)} />
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
+          <div className="detail-photo-tiles-shell">
+            {favoriteButton ? <div className="detail-photo-fav">{favoriteButton}</div> : null}
+            {renderDetailPhotoTiles()}
+          </div>
+          <div className="detail-hero-caption">
+            <h3 className="detail-hero-title">{item.title || item.name}</h3>
+            <div className="detail-hero-price">{fmtRub.format(item.price)}</div>
+          </div>
           <div className="detail-basic-meta">
-            <div className="detail-basic-meta-price">
-              <span>Стоимость</span>
-              <b>{fmtRub.format(item.price)}</b>
-            </div>
             <div className="detail-basic-meta-list">
               {item.category ? (
                 <div className="detail-basic-meta-item">
@@ -411,29 +427,15 @@ export function DetailModalContent({
       ) : null}
       {isAdsDetail ? (
         <section className="detail-ad-unified-block">
-          <Media
-            photos={photos}
-            emptyText="Нет фотографий"
-            section={type}
-            overlay={favoriteButton}
-            onOpen={(startIndex = 0) => (photos.length ? setViewerIndex(clamp(startIndex, 0, photos.length - 1)) : null)}
-          />
-          {photos.length > 1 ? (
-            <div className="gallery detail-ad-gallery">
-              {photos.map((photo, index) => {
-                return (
-                  <button key={`${photo}-${index}`} className="gallery-btn" type="button" onClick={() => setViewerIndex(index)}>
-                    <img className="gallery-img" src={photo} alt="gallery" loading="lazy" onError={(e) => applyImageFallback(e, type)} />
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
+          <div className="detail-photo-tiles-shell">
+            {favoriteButton ? <div className="detail-photo-fav">{favoriteButton}</div> : null}
+            {renderDetailPhotoTiles()}
+          </div>
+          <div className="detail-hero-caption">
+            <h3 className="detail-hero-title">{item.title || item.name}</h3>
+            <div className="detail-hero-price">{fmtRub.format(item.price)}</div>
+          </div>
           <div className="detail-basic-meta">
-            <div className="detail-basic-meta-price">
-              <span>Стоимость</span>
-              <b>{fmtRub.format(item.price)}</b>
-            </div>
             <div className="detail-basic-meta-list">
               {item.category ? (
                 <div className="detail-basic-meta-item">
