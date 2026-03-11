@@ -1857,14 +1857,15 @@ button {
 
 .detail-photo-tiles {
   display: grid;
-  gap: 6px;
+  gap: 3px;
   width: 100%;
-  height: clamp(240px, 42vh, 520px);
+  height: clamp(320px, 58vh, 720px);
   border-radius: 14px;
   overflow: hidden;
+  border: 1px solid #f1d5d8;
   background:
-    radial-gradient(circle at top, rgba(30, 41, 59, 0.42), rgba(15, 23, 42, 0.9)),
-    linear-gradient(180deg, #0f172a, #111827);
+    radial-gradient(circle at top right, rgba(190, 24, 93, 0.1), transparent 52%),
+    linear-gradient(180deg, #fff8fa, #fff2f4);
 }
 
 .detail-photo-tiles-1 {
@@ -1878,11 +1879,20 @@ button {
 .detail-photo-tiles-3,
 .detail-photo-tiles-4 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(2, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1.35fr) minmax(0, 1fr);
 }
 
 .detail-photo-tiles-3 .detail-photo-tile:first-child {
-  grid-row: span 2;
+  grid-column: 1 / -1;
+}
+
+.detail-photo-tiles-4 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1.45fr) minmax(0, 1fr);
+}
+
+.detail-photo-tiles-4 .detail-photo-tile:first-child {
+  grid-column: 1 / -1;
 }
 
 .detail-photo-tile {
@@ -1890,7 +1900,7 @@ button {
   border: none;
   margin: 0;
   padding: 0;
-  background: rgba(15, 23, 42, 0.7);
+  background: #f7eaee;
   cursor: zoom-in;
   overflow: hidden;
 }
@@ -1898,7 +1908,8 @@ button {
 .detail-photo-tile-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center;
   display: block;
 }
 
@@ -1920,11 +1931,12 @@ button {
   display: grid;
   place-items: center;
   padding: 12px;
-  color: #cbd5e1;
+  color: #9f1239;
   font-weight: 700;
+  border: 1px solid #f1d5d8;
   background:
-    radial-gradient(circle at top, rgba(30, 41, 59, 0.42), rgba(15, 23, 42, 0.9)),
-    linear-gradient(180deg, #0f172a, #111827);
+    radial-gradient(circle at top right, rgba(190, 24, 93, 0.12), transparent 50%),
+    linear-gradient(180deg, #fff9fa, #fff3f5);
 }
 
 .detail-hero-caption {
@@ -2494,8 +2506,8 @@ button {
   }
 
   .detail-photo-tiles {
-    min-height: clamp(220px, 38vh, 360px);
-    height: clamp(220px, 38vh, 360px);
+    min-height: clamp(290px, 52vh, 520px);
+    height: clamp(290px, 52vh, 520px);
   }
 
   .detail-hero-title {
