@@ -4,7 +4,10 @@ export function useGestureGuard() {
   useEffect(() => {
     let lastTouchEnd = 0;
     let touchStartY = 0;
+    let touchStartX = 0;
     let activeScrollElement = null;
+
+    const isViewerTarget = (target) => Boolean(target?.closest?.(".viewer-content"));
 
     const getScrollableParent = (target) => {
       let node = target instanceof Element ? target : null;
@@ -23,30 +26,38 @@ export function useGestureGuard() {
     };
 
     const preventGesture = (e) => {
-      if (e.target?.closest?.(".viewer-content")) return;
+      if (isViewerTarget(e.target)) return;
       e.preventDefault();
     };
 
     const handleTouchStart = (e) => {
-      if (e.target?.closest?.(".viewer-content")) return;
       const touch = e.touches?.[0];
       if (!touch) return;
+      touchStartX = touch.clientX;
       touchStartY = touch.clientY;
       activeScrollElement = getScrollableParent(e.target);
     };
 
     const preventTouchMove = (e) => {
-      if (e.target?.closest?.(".viewer-content")) return;
+      const insideViewer = isViewerTarget(e.target);
       if (e.touches && e.touches.length > 1) {
-        e.preventDefault();
+        if (!insideViewer) e.preventDefault();
         return;
       }
 
       const touch = e.touches?.[0];
       if (!touch) return;
 
+      const deltaX = touch.clientX - touchStartX;
       const deltaY = touch.clientY - touchStartY;
       if (deltaY <= 0) return;
+
+      if (insideViewer) {
+        if (Math.abs(deltaY) > Math.abs(deltaX) + 8) {
+          e.preventDefault();
+        }
+        return;
+      }
 
       const scrollElement = activeScrollElement || getScrollableParent(e.target);
       const scrollTop = Number(scrollElement?.scrollTop || 0);
@@ -57,7 +68,7 @@ export function useGestureGuard() {
     };
 
     const preventDoubleTapZoom = (e) => {
-      if (e.target?.closest?.(".viewer-content")) return;
+      if (isViewerTarget(e.target)) return;
       const now = Date.now();
       if (now - lastTouchEnd <= 300) e.preventDefault();
       lastTouchEnd = now;

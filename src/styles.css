@@ -39,6 +39,7 @@ body {
   background: radial-gradient(circle at top left, #ffe7ea 0%, var(--bg) 55%, #fff4f4 100%);
   color: var(--text);
   overflow-x: hidden;
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -47,12 +48,18 @@ body {
   padding: 0;
 }
 
+#root {
+  width: 100%;
+  overscroll-behavior-y: none;
+}
+
 .app-shell {
   width: min(100vw, 560px);
   min-height: var(--app-height);
   background: transparent;
   display: flex;
   flex-direction: column;
+  overscroll-behavior-y: none;
 }
 
 .topbar {
@@ -105,6 +112,7 @@ body {
   padding: 8px 14px calc(102px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom), var(--dynamic-safe-area-bottom)) + var(--android-nav-buffer) + var(--bottom-nav-lift));
   display: grid;
   gap: 14px;
+  overscroll-behavior-y: contain;
 }
 
 .section {
@@ -2886,7 +2894,7 @@ button {
   inset: 0;
   z-index: var(--z-viewer);
   background: #000;
-  overscroll-behavior: contain;
+  overscroll-behavior: none;
   width: 100vw;
   height: 100dvh;
 }
