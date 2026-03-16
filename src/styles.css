@@ -763,6 +763,104 @@ body {
   font-size: 12px;
 }
 
+.listing-import-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.listing-import-meta-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  color: #9f1239;
+  background: linear-gradient(180deg, #fff1f4, #ffe4ea);
+  border: 1px solid #f4c8d2;
+}
+
+.listing-import-meta-icon .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.listing-import-meta-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  flex: 1 1 auto;
+}
+
+.listing-import-meta-kicker {
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #be123c;
+}
+
+.listing-import-meta-title {
+  min-width: 0;
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listing-import-meta-date {
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.listing-import-meta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #be123c;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.listing-import-meta-link .icon {
+  width: 13px;
+  height: 13px;
+}
+
+.listing-import-meta-card {
+  margin-top: 2px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, #fffafb, #fff4f6);
+  border: 1px solid #f4d5dc;
+}
+
+.listing-import-meta-card:hover {
+  border-color: #efb7c4;
+  background: linear-gradient(180deg, #fff7f9, #ffeff3);
+}
+
+.listing-import-meta-detail {
+  padding: 11px 12px;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at right top, rgba(190, 24, 93, 0.08), transparent 42%),
+    linear-gradient(180deg, #fffefe, #fff7f9);
+  border: 1px solid #f1d5d8;
+}
+
 .card-title {
   font-weight: 700;
   font-size: 15px;
@@ -1959,18 +2057,22 @@ button {
 }
 
 .detail-service-unified-block .detail-basic-meta,
+.detail-service-unified-block .listing-import-meta-detail,
 .detail-service-unified-block .detail-basic-desc-card,
 .detail-service-unified-block .detail-contacts-block,
 .detail-ad-unified-block .detail-basic-meta,
+.detail-ad-unified-block .listing-import-meta-detail,
 .detail-ad-unified-block .detail-basic-desc-card,
 .detail-ad-unified-block .detail-contacts-block {
   margin-top: 0;
 }
 
 .detail-service-unified-block .detail-basic-meta,
+.detail-service-unified-block .listing-import-meta-detail,
 .detail-service-unified-block .detail-basic-desc-card,
 .detail-service-unified-block .detail-contacts-block-basic,
 .detail-ad-unified-block .detail-basic-meta,
+.detail-ad-unified-block .listing-import-meta-detail,
 .detail-ad-unified-block .detail-basic-desc-card,
 .detail-ad-unified-block .detail-contacts-block-basic {
   border-color: #f1d5d8;

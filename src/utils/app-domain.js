@@ -178,10 +178,18 @@ export const getDaysAgo = (value) => {
   const delta = Date.now() - date.getTime();
   return Math.max(0, Math.floor(delta / 86400000));
 };
+const pickPrimaryContact = (value, { prefix = "" } = {}) => {
+  const primary = String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .find(Boolean);
+  if (!primary) return "";
+  return prefix && !primary.startsWith(prefix) ? `${prefix}${primary}` : primary;
+};
 export const getContacts = (item) => ({
-  ...(item?.phone ? { phone: item.phone } : {}),
+  ...(pickPrimaryContact(item?.phone) ? { phone: pickPrimaryContact(item?.phone) } : {}),
   ...(item?.whatsapp ? { wa: item.whatsapp } : {}),
-  ...(item?.telegram ? { tg: item.telegram } : {}),
+  ...(pickPrimaryContact(item?.telegram, { prefix: "@" }) ? { tg: pickPrimaryContact(item?.telegram, { prefix: "@" }) } : {}),
 });
 export const toAccountId = (value) => {
   const parsed = Number(value);
@@ -215,6 +223,7 @@ export const mapListingToUi = (item) => ({
   contacts: getContacts(item),
   photos: normalizeFivePhotos(item.photos),
   isFavorite: Boolean(item.isFavorite),
+  importMeta: item.importMeta || null,
 });
 export const mapTaxiToUi = (item) => ({
   id: `taxi-${pickFirstNumber(item.taxiOfferId, item.offerId, item.id, item.taxi_id) || randomSuffix()}`,

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { clamp, fmtRub, getTouchDistance, formatListingPostedAt } from "../../utils/helpers";
 import { applyImageFallback, replaceImageWithEmpty } from "../../utils/images";
 import { formatTaxiWhenForDisplay } from "../../utils/taxi";
+import { ListingImportMeta } from "../listing-import-meta";
 import { Icon, Field } from "../ui";
 import { Media } from "../cards";
 
@@ -413,6 +414,7 @@ export function DetailModalContent({
               ) : null}
             </div>
           </div>
+          <ListingImportMeta importMeta={item.importMeta} mode="detail" />
           <div className="detail-basic-desc-card">
             <div className="detail-content-title">Описание</div>
             <p>{item.desc || "Нет описания"}</p>
@@ -457,6 +459,7 @@ export function DetailModalContent({
               ) : null}
             </div>
           </div>
+          <ListingImportMeta importMeta={item.importMeta} mode="detail" />
           <div className="detail-basic-desc-card">
             <div className="detail-content-title">Описание</div>
             <p>{item.desc || "Нет описания"}</p>
