@@ -56,9 +56,11 @@ body {
 .app-shell {
   width: min(100vw, 560px);
   min-height: var(--app-height);
+  height: var(--app-height);
   background: transparent;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   overscroll-behavior-y: none;
 }
 
@@ -109,9 +111,15 @@ body {
 }
 
 .screen {
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 8px 14px calc(102px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom), var(--dynamic-safe-area-bottom)) + var(--android-nav-buffer) + var(--bottom-nav-lift));
   display: grid;
   gap: 14px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   overscroll-behavior-y: contain;
 }
 
