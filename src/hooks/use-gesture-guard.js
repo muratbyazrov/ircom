@@ -6,6 +6,8 @@ export function useGestureGuard() {
     let touchStartY = 0;
     let touchStartX = 0;
     let activeScrollElement = null;
+    const telegramPlatform = String(window.Telegram?.WebApp?.platform || "").toLowerCase();
+    const isTelegramAndroid = telegramPlatform === "android";
 
     const isViewerTarget = (target) => Boolean(target?.closest?.(".viewer-content"));
 
@@ -56,6 +58,10 @@ export function useGestureGuard() {
         if (Math.abs(deltaY) > Math.abs(deltaX) + 8) {
           e.preventDefault();
         }
+        return;
+      }
+
+      if (isTelegramAndroid) {
         return;
       }
 
