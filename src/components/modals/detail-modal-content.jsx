@@ -139,6 +139,7 @@ export function DetailModalContent({
       );
     })
     .filter(Boolean);
+  const shouldShowMissingContactsHint = (isAdsDetail || isServicesDetail) && !contactButtons.length;
 
   const favoriteButton = !isRestaurantDetail && !isOwnerView ? (
     <button
@@ -425,6 +426,19 @@ export function DetailModalContent({
               <div className="detail-contact-grid">{contactButtons}</div>
             </div>
           ) : null}
+          {shouldShowMissingContactsHint ? (
+            <div className="detail-contacts-block detail-contacts-block-basic detail-service-contacts">
+              <div className="detail-contacts-title">Контакты</div>
+              <div className="detail-contact-grid">
+                <div className="detail-contact-btn" aria-disabled="true">
+                  <span className="detail-contact-text">
+                    <b>Не указаны</b>
+                    <span>Автор объявления не оставил номер телефона или Telegram.</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </section>
       ) : null}
       {isAdsDetail ? (
@@ -468,6 +482,19 @@ export function DetailModalContent({
             <div className="detail-contacts-block detail-contacts-block-basic detail-ad-contacts">
               <div className="detail-contacts-title">Контакты</div>
               <div className="detail-contact-grid">{contactButtons}</div>
+            </div>
+          ) : null}
+          {shouldShowMissingContactsHint ? (
+            <div className="detail-contacts-block detail-contacts-block-basic detail-ad-contacts">
+              <div className="detail-contacts-title">Контакты</div>
+              <div className="detail-contact-grid">
+                <div className="detail-contact-btn" aria-disabled="true">
+                  <span className="detail-contact-text">
+                    <b>Не указаны</b>
+                    <span>Автор объявления не оставил номер телефона или Telegram.</span>
+                  </span>
+                </div>
+              </div>
             </div>
           ) : null}
         </section>
