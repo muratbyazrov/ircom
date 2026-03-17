@@ -364,8 +364,9 @@ export default function App() {
           sessionToken: response.sessionToken,
           account: response.account,
         });
-      } catch {
-        // Silent fallback: user can still use regular phone registration/login flow.
+      } catch (error) {
+        // Keep guest fallback, but log the reason so prod issues are debuggable.
+        console.error("Telegram auto-auth failed", error);
       } finally {
         if (isMounted) {
           setAuthPending(false);
