@@ -294,7 +294,7 @@ export function DetailModalContent({
   const closeViewerWithSwipe = () => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     setDismissAnimating(true);
-    setDismissY(window.innerHeight * 0.35);
+    setDismissY(dismissY < 0 ? window.innerHeight * -0.35 : window.innerHeight * 0.35);
     closeTimerRef.current = setTimeout(() => {
       setViewerIndex(null);
     }, 180);
@@ -843,7 +843,7 @@ export function DetailModalContent({
               }
 
               if (gestureMode.current === "swipe") {
-                if (deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX) + 8) {
+                if (Math.abs(deltaY) > Math.abs(deltaX) + 8) {
                   setDismissY(deltaY * 0.9);
                   setDragX(0);
                   return;
@@ -883,7 +883,7 @@ export function DetailModalContent({
               const absX = Math.abs(deltaX);
               const absY = Math.abs(deltaY);
 
-              if (deltaY > 90 && absY > absX && elapsed < 320) {
+              if (absY > 90 && absY > absX && elapsed < 320) {
                 closeViewerWithSwipe();
                 setDragX(0);
                 gestureMode.current = "idle";
@@ -924,7 +924,7 @@ export function DetailModalContent({
                 setPan({ x: 0, y: 0 });
               }
               setDragX(0);
-              if (dismissY > 0) {
+              if (dismissY !== 0) {
                 setDismissAnimating(true);
                 setDismissY(0);
               }
@@ -945,7 +945,7 @@ export function DetailModalContent({
             }}
             style={{
               transform: `translate3d(0, ${dismissY}px, 0)`,
-              opacity: `${Math.max(0.45, 1 - dismissY / Math.max(400, window.innerHeight * 0.9))}`,
+              opacity: `${Math.max(0.45, 1 - Math.abs(dismissY) / Math.max(400, window.innerHeight * 0.9))}`,
               transition: dismissAnimating ? "transform 180ms ease, opacity 180ms ease" : "none",
             }}
           >
@@ -976,7 +976,10 @@ export function DetailModalContent({
             </div>
           </div>
           <button className="viewer-close" type="button" onClick={() => setViewerIndex(null)}>
-            ×
+            <span className="viewer-close-icon" aria-hidden="true">
+              <Icon name="close" />
+            </span>
+            <span>Закрыть</span>
           </button>
         </section>
       ) : null}
