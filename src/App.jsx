@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
-import {Eye, EyeOff} from 'lucide-react';
+import {Eye, EyeOff, X} from 'lucide-react';
 import {CreateForm, DetailModalContent, ProfileEditForm} from './components/modals';
 import {EntityGroupModalContent} from './components/entity-group-modal-content';
 import {Icon, Modal} from './components/ui';
@@ -122,6 +122,7 @@ export default function App() {
   const [authBootstrapDone, setAuthBootstrapDone] = useState(false);
   const [signInPhoneValue, setSignInPhoneValue] = useState("");
   const [signInLoginValue, setSignInLoginValue] = useState("");
+  const [telegramWebAppReady, setTelegramWebAppReady] = useState(false);
   const [adsData, setAdsData] = useState([]);
   const [servicesData, setServicesData] = useState([]);
   const [taxiData, setTaxiData] = useState([]);
@@ -156,6 +157,9 @@ export default function App() {
     () => (isAuth ? adsCategories : adsCategories.filter((x) => x !== "Мои объявления")),
     [isAuth, adsCategories]
   );
+  const telegramWebApp = telegramWebAppReady ? window.Telegram?.WebApp : null;
+  const telegramInitData = String(telegramWebApp?.initData || "").trim();
+  const isTelegramMiniApp = Boolean(telegramWebApp && telegramInitData);
   const openSupport = useCallback(() => {
     const tg = window.Telegram?.WebApp;
     if (tg?.openTelegramLink) {
@@ -163,6 +167,49 @@ export default function App() {
       return;
     }
     window.open(SUPPORT_TELEGRAM_URL, "_blank", "noopener,noreferrer");
+  }, []);
+
+  const closeMiniApp = useCallback(() => {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.close) {
+      tg.close();
+      return;
+    }
+
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+
+    window.close();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+      setTelegramWebAppReady(true);
+      return undefined;
+    }
+
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 60;
+    const timer = window.setInterval(() => {
+      if (cancelled) return;
+      if (window.Telegram?.WebApp) {
+        setTelegramWebAppReady(true);
+        window.clearInterval(timer);
+        return;
+      }
+      attempts += 1;
+      if (attempts >= maxAttempts) {
+        window.clearInterval(timer);
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, []);
 
   const resetSignInFields = useCallback(() => {
@@ -195,16 +242,38 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const tg = window.Telegram?.WebApp;
+    const tg = isTelegramMiniApp ? telegramWebApp : null;
     const root = document.documentElement;
     let fullscreenRetryTimer = null;
     let fullscreenAttempts = 0;
     const MAX_FULLSCREEN_ATTEMPTS = 6;
     const FULLSCREEN_RETRY_DELAY = 180;
+    const telegramCapabilities = {
+      disableVerticalSwipes: true,
+      requestFullscreen: true,
+      enableClosingConfirmation: true,
+    };
     const clampInset = (value) => {
       const numeric = Number(value);
       if (!Number.isFinite(numeric)) return 0;
       return Math.max(0, Math.min(numeric, 96));
+    };
+    const callTelegramMethod = (methodName) => {
+      const method = tg?.[methodName];
+      if (!method || telegramCapabilities[methodName] === false) {
+        return false;
+      }
+
+      try {
+        method.call(tg);
+        return true;
+      } catch (error) {
+        if (error?.message === "WebAppMethodUnsupported") {
+          telegramCapabilities[methodName] = false;
+          return false;
+        }
+        throw error;
+      }
     };
     const applyViewportVars = () => {
       const telegramPlatform = String(tg?.platform || "").toLowerCase();
@@ -263,8 +332,8 @@ export default function App() {
 
     const enforceFullscreen = () => {
       tg.expand?.();
-      tg.disableVerticalSwipes?.();
-      tg.requestFullscreen?.();
+      callTelegramMethod("disableVerticalSwipes");
+      callTelegramMethod("requestFullscreen");
     };
     const scheduleFullscreenRetry = () => {
       if (fullscreenAttempts >= MAX_FULLSCREEN_ATTEMPTS) return;
@@ -296,7 +365,7 @@ export default function App() {
 
     tg.ready();
     enforceFullscreen();
-    tg.enableClosingConfirmation?.();
+    callTelegramMethod("enableClosingConfirmation");
     applyViewportVars();
     scheduleFullscreenRetry();
 
@@ -322,7 +391,7 @@ export default function App() {
       window.visualViewport?.removeEventListener("resize", applyViewportVars);
       window.visualViewport?.removeEventListener("scroll", applyViewportVars);
     };
-  }, []);
+  }, [telegramWebApp, isTelegramMiniApp]);
 
   useEffect(() => {
     let isMounted = true;
@@ -369,9 +438,8 @@ export default function App() {
     if (localStorage.getItem(AUTH_SESSION_STORAGE_KEY)) return undefined;
     if (isTelegramAutoAuthDisabled()) return undefined;
 
-    const tg = window.Telegram?.WebApp;
-    const initData = String(tg?.initData || "").trim();
-    if (!initData) return undefined;
+    const tg = isTelegramMiniApp ? telegramWebApp : null;
+    if (!tg || !telegramInitData) return undefined;
 
     let isMounted = true;
 
@@ -379,7 +447,7 @@ export default function App() {
       setAuthPending(true);
       setAuthError("");
       try {
-        const response = await telegramAuthRequest({ initData });
+        const response = await telegramAuthRequest({ initData: telegramInitData });
         if (!isMounted || !response?.sessionToken || !response?.account) return;
 
         localStorage.setItem(
@@ -405,7 +473,7 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [authBootstrapDone, isAuth, applyAuthSession, isTelegramAutoAuthDisabled]);
+  }, [authBootstrapDone, isAuth, applyAuthSession, isTelegramAutoAuthDisabled, telegramWebApp, telegramInitData, isTelegramMiniApp]);
 
   const refreshCatalog = useCallback(async () => {
     const accountId = toAccountId(authSession?.accountId);
@@ -1707,8 +1775,16 @@ export default function App() {
           <button className="ghost-btn topbar-support-btn" onClick={openSupport} type="button">
             Проблема
           </button>
-          <button className="ghost-btn topbar-auth-btn" onClick={toggleAuthModal} type="button">
-            {isAuth ? "Выйти" : "Войти"}
+          {!isAuth ? (
+            <button className="ghost-btn topbar-auth-btn" onClick={toggleAuthModal} type="button">
+              Войти
+            </button>
+          ) : null}
+          <button className="topbar-close-btn" onClick={closeMiniApp} type="button" aria-label="Закрыть приложение">
+            <span className="topbar-close-icon" aria-hidden="true">
+              <X className="icon" />
+            </span>
+            <span>Закрыть</span>
           </button>
         </div>
       </header>
