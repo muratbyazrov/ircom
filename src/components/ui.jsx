@@ -114,10 +114,12 @@ export function Modal({ open, onClose, children, variant = "sheet", closeOnBackd
   const isSheetModal = variant === "sheet";
   const actionLabel = isSheetModal ? "Закрыть" : "Назад";
   const actionIcon = isSheetModal ? "close" : "route-bw";
+  const closeWrapClassName = `modal-close-wrap${isSheetModal ? "" : " modal-close-wrap-full"}`;
+  const closeButtonClassName = `modal-close-inline${isSheetModal ? "" : " modal-close-inline-full"}`;
 
   const closeButton = (
-    <div className="modal-close-wrap">
-      <button className="modal-close-inline" type="button" onClick={onClose} aria-label={actionLabel}>
+    <div className={closeWrapClassName}>
+      <button className={closeButtonClassName} type="button" onClick={onClose} aria-label={actionLabel}>
         <span className="modal-close-inline-icon" aria-hidden="true"><Icon name={actionIcon} /></span>
         <span>{actionLabel}</span>
       </button>

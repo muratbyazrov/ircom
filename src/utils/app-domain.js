@@ -210,14 +210,24 @@ export const pickFirstText = (...values) => {
   }
   return "";
 };
+const getListingPostedAt = (item) => pickFirstText(
+  item?.importMeta?.date,
+  item?.createdAt,
+  item?.created_at
+);
 export const mapListingToUi = (item) => ({
+  ...(() => {
+    const postedAt = getListingPostedAt(item);
+    return {
+      createdAt: postedAt,
+      date: getDaysAgo(postedAt),
+    };
+  })(),
   id: `${item.kind === 1 ? "ad" : "service"}-${item.listingId}`,
   listingId: item.listingId,
   category: item.category,
   title: item.title,
   price: Number(item.price) || 0,
-  createdAt: pickFirstText(item.createdAt, item.created_at),
-  date: getDaysAgo(pickFirstText(item.createdAt, item.created_at)),
   desc: item.description || "",
   owner: item.accountId ? `account-${item.accountId}` : null,
   contacts: getContacts(item),

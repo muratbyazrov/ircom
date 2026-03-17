@@ -117,6 +117,11 @@ export function DetailModalContent({
     const text = String(value || "").trim();
     return Boolean(text) && text !== "-";
   };
+  const hasImportMeta = Boolean(
+    String(item.importMeta?.source || "").trim()
+    || String(item.importMeta?.date || "").trim()
+    || String(item.importMeta?.permalink || "").trim()
+  );
 
   const contactButtons = Object.entries(item.contacts || {})
     .filter(([, value]) => isPresentContactValue(value))
@@ -415,27 +420,24 @@ export function DetailModalContent({
               ) : null}
             </div>
           </div>
-          <ListingImportMeta importMeta={item.importMeta} mode="detail" />
           <div className="detail-basic-desc-card">
             <div className="detail-content-title">Описание</div>
             <p>{item.desc || "Нет описания"}</p>
           </div>
-          {contactButtons.length ? (
-            <div className="detail-contacts-block detail-contacts-block-basic detail-service-contacts">
-              <div className="detail-contacts-title">Контакты</div>
-              <div className="detail-contact-grid">{contactButtons}</div>
-            </div>
-          ) : null}
-          {shouldShowMissingContactsHint ? (
+          {(contactButtons.length || hasImportMeta || shouldShowMissingContactsHint) ? (
             <div className="detail-contacts-block detail-contacts-block-basic detail-service-contacts">
               <div className="detail-contacts-title">Контакты</div>
               <div className="detail-contact-grid">
-                <div className="detail-contact-btn" aria-disabled="true">
-                  <span className="detail-contact-text">
-                    <b>Не указаны</b>
-                    <span>Автор объявления не оставил номер телефона или Telegram.</span>
-                  </span>
-                </div>
+                {contactButtons}
+                {hasImportMeta ? <ListingImportMeta importMeta={item.importMeta} mode="detail" /> : null}
+                {shouldShowMissingContactsHint ? (
+                  <div className="detail-contact-btn" aria-disabled="true">
+                    <span className="detail-contact-text">
+                      <b>Не указаны</b>
+                      <span>Автор объявления не оставил номер телефона или Telegram.</span>
+                    </span>
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -473,27 +475,24 @@ export function DetailModalContent({
               ) : null}
             </div>
           </div>
-          <ListingImportMeta importMeta={item.importMeta} mode="detail" />
           <div className="detail-basic-desc-card">
             <div className="detail-content-title">Описание</div>
             <p>{item.desc || "Нет описания"}</p>
           </div>
-          {contactButtons.length ? (
-            <div className="detail-contacts-block detail-contacts-block-basic detail-ad-contacts">
-              <div className="detail-contacts-title">Контакты</div>
-              <div className="detail-contact-grid">{contactButtons}</div>
-            </div>
-          ) : null}
-          {shouldShowMissingContactsHint ? (
+          {(contactButtons.length || hasImportMeta || shouldShowMissingContactsHint) ? (
             <div className="detail-contacts-block detail-contacts-block-basic detail-ad-contacts">
               <div className="detail-contacts-title">Контакты</div>
               <div className="detail-contact-grid">
-                <div className="detail-contact-btn" aria-disabled="true">
-                  <span className="detail-contact-text">
-                    <b>Не указаны</b>
-                    <span>Автор объявления не оставил номер телефона или Telegram.</span>
-                  </span>
-                </div>
+                {contactButtons}
+                {hasImportMeta ? <ListingImportMeta importMeta={item.importMeta} mode="detail" /> : null}
+                {shouldShowMissingContactsHint ? (
+                  <div className="detail-contact-btn" aria-disabled="true">
+                    <span className="detail-contact-text">
+                      <b>Не указаны</b>
+                      <span>Автор объявления не оставил номер телефона или Telegram.</span>
+                    </span>
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : null}
