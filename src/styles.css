@@ -1731,40 +1731,40 @@ button {
 }
 
 .modal-close-wrap-full {
-  top: calc(max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--full-screen-global-top-offset)) * -1);
   margin:
-    calc(max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--full-screen-global-top-offset)) * -1 - 10px)
-    -14px 14px;
+    calc(max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--full-screen-global-top-offset)) * -1 - 2px)
+    0 10px;
   padding:
-    calc(max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--full-screen-global-top-offset)) + 10px)
-    14px 12px;
+    calc(max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--full-screen-global-top-offset)) + 2px)
+    0 0;
   justify-content: stretch;
-  background: linear-gradient(180deg, rgba(255, 251, 252, 0.98), rgba(255, 251, 252, 0.88) 72%, rgba(255, 251, 252, 0));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  position: relative;
 }
 
 .modal-close-inline-full {
   width: 100%;
   justify-content: center;
   gap: 10px;
-  padding: 13px 18px;
-  border-radius: 16px;
-  border-color: #f0c6cf;
+  padding: 10px 16px;
+  border-radius: 13px;
+  border-color: rgba(240, 198, 207, 0.9);
   background:
-    radial-gradient(circle at 12% 0%, rgba(227, 38, 46, 0.12), transparent 42%),
-    linear-gradient(180deg, #fffafb, #fff2f5);
+    radial-gradient(circle at 12% 0%, rgba(227, 38, 46, 0.1), transparent 42%),
+    linear-gradient(180deg, #fffafb, #fff5f7);
   color: #1f2a44;
   box-shadow:
-    0 14px 30px rgba(190, 24, 93, 0.12),
+    0 8px 20px rgba(190, 24, 93, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .modal-close-inline-full:hover {
   border-color: #e8b2bf;
   box-shadow:
-    0 16px 34px rgba(190, 24, 93, 0.16),
+    0 10px 24px rgba(190, 24, 93, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
