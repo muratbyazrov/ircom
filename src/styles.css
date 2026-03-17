@@ -115,6 +115,7 @@ body {
   min-height: 0;
   padding: 8px 14px calc(102px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom), var(--dynamic-safe-area-bottom)) + var(--android-nav-buffer) + var(--bottom-nav-lift));
   display: grid;
+  align-content: start;
   gap: 14px;
   overflow-y: auto;
   overflow-x: hidden;
