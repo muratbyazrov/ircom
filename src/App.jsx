@@ -14,6 +14,7 @@ import {
   registerRequest,
   signInRequest,
   signOutRequest,
+  telegramAuthRequest,
 } from './api/auth';
 import {
   createListingRequest,
@@ -117,6 +118,9 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [submitPending, setSubmitPending] = useState(false);
   const [showAuthPassword, setShowAuthPassword] = useState(false);
+  const [authBootstrapDone, setAuthBootstrapDone] = useState(false);
+  const [signInPhoneValue, setSignInPhoneValue] = useState("");
+  const [signInLoginValue, setSignInLoginValue] = useState("");
   const [adsData, setAdsData] = useState([]);
   const [servicesData, setServicesData] = useState([]);
   const [taxiData, setTaxiData] = useState([]);
@@ -158,6 +162,11 @@ export default function App() {
       return;
     }
     window.open(SUPPORT_TELEGRAM_URL, "_blank", "noopener,noreferrer");
+  }, []);
+
+  const resetSignInFields = useCallback(() => {
+    setSignInPhoneValue("");
+    setSignInLoginValue("");
   }, []);
 
   useEffect(() => {
@@ -293,7 +302,10 @@ export default function App() {
   useEffect(() => {
     let isMounted = true;
     const rawSession = localStorage.getItem(AUTH_SESSION_STORAGE_KEY);
-    if (!rawSession) return undefined;
+    if (!rawSession) {
+      setAuthBootstrapDone(true);
+      return undefined;
+    }
 
     const restore = async () => {
       try {
@@ -314,6 +326,10 @@ export default function App() {
         });
       } catch {
         localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+      } finally {
+        if (isMounted) {
+          setAuthBootstrapDone(true);
+        }
       }
     };
 
@@ -322,6 +338,47 @@ export default function App() {
       isMounted = false;
     };
   }, [applyAuthSession]);
+
+  useEffect(() => {
+    if (!authBootstrapDone || isAuth) return undefined;
+    if (localStorage.getItem(AUTH_SESSION_STORAGE_KEY)) return undefined;
+
+    const tg = window.Telegram?.WebApp;
+    const initData = String(tg?.initData || "").trim();
+    if (!initData) return undefined;
+
+    let isMounted = true;
+
+    const runTelegramAuth = async () => {
+      setAuthPending(true);
+      setAuthError("");
+      try {
+        const response = await telegramAuthRequest({ initData });
+        if (!isMounted || !response?.sessionToken || !response?.account) return;
+
+        localStorage.setItem(
+          AUTH_SESSION_STORAGE_KEY,
+          JSON.stringify({ sessionToken: response.sessionToken })
+        );
+        applyAuthSession({
+          sessionToken: response.sessionToken,
+          account: response.account,
+        });
+      } catch {
+        // Silent fallback: user can still use regular phone registration/login flow.
+      } finally {
+        if (isMounted) {
+          setAuthPending(false);
+        }
+      }
+    };
+
+    runTelegramAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authBootstrapDone, isAuth, applyAuthSession]);
 
   const refreshCatalog = useCallback(async () => {
     const accountId = toAccountId(authSession?.accountId);
@@ -523,6 +580,7 @@ export default function App() {
     setAuthMode("signin");
     setAuthError("");
     setShowAuthPassword(false);
+    resetSignInFields();
     toggleAuth(() => setModal({ type: "auth", payload: {} }));
   };
 
@@ -532,6 +590,7 @@ export default function App() {
     setAuthMode("signin");
     setAuthError("");
     setShowAuthPassword(false);
+    resetSignInFields();
     setModal({ type: "auth", payload: returnTo ? { returnTo, fromDetail: Boolean(options.fromDetail) } : {} });
   };
 
@@ -540,24 +599,32 @@ export default function App() {
     if (authPending) return;
 
     const fd = new FormData(event.currentTarget);
+    const signInPhone = formatPhoneValueCompact(signInPhoneValue, { allowEmpty: true });
+    const login = signInLoginValue.replace(/^@+/, "").trim();
     const rawPhone = String(fd.get("phone") || "").trim();
-    const signInPhone = formatPhoneValueCompact(rawPhone, { allowEmpty: true });
-    const phone = signInPhone;
+    const phone = formatPhoneValueCompact(rawPhone, { allowEmpty: true });
     const name = String(fd.get("name") || "").trim();
     const password = String(fd.get("password") || "");
     const isValidPhone = /^\+7\(\d{3}\)\d{3}-\d{2}-\d{2}$/.test(signInPhone);
+    const isValidLogin = /^[A-Za-z0-9_]{3,64}$/.test(login);
+    const hasSignInPhone = Boolean(signInPhone);
+    const hasSignInLogin = Boolean(login);
 
     if (!password) {
       setAuthError("Введите пароль");
       return;
     }
 
-    if (authMode === "signin" && !signInPhone) {
-      setAuthError("Введите телефон");
+    if (authMode === "signin" && !hasSignInPhone && !hasSignInLogin) {
+      setAuthError("Введите телефон или логин");
       return;
     }
-    if (authMode === "signin" && !isValidPhone) {
+    if (authMode === "signin" && hasSignInPhone && !isValidPhone) {
       setAuthError("Введите телефон в формате +7(XXX)XXX-XX-XX");
+      return;
+    }
+    if (authMode === "signin" && hasSignInLogin && !isValidLogin) {
+      setAuthError("Введите корректный логин");
       return;
     }
 
@@ -586,7 +653,7 @@ export default function App() {
           password,
         })
         : await signInRequest({
-          phone: signInPhone,
+          ...(hasSignInPhone ? { phone: signInPhone } : { login }),
           password,
         });
 
@@ -1724,7 +1791,7 @@ export default function App() {
         {modal?.type === "auth" && (
           <>
             <h3>Требуется авторизация</h3>
-            <p className="small">Войдите по телефону и паролю, либо создайте новый аккаунт.</p>
+            <p className="small">Войдите по телефону или логину и паролю, либо создайте новый аккаунт по номеру телефона.</p>
             <div className="multi-select-buttons" style={{ marginTop: 8 }}>
               <button
                 type="button"
@@ -1733,6 +1800,7 @@ export default function App() {
                   setAuthMode("signin");
                   setAuthError("");
                   setShowAuthPassword(false);
+                  resetSignInFields();
                 }}
                 aria-pressed={authMode === "signin"}
               >
@@ -1745,6 +1813,7 @@ export default function App() {
                   setAuthMode("signup");
                   setAuthError("");
                   setShowAuthPassword(false);
+                  resetSignInFields();
                 }}
                 aria-pressed={authMode === "signup"}
               >
@@ -1753,21 +1822,52 @@ export default function App() {
             </div>
             <form key={authMode} className="list" style={{ marginTop: 10 }} onSubmit={handleAuthSubmit}>
               {authMode === "signin" && (
-                <label className="field">
-                  <span className="small">Телефон</span>
-                  <input
-                    required
-                    name="phone"
-                    type="tel"
-                    inputMode="numeric"
-                    className="input"
-                    placeholder={PHONE_COMPACT_PLACEHOLDER}
-                    pattern={PHONE_COMPACT_PATTERN}
-                    autoComplete="tel"
-                    onInput={(e) => handlePhoneInputCompact(e, { allowEmpty: true })}
-                    onFocus={syncPhonePrev}
-                  />
-                </label>
+                <>
+                  <label className="field">
+                    <span className="small">Телефон</span>
+                    <input
+                      name="signinPhone"
+                      type="tel"
+                      inputMode="numeric"
+                      className="input"
+                      placeholder={PHONE_COMPACT_PLACEHOLDER}
+                      pattern={PHONE_COMPACT_PATTERN}
+                      autoComplete="tel"
+                      value={signInPhoneValue}
+                      disabled={Boolean(signInLoginValue)}
+                      onInput={(e) => {
+                        handlePhoneInputCompact(e, { allowEmpty: true });
+                        setSignInPhoneValue(e.currentTarget.value);
+                        if (authError) setAuthError("");
+                      }}
+                      onFocus={syncPhonePrev}
+                    />
+                  </label>
+                  <label className="field">
+                    <span className="small">Логин</span>
+                    <input
+                      name="signinLogin"
+                      type="text"
+                      inputMode="text"
+                      className="input"
+                      placeholder="username"
+                      autoComplete="username"
+                      value={signInLoginValue}
+                      disabled={Boolean(signInPhoneValue)}
+                      onChange={(e) => {
+                        setSignInLoginValue(e.currentTarget.value);
+                        if (authError) setAuthError("");
+                      }}
+                    />
+                  </label>
+                  <p className="small" style={{ marginTop: 2 }}>
+                    {signInPhoneValue
+                      ? "Вход через телефон. Поле логина временно отключено."
+                      : signInLoginValue
+                        ? "Вход через логин. Поле телефона временно отключено."
+                        : "Введите телефон или логин."}
+                  </p>
+                </>
               )}
 
               {authMode === "signup" && (

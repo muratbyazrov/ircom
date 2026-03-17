@@ -6,6 +6,8 @@ export const registerRequest = (params) => accountApi("register", params);
 
 export const signInRequest = (params) => accountApi("signIn", params);
 
+export const telegramAuthRequest = (params) => accountApi("telegramAuth", params);
+
 export const getSessionRequest = (params) => accountApi("getSession", params);
 
 export const signOutRequest = (params) => accountApi("signOut", params);
