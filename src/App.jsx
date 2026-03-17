@@ -94,6 +94,7 @@ const normalizeDictionaryNames = (dictionaryList) => {
 const withAllCategory = (categories) => ["Все", ...categories.filter((item) => item !== "Все")];
 const withMyAdsCategory = (categories) => categories.includes("Мои объявления") ? categories : [...categories, "Мои объявления"];
 const SUPPORT_TELEGRAM_URL = "https://t.me/+Bqm7XK8ISl4yMmNi";
+const TELEGRAM_AUTO_AUTH_DISABLED_KEY = "__ircomTelegramAutoAuthDisabled";
 
 export default function App() {
   const [tab, setTab] = useState("ads");
@@ -167,6 +168,30 @@ export default function App() {
   const resetSignInFields = useCallback(() => {
     setSignInPhoneValue("");
     setSignInLoginValue("");
+  }, []);
+
+  const isTelegramAutoAuthDisabled = useCallback(() => {
+    try {
+      return sessionStorage.getItem(TELEGRAM_AUTO_AUTH_DISABLED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const disableTelegramAutoAuth = useCallback(() => {
+    try {
+      sessionStorage.setItem(TELEGRAM_AUTO_AUTH_DISABLED_KEY, "1");
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  const enableTelegramAutoAuth = useCallback(() => {
+    try {
+      sessionStorage.removeItem(TELEGRAM_AUTO_AUTH_DISABLED_KEY);
+    } catch {
+      // ignore storage errors
+    }
   }, []);
 
   useEffect(() => {
@@ -342,6 +367,7 @@ export default function App() {
   useEffect(() => {
     if (!authBootstrapDone || isAuth) return undefined;
     if (localStorage.getItem(AUTH_SESSION_STORAGE_KEY)) return undefined;
+    if (isTelegramAutoAuthDisabled()) return undefined;
 
     const tg = window.Telegram?.WebApp;
     const initData = String(tg?.initData || "").trim();
@@ -379,7 +405,7 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [authBootstrapDone, isAuth, applyAuthSession]);
+  }, [authBootstrapDone, isAuth, applyAuthSession, isTelegramAutoAuthDisabled]);
 
   const refreshCatalog = useCallback(async () => {
     const accountId = toAccountId(authSession?.accountId);
@@ -573,6 +599,7 @@ export default function App() {
       } catch {
         // ignore: user should still be logged out locally
       }
+      disableTelegramAutoAuth();
       localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
       toggleAuth(() => setModal({ type: "auth", payload: {} }));
       return;
@@ -662,6 +689,7 @@ export default function App() {
         throw new Error("Некорректный ответ сервера");
       }
 
+      enableTelegramAutoAuth();
       localStorage.setItem(
         AUTH_SESSION_STORAGE_KEY,
         JSON.stringify({ sessionToken: response.sessionToken })
