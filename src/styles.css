@@ -331,6 +331,21 @@ body {
   overflow: hidden;
 }
 
+.card-skeleton {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, rgba(255, 255, 255, 0) 20%, rgba(255, 255, 255, 0.68) 50%, rgba(255, 255, 255, 0) 80%);
+  transform: translateX(-100%);
+  animation: card-skeleton-shimmer 1.45s ease-in-out infinite;
+  pointer-events: none;
+}
+
 .card-clickable {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -353,6 +368,10 @@ body {
   position: relative;
   padding: 10px;
   display: grid;
+  gap: 8px;
+}
+
+.card-skeleton .card-body {
   gap: 8px;
 }
 
@@ -405,6 +424,186 @@ body {
   width: 17px;
   height: 17px;
   flex: 0 0 17px;
+}
+
+.skeleton-block {
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(236, 241, 247, 0.95), rgba(226, 233, 241, 0.95));
+}
+
+.card-skeleton-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: rgba(255, 255, 255, 0.88);
+  width: fit-content;
+}
+
+.card-skeleton-pill-floating {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
+.card-skeleton-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.card-skeleton-pill-text {
+  width: 84px;
+  height: 10px;
+}
+
+.card-skeleton-media {
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 36%),
+    linear-gradient(180deg, #f8eadf 0%, #fff6ed 100%);
+}
+
+.card-skeleton-gallery {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: 2px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.card-skeleton-gallery-primary {
+  min-height: 100%;
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(239, 200, 159, 0.92), rgba(245, 217, 188, 0.92));
+}
+
+.card-skeleton-gallery-secondary {
+  min-height: 100%;
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(247, 227, 207, 0.96), rgba(241, 214, 185, 0.96));
+}
+
+.card-skeleton-gallery > :first-child {
+  grid-row: span 2;
+}
+
+.card-skeleton-media-square {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.card-skeleton-square-art {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  background:
+    radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0) 32%),
+    linear-gradient(180deg, rgba(242, 211, 182, 0.94), rgba(248, 234, 223, 0.94));
+}
+
+.card-skeleton-restaurant-hero {
+  height: 170px;
+}
+
+.card-skeleton-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.card-skeleton-title-wrap,
+.card-skeleton-copy {
+  display: grid;
+  gap: 7px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.card-skeleton-copy-tight {
+  gap: 6px;
+}
+
+.card-skeleton-line {
+  width: 100%;
+  height: 11px;
+}
+
+.card-skeleton-line-title {
+  width: min(72%, 260px);
+  height: 15px;
+  border-radius: 8px;
+}
+
+.card-skeleton-line-title-short {
+  width: min(48%, 180px);
+  height: 15px;
+  border-radius: 8px;
+}
+
+.card-skeleton-line-meta {
+  width: min(42%, 144px);
+  height: 10px;
+  opacity: 0.92;
+}
+
+.card-skeleton-line-caption {
+  width: 78px;
+  height: 10px;
+}
+
+.card-skeleton-line-wide {
+  width: min(86%, 320px);
+}
+
+.card-skeleton-price {
+  width: 82px;
+  height: 18px;
+  border-radius: 9px;
+  flex: 0 0 auto;
+}
+
+.card-skeleton-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.card-skeleton-badge {
+  width: 106px;
+  height: 26px;
+  border-radius: 999px;
+}
+
+.card-skeleton-badge-compact {
+  width: 68px;
+  height: 24px;
+}
+
+.card-skeleton-copy .card-skeleton-line:last-child {
+  opacity: 0.86;
+}
+
+.card-skeleton-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-skeleton-chip {
+  width: 84px;
+  height: 26px;
+  border-radius: 999px;
+}
+
+.card-skeleton-chip-wide {
+  width: 126px;
 }
 
 .media {
@@ -992,6 +1191,16 @@ body {
 }
 
 @keyframes media-state-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes card-skeleton-shimmer {
   from {
     transform: translateX(-100%);
   }

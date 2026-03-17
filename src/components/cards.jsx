@@ -29,6 +29,122 @@ function MediaStateSurface({ state, title, note, tile = false }) {
   );
 }
 
+function SkeletonBlock({ className = "" }) {
+  return <span className={`skeleton-block ${className}`.trim()} aria-hidden="true" />;
+}
+
+export function ItemCardSkeleton({ section = "ads", showRating = false }) {
+  const cardSectionClass = section === "ads" ? "card-ad" : section === "services" ? "card-service" : "";
+
+  return (
+    <article className={`card card-skeleton ${cardSectionClass}`} aria-hidden="true">
+      <div className="card-body">
+        <span className="card-skeleton-pill card-skeleton-pill-floating">
+          <SkeletonBlock className="card-skeleton-icon" />
+          <SkeletonBlock className="card-skeleton-pill-text" />
+        </span>
+        <div className={`media media-bleed card-skeleton-media ${section === "ads" || section === "services" ? "card-skeleton-media-compact" : ""}`}>
+          <div className="card-skeleton-gallery">
+            <SkeletonBlock className="card-skeleton-gallery-primary" />
+            <SkeletonBlock className="card-skeleton-gallery-secondary" />
+            <SkeletonBlock className="card-skeleton-gallery-secondary" />
+            <SkeletonBlock className="card-skeleton-gallery-secondary" />
+          </div>
+        </div>
+        <div className="card-skeleton-topline">
+          <div className="card-skeleton-title-wrap">
+            <SkeletonBlock className="card-skeleton-line card-skeleton-line-title" />
+            <SkeletonBlock className="card-skeleton-line card-skeleton-line-title-short" />
+            <SkeletonBlock className="card-skeleton-line card-skeleton-line-meta" />
+          </div>
+          <SkeletonBlock className="card-skeleton-price" />
+        </div>
+        {showRating ? (
+          <div className="card-skeleton-rating">
+            <SkeletonBlock className="card-skeleton-badge" />
+            <SkeletonBlock className="card-skeleton-line card-skeleton-line-caption" />
+          </div>
+        ) : null}
+        <div className="card-skeleton-copy">
+          <SkeletonBlock className="card-skeleton-line" />
+          <SkeletonBlock className="card-skeleton-line card-skeleton-line-wide" />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+export function TaxiCardSkeleton() {
+  return (
+    <article className="card card-skeleton card-taxi" aria-hidden="true">
+      <div className="card-body taxi-card-body">
+        <span className="card-skeleton-pill card-skeleton-pill-floating">
+          <SkeletonBlock className="card-skeleton-icon" />
+          <SkeletonBlock className="card-skeleton-pill-text" />
+        </span>
+        <div className="taxi-card-layout">
+          <div className="media taxi-media-full card-skeleton-media card-skeleton-media-square">
+            <SkeletonBlock className="card-skeleton-square-art" />
+          </div>
+          <div className="taxi-card-content">
+            <div className="taxi-card-head">
+              <SkeletonBlock className="card-skeleton-line card-skeleton-line-title" />
+              <SkeletonBlock className="card-skeleton-price" />
+            </div>
+            <SkeletonBlock className="card-skeleton-line card-skeleton-line-meta" />
+            <div className="card-skeleton-rating">
+              <SkeletonBlock className="card-skeleton-badge" />
+              <SkeletonBlock className="card-skeleton-line card-skeleton-line-caption" />
+            </div>
+          </div>
+        </div>
+        <div className="card-skeleton-chips">
+          <SkeletonBlock className="card-skeleton-chip" />
+          <SkeletonBlock className="card-skeleton-chip card-skeleton-chip-wide" />
+          <SkeletonBlock className="card-skeleton-chip" />
+        </div>
+        <div className="card-skeleton-copy">
+          <SkeletonBlock className="card-skeleton-line" />
+          <SkeletonBlock className="card-skeleton-line card-skeleton-line-wide" />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+export function RestaurantCardSkeleton() {
+  return (
+    <article className="card card-skeleton restaurant-list-card" aria-hidden="true">
+      <div className="card-body">
+        <div className="restaurant-list-photo-wrap card-skeleton-media card-skeleton-restaurant-hero">
+          <div className="card-skeleton-gallery">
+            <SkeletonBlock className="card-skeleton-gallery-primary" />
+            <SkeletonBlock className="card-skeleton-gallery-secondary" />
+            <SkeletonBlock className="card-skeleton-gallery-secondary" />
+            <SkeletonBlock className="card-skeleton-gallery-secondary" />
+          </div>
+        </div>
+        <div className="restaurant-list-head">
+          <div className="restaurant-list-main">
+            <div className="card-skeleton-copy card-skeleton-copy-tight">
+              <SkeletonBlock className="card-skeleton-line card-skeleton-line-title" />
+              <SkeletonBlock className="card-skeleton-line card-skeleton-line-title-short" />
+            </div>
+          </div>
+          <SkeletonBlock className="card-skeleton-badge card-skeleton-badge-compact" />
+        </div>
+        <div className="card-skeleton-copy card-skeleton-copy-tight">
+          <SkeletonBlock className="card-skeleton-line" />
+          <SkeletonBlock className="card-skeleton-line card-skeleton-line-wide" />
+        </div>
+        <div className="restaurant-list-meta">
+          <SkeletonBlock className="card-skeleton-chip card-skeleton-chip-wide" />
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, section = "ads", isOwn = false, canFavorite = true }) {
   const hasRating = typeof item.ratingValue === "number" && Number(item.reviewsCount) > 0;
   const postedAtText = section === "ads"

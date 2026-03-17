@@ -1,8 +1,16 @@
 import { CategoryTabs, Empty, Field, Icon, Section, SectionHeader, SortSelect } from "../components/ui";
-import { ItemCard, TaxiCard } from "../components/cards";
+import { ItemCard, ItemCardSkeleton, RestaurantCardSkeleton, TaxiCard, TaxiCardSkeleton } from "../components/cards";
 import { sectionSortModes } from "../utils/constants";
 import { fmtRub } from "../utils/helpers";
 import { replaceImageWithEmpty } from "../utils/images";
+
+function LoadingList({ children, label = "Загружаем карточки" }) {
+  return (
+    <section className="list" aria-live="polite" aria-busy="true" aria-label={label}>
+      {children}
+    </section>
+  );
+}
 
 export function AdsTab({
   adsCategoriesVisible,
@@ -16,6 +24,7 @@ export function AdsTab({
   toggleFavorite,
   favorites,
   currentOwner,
+  isLoading = false,
 }) {
   return (
     <>
@@ -24,7 +33,14 @@ export function AdsTab({
         <CategoryTabs list={adsCategoriesVisible} value={adsCategory} onChange={setAdsCategory} />
         <SortSelect value={adsSort} onChange={setAdsSort} modes={sectionSortModes.ads} />
       </Section>
-      <section className="list">
+      {isLoading ? (
+        <LoadingList label="Загружаем объявления">
+          <ItemCardSkeleton section="ads" />
+          <ItemCardSkeleton section="ads" />
+          <ItemCardSkeleton section="ads" />
+        </LoadingList>
+      ) : (
+        <section className="list">
         {adsItems.length ? adsItems.map((x) => (
           <ItemCard
             key={x.id}
@@ -37,7 +53,8 @@ export function AdsTab({
             canFavorite={!(currentOwner && x.owner === currentOwner)}
           />
         )) : <Empty text="Пока нет объявлений" />}
-      </section>
+        </section>
+      )}
     </>
   );
 }
@@ -54,6 +71,7 @@ export function ServicesTab({
   favorites,
   serviceCategories,
   currentOwner,
+  isLoading = false,
 }) {
   return (
     <>
@@ -62,7 +80,14 @@ export function ServicesTab({
         <CategoryTabs list={serviceCategories} value={serviceCategory} onChange={setServiceCategory} />
         <SortSelect value={servicesSort} onChange={setServicesSort} modes={sectionSortModes.services} />
       </Section>
-      <section className="list">
+      {isLoading ? (
+        <LoadingList label="Загружаем услуги">
+          <ItemCardSkeleton section="services" showRating />
+          <ItemCardSkeleton section="services" showRating />
+          <ItemCardSkeleton section="services" showRating />
+        </LoadingList>
+      ) : (
+        <section className="list">
         {servicesItems.length ? servicesItems.map((x) => (
           <ItemCard
             key={x.id}
@@ -76,7 +101,8 @@ export function ServicesTab({
             canFavorite={!(currentOwner && x.owner === currentOwner)}
           />
         )) : <Empty text="Пока нет услуг" />}
-      </section>
+        </section>
+      )}
     </>
   );
 }
@@ -96,6 +122,7 @@ export function TaxiTab({
   favorites,
   currentOwner,
   isOwnTaxiItem,
+  isLoading = false,
 }) {
   const isIntercity = taxiCategory !== "Такси по Цхинвалу";
 
@@ -126,7 +153,14 @@ export function TaxiTab({
         ) : null}
         <SortSelect value={taxiSort} onChange={setTaxiSort} modes={sectionSortModes.taxi} />
       </Section>
-      <section className="list">
+      {isLoading ? (
+        <LoadingList label="Загружаем поездки">
+          <TaxiCardSkeleton />
+          <TaxiCardSkeleton />
+          <TaxiCardSkeleton />
+        </LoadingList>
+      ) : (
+        <section className="list">
         {taxiItems.length
           ? taxiItems.map((x) => {
             const isOwn = typeof isOwnTaxiItem === "function"
@@ -145,7 +179,8 @@ export function TaxiTab({
             );
           })
           : <Empty text={taxiRequestedAt && isIntercity ? "Нет поездок на выбранное время" : "Пока нет предложений"} />}
-      </section>
+        </section>
+      )}
     </>
   );
 }
@@ -160,6 +195,7 @@ export function FoodTab({
   openCreate,
   openEntityGroup,
   openDetail,
+  isLoading = false,
 }) {
   const hasOwnedRestaurant = isAuth && hasRestaurant;
 
@@ -173,7 +209,13 @@ export function FoodTab({
       <Section>
         <CategoryTabs list={foodCategories} value={foodCategory} onChange={setFoodCategory} />
       </Section>
-      <section className="list">
+      {isLoading ? (
+        <LoadingList label="Загружаем заведения">
+          <RestaurantCardSkeleton />
+          <RestaurantCardSkeleton />
+        </LoadingList>
+      ) : (
+        <section className="list">
         {!restaurants.length ? <Empty text="Пока нет заведений" /> : null}
         {restaurants.map((restaurant) => (
           <article
@@ -220,7 +262,8 @@ export function FoodTab({
             </div>
           </article>
         ))}
-      </section>
+        </section>
+      )}
     </>
   );
 }

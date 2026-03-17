@@ -124,6 +124,7 @@ export default function App() {
   const [signInLoginValue, setSignInLoginValue] = useState("");
   const [signInMethod, setSignInMethod] = useState("phone");
   const [telegramWebAppReady, setTelegramWebAppReady] = useState(false);
+  const [isCatalogLoading, setIsCatalogLoading] = useState(true);
   const [adsData, setAdsData] = useState([]);
   const [servicesData, setServicesData] = useState([]);
   const [taxiData, setTaxiData] = useState([]);
@@ -317,7 +318,7 @@ export default function App() {
       root.style.setProperty("--dynamic-safe-area-bottom", `${visualViewportBottomInset}px`);
       root.style.setProperty("--android-nav-buffer", `${isAndroidPlatform ? (isAndroidTelegram ? 10 : 6) : 0}px`);
       root.style.setProperty("--bottom-nav-lift", `${isAndroidPlatform ? 12 : 0}px`);
-      root.style.setProperty("--topbar-global-offset", `${isAndroidPlatform ? 56 : (isIosPlatform ? 40 : 0)}px`);
+      root.style.setProperty("--topbar-global-offset", `${isAndroidPlatform ? 44 : (isIosPlatform ? 40 : 0)}px`);
     };
 
     if (!tg) {
@@ -479,52 +480,57 @@ export default function App() {
 
   const refreshCatalog = useCallback(async () => {
     const accountId = toAccountId(authSession?.accountId);
-    const [adsRaw, servicesRaw, taxiCityRaw, taxiOutRaw, taxiInRaw, restaurantsRaw, menuRaw] = await Promise.all([
-      getListingsRequest({ kind: 1, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
-      getListingsRequest({ kind: 2, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
-      getTaxiOffersRequest({ direction: 1, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
-      getTaxiOffersRequest({ direction: 2, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
-      getTaxiOffersRequest({ direction: 3, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
-      getRestaurantsRequest({ limit: 300 }),
-      getMenuItemsRequest({ limit: 300, ...(accountId !== null ? { accountId } : {}) }),
-    ]);
+    setIsCatalogLoading(true);
+    try {
+      const [adsRaw, servicesRaw, taxiCityRaw, taxiOutRaw, taxiInRaw, restaurantsRaw, menuRaw] = await Promise.all([
+        getListingsRequest({ kind: 1, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
+        getListingsRequest({ kind: 2, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
+        getTaxiOffersRequest({ direction: 1, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
+        getTaxiOffersRequest({ direction: 2, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
+        getTaxiOffersRequest({ direction: 3, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
+        getRestaurantsRequest({ limit: 300 }),
+        getMenuItemsRequest({ limit: 300, ...(accountId !== null ? { accountId } : {}) }),
+      ]);
 
-    const restaurantDeliveryById = new Map(
-      toArray(restaurantsRaw).map((restaurant) => [
-        toAccountId(restaurant?.restaurantId),
-        {
-          mode: getRestaurantDeliveryMode(restaurant),
-          price: getRestaurantDeliveryPrice(restaurant),
-        },
-      ]).filter(([id]) => id !== null)
-    );
+      const restaurantDeliveryById = new Map(
+        toArray(restaurantsRaw).map((restaurant) => [
+          toAccountId(restaurant?.restaurantId),
+          {
+            mode: getRestaurantDeliveryMode(restaurant),
+            price: getRestaurantDeliveryPrice(restaurant),
+          },
+        ]).filter(([id]) => id !== null)
+      );
 
-    const nextAds = toArray(adsRaw).map(mapListingToUi);
-    const nextServices = toArray(servicesRaw).map(mapListingToUi);
-    const nextTaxi = [...toArray(taxiCityRaw), ...toArray(taxiOutRaw), ...toArray(taxiInRaw)].map(mapTaxiToUi);
-    const nextFood = toArray(menuRaw).map((item) => {
-      const mapped = mapMenuItemToUi(item);
-      const restaurantId = toAccountId(mapped.restaurantId);
-      const restaurantDelivery = restaurantId !== null ? restaurantDeliveryById.get(restaurantId) : null;
-      return {
-        ...mapped,
-        restaurantDeliveryMode: restaurantDelivery?.mode || "none",
-        restaurantDeliveryPrice: restaurantDelivery?.price || 0,
-      };
-    });
+      const nextAds = toArray(adsRaw).map(mapListingToUi);
+      const nextServices = toArray(servicesRaw).map(mapListingToUi);
+      const nextTaxi = [...toArray(taxiCityRaw), ...toArray(taxiOutRaw), ...toArray(taxiInRaw)].map(mapTaxiToUi);
+      const nextFood = toArray(menuRaw).map((item) => {
+        const mapped = mapMenuItemToUi(item);
+        const restaurantId = toAccountId(mapped.restaurantId);
+        const restaurantDelivery = restaurantId !== null ? restaurantDeliveryById.get(restaurantId) : null;
+        return {
+          ...mapped,
+          restaurantDeliveryMode: restaurantDelivery?.mode || "none",
+          restaurantDeliveryPrice: restaurantDelivery?.price || 0,
+        };
+      });
 
-    setAdsData(nextAds);
-    setServicesData(nextServices);
-    setTaxiData(nextTaxi);
-    setFoodData(nextFood);
+      setAdsData(nextAds);
+      setServicesData(nextServices);
+      setTaxiData(nextTaxi);
+      setFoodData(nextFood);
 
-    const nextFavorites = new Set([
-      ...nextAds.filter((x) => x.isFavorite).map((x) => x.id),
-      ...nextServices.filter((x) => x.isFavorite).map((x) => x.id),
-      ...nextTaxi.filter((x) => x.isFavorite).map((x) => x.id),
-      ...nextFood.filter((x) => x.isFavorite).map((x) => x.id),
-    ]);
-    setFavorites(nextFavorites);
+      const nextFavorites = new Set([
+        ...nextAds.filter((x) => x.isFavorite).map((x) => x.id),
+        ...nextServices.filter((x) => x.isFavorite).map((x) => x.id),
+        ...nextTaxi.filter((x) => x.isFavorite).map((x) => x.id),
+        ...nextFood.filter((x) => x.isFavorite).map((x) => x.id),
+      ]);
+      setFavorites(nextFavorites);
+    } finally {
+      setIsCatalogLoading(false);
+    }
   }, [authSession?.accountId]);
 
   const refreshDictionaries = useCallback(async () => {
@@ -1816,6 +1822,7 @@ export default function App() {
             toggleFavorite={toggleFavorite}
             favorites={favorites}
             currentOwner={currentOwner}
+            isLoading={isCatalogLoading}
           />
         )}
 
@@ -1832,6 +1839,7 @@ export default function App() {
             favorites={favorites}
             serviceCategories={serviceCategories}
             currentOwner={currentOwner}
+            isLoading={isCatalogLoading}
           />
         )}
 
@@ -1851,6 +1859,7 @@ export default function App() {
             favorites={favorites}
             currentOwner={currentOwner}
             isOwnTaxiItem={isOwnTaxiItem}
+            isLoading={isCatalogLoading}
           />
         )}
 
@@ -1866,6 +1875,7 @@ export default function App() {
             openCreate={openCreate}
             openEntityGroup={openEntityGroup}
             openDetail={openDetail}
+            isLoading={isCatalogLoading}
           />
         )}
 
