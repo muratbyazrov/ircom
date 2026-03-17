@@ -316,7 +316,7 @@ export default function App() {
       root.style.setProperty("--tg-safe-area-bottom", `${safeBottom}px`);
       root.style.setProperty("--dynamic-safe-area-bottom", `${visualViewportBottomInset}px`);
       root.style.setProperty("--android-nav-buffer", `${isAndroidPlatform ? (isAndroidTelegram ? 10 : 6) : 0}px`);
-      root.style.setProperty("--bottom-nav-lift", `${isAndroidPlatform ? 34 : 0}px`);
+      root.style.setProperty("--bottom-nav-lift", `${isAndroidPlatform ? 24 : 0}px`);
       root.style.setProperty("--topbar-global-offset", `${isAndroidPlatform ? 72 : (isIosPlatform ? 40 : 0)}px`);
     };
 

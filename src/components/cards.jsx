@@ -1,8 +1,33 @@
 import { useEffect, useRef, useState } from "react";
 import { clamp, fmtRub, short, formatListingPostedAt } from "../utils/helpers";
-import { applyImageFallback } from "../utils/images";
 import { formatTaxiWhenForDisplay } from "../utils/taxi";
 import { Icon } from "./ui";
+
+const MEDIA_STATUS_LOADING = "loading";
+const MEDIA_STATUS_LOADED = "loaded";
+const MEDIA_STATUS_ERROR = "error";
+
+function buildPhotoStates(items) {
+  return items.map(() => MEDIA_STATUS_LOADING);
+}
+
+function MediaStateSurface({ state, title, note, tile = false }) {
+  return (
+    <div className={`media-state media-state-${state} ${tile ? "media-state-tile" : ""}`} aria-live={state === MEDIA_STATUS_LOADING ? "polite" : undefined}>
+      <div className="media-state-art" aria-hidden="true">
+        <span className="media-state-frame" />
+        <span className="media-state-line media-state-line-lg" />
+        <span className="media-state-line media-state-line-sm" />
+      </div>
+      {tile ? null : (
+        <>
+          <span className="media-state-title">{title}</span>
+          {note ? <span className="media-state-note">{note}</span> : null}
+        </>
+      )}
+    </div>
+  );
+}
 
 export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, section = "ads", isOwn = false, canFavorite = true }) {
   const hasRating = typeof item.ratingValue === "number" && Number(item.reviewsCount) > 0;
@@ -192,18 +217,79 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
   );
 }
 
-export function Media({ photos, emptyText, compact = false, onOpen, bleed = false, section = "ads", className = "", blockParentClick = false, overlay = null }) {
+export function Media({ photos, emptyText, compact = false, onOpen, bleed = false, className = "", blockParentClick = false, overlay = null }) {
   const items = Array.isArray(photos) ? photos.filter(Boolean) : [];
   const hasPhotos = items.length > 0;
   const showGrid = hasPhotos && !onOpen;
   const [index, setIndex] = useState(0);
+  const [photoStates, setPhotoStates] = useState(() => buildPhotoStates(items));
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
   const suppressClickRef = useRef(false);
+  const photoSignature = items.join("\n");
 
   useEffect(() => {
     setIndex(0);
-  }, [items.length, items[0]]);
+  }, [photoSignature]);
+
+  useEffect(() => {
+    if (!items.length) {
+      setPhotoStates([]);
+      return undefined;
+    }
+
+    const initialStates = buildPhotoStates(items);
+    let isCancelled = false;
+    setPhotoStates(initialStates);
+
+    const preloaders = items.map((photo, photoIndex) => {
+      const image = new Image();
+      const updatePhotoState = (status) => {
+        if (isCancelled) return;
+        setPhotoStates((prev) => {
+          const baseStates = Array.isArray(prev) && prev.length === items.length ? prev : initialStates;
+          if (baseStates[photoIndex] === status) return baseStates;
+          const nextStates = [...baseStates];
+          nextStates[photoIndex] = status;
+          return nextStates;
+        });
+      };
+
+      image.onload = () => updatePhotoState(MEDIA_STATUS_LOADED);
+      image.onerror = () => updatePhotoState(MEDIA_STATUS_ERROR);
+      image.src = photo;
+
+      if (image.complete) {
+        updatePhotoState(image.naturalWidth > 0 ? MEDIA_STATUS_LOADED : MEDIA_STATUS_ERROR);
+      }
+
+      return image;
+    });
+
+    return () => {
+      isCancelled = true;
+      preloaders.forEach((image) => {
+        image.onload = null;
+        image.onerror = null;
+      });
+    };
+  }, [photoSignature]);
+
+  const resolvedPhotoStates = items.map((_, photoIndex) => photoStates[photoIndex] || MEDIA_STATUS_LOADING);
+  const hasLoadedPhoto = resolvedPhotoStates.some((state) => state === MEDIA_STATUS_LOADED);
+  const hasPendingPhoto = resolvedPhotoStates.some((state) => state === MEDIA_STATUS_LOADING);
+  const isLoadingOnly = hasPhotos && !hasLoadedPhoto && hasPendingPhoto;
+  const isUnavailable = hasPhotos && !hasLoadedPhoto && !hasPendingPhoto;
+  const isInteractive = hasLoadedPhoto && Boolean(onOpen);
+
+  const updatePhotoState = (photoIndex, status) => {
+    setPhotoStates((prev) => {
+      if (!Array.isArray(prev) || prev[photoIndex] === status) return prev;
+      const nextStates = [...prev];
+      nextStates[photoIndex] = status;
+      return nextStates;
+    });
+  };
 
   const onTouchStart = (e) => {
     if (items.length < 2) return;
@@ -234,16 +320,16 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
 
   return (
     <div
-      className={`media ${compact ? "media-compact" : ""} ${bleed ? "media-bleed" : ""} ${hasPhotos ? "media-has-image" : ""} ${showGrid ? "media-grid-mode" : ""} ${hasPhotos && onOpen ? "media-clickable" : ""} ${className}`}
-      role={hasPhotos && onOpen ? "button" : undefined}
-      tabIndex={hasPhotos && onOpen ? 0 : undefined}
+      className={`media ${compact ? "media-compact" : ""} ${bleed ? "media-bleed" : ""} ${hasPhotos ? "media-has-image" : ""} ${showGrid ? "media-grid-mode" : ""} ${isInteractive ? "media-clickable" : ""} ${className}`}
+      role={isInteractive ? "button" : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
       onClick={
         blockParentClick
           ? (e) => {
               e.preventDefault();
               e.stopPropagation();
             }
-          : hasPhotos && onOpen
+          : isInteractive
             ? (e) => {
                 if (suppressClickRef.current) {
                   e.preventDefault();
@@ -255,24 +341,38 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
             : undefined
       }
       onKeyDown={(e) => {
-        if (hasPhotos && onOpen && (e.key === "Enter" || e.key === " ")) onOpen(index);
+        if (isInteractive && (e.key === "Enter" || e.key === " ")) onOpen(index);
       }}
       onTouchStart={showGrid ? undefined : onTouchStart}
       onTouchEnd={showGrid ? undefined : onTouchEnd}
     >
-      {hasPhotos ? (
+      {!hasPhotos ? (
+        <MediaStateSurface state="empty" title={emptyText} />
+      ) : isLoadingOnly ? (
+        <MediaStateSurface state={MEDIA_STATUS_LOADING} title="Загружаем фото" note="Покажем изображения сразу после загрузки." />
+      ) : isUnavailable ? (
+        <MediaStateSurface state={MEDIA_STATUS_ERROR} title="Не удалось загрузить фото" note="Похоже, изображения сейчас недоступны." />
+      ) : (
         showGrid ? (
           <div className={`media-grid media-grid-${Math.min(items.length, 4)}`}>
             {items.slice(0, 4).map((photo, photoIndex) => (
               <div className="media-grid-item" key={`${photo}-${photoIndex}`}>
-                <img
-                  className="media-img"
-                  src={photo}
-                  alt="preview"
-                  loading="lazy"
-                  draggable={false}
-                  onError={(e) => applyImageFallback(e, section)}
-                />
+                {resolvedPhotoStates[photoIndex] === MEDIA_STATUS_LOADED ? (
+                  <img
+                    className="media-img"
+                    src={photo}
+                    alt="preview"
+                    loading="lazy"
+                    draggable={false}
+                    onError={() => updatePhotoState(photoIndex, MEDIA_STATUS_ERROR)}
+                  />
+                ) : (
+                  <MediaStateSurface
+                    state={resolvedPhotoStates[photoIndex]}
+                    title={resolvedPhotoStates[photoIndex] === MEDIA_STATUS_LOADING ? "Загружаем фото" : "Фото недоступно"}
+                    tile
+                  />
+                )}
                 {photoIndex === 3 && items.length > 4 ? (
                   <span className="media-grid-more">+{items.length - 4}</span>
                 ) : null}
@@ -284,14 +384,22 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
             <div className="media-slider" style={{ transform: `translate3d(-${index * 100}%, 0, 0)` }}>
               {items.map((photo, photoIndex) => (
                 <div className="media-slide" key={`${photo}-${photoIndex}`}>
-                  <img
-                    className="media-img"
-                    src={photo}
-                    alt="preview"
-                    loading="lazy"
-                    draggable={false}
-                    onError={(e) => applyImageFallback(e, section)}
-                  />
+                  {resolvedPhotoStates[photoIndex] === MEDIA_STATUS_LOADED ? (
+                    <img
+                      className="media-img"
+                      src={photo}
+                      alt="preview"
+                      loading="lazy"
+                      draggable={false}
+                      onError={() => updatePhotoState(photoIndex, MEDIA_STATUS_ERROR)}
+                    />
+                  ) : (
+                    <MediaStateSurface
+                      state={resolvedPhotoStates[photoIndex]}
+                      title={resolvedPhotoStates[photoIndex] === MEDIA_STATUS_LOADING ? "Загружаем фото" : "Фото недоступно"}
+                      tile
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -304,8 +412,6 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
             ) : null}
           </>
         )
-      ) : (
-        <div className="media-empty">{emptyText}</div>
       )}
       {overlay ? <div className="media-overlay">{overlay}</div> : null}
     </div>
