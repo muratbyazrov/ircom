@@ -122,6 +122,7 @@ export default function App() {
   const [authBootstrapDone, setAuthBootstrapDone] = useState(false);
   const [signInPhoneValue, setSignInPhoneValue] = useState("");
   const [signInLoginValue, setSignInLoginValue] = useState("");
+  const [signInMethod, setSignInMethod] = useState("phone");
   const [telegramWebAppReady, setTelegramWebAppReady] = useState(false);
   const [adsData, setAdsData] = useState([]);
   const [servicesData, setServicesData] = useState([]);
@@ -215,6 +216,7 @@ export default function App() {
   const resetSignInFields = useCallback(() => {
     setSignInPhoneValue("");
     setSignInLoginValue("");
+    setSignInMethod("phone");
   }, []);
 
   const isTelegramAutoAuthDisabled = useCallback(() => {
@@ -703,24 +705,35 @@ export default function App() {
     const password = String(fd.get("password") || "");
     const isValidPhone = /^\+7\(\d{3}\)\d{3}-\d{2}-\d{2}$/.test(signInPhone);
     const isValidLogin = /^[A-Za-z0-9_]{3,64}$/.test(login);
-    const hasSignInPhone = Boolean(signInPhone);
-    const hasSignInLogin = Boolean(login);
+    const hasSignInPhone = signInMethod === "phone" && Boolean(signInPhone);
+    const hasSignInLogin = signInMethod === "login" && Boolean(login);
 
     if (!password) {
       setAuthError("Введите пароль");
       return;
     }
 
+    if (authMode === "signin") {
+      if (signInMethod === "phone" && !hasSignInPhone) {
+        setAuthError("Введите телефон");
+        return;
+      }
+      if (signInMethod === "phone" && !isValidPhone) {
+        setAuthError("Введите телефон в формате +7(XXX)XXX-XX-XX");
+        return;
+      }
+      if (signInMethod === "login" && !hasSignInLogin) {
+        setAuthError("Введите логин");
+        return;
+      }
+      if (signInMethod === "login" && !isValidLogin) {
+        setAuthError("Введите корректный логин");
+        return;
+      }
+    }
+
     if (authMode === "signin" && !hasSignInPhone && !hasSignInLogin) {
-      setAuthError("Введите телефон или логин");
-      return;
-    }
-    if (authMode === "signin" && hasSignInPhone && !isValidPhone) {
-      setAuthError("Введите телефон в формате +7(XXX)XXX-XX-XX");
-      return;
-    }
-    if (authMode === "signin" && hasSignInLogin && !isValidLogin) {
-      setAuthError("Введите корректный логин");
+      setAuthError(signInMethod === "phone" ? "Введите телефон" : "Введите логин");
       return;
     }
 
@@ -1896,7 +1909,7 @@ export default function App() {
         {modal?.type === "auth" && (
           <>
             <h3>Требуется авторизация</h3>
-            <p className="small">Войдите по телефону или логину и паролю, либо создайте новый аккаунт по номеру телефона.</p>
+            <p className="small">Выберите способ входа. Для регистрации новый аккаунт по-прежнему создаётся по номеру телефона.</p>
             <div className="multi-select-buttons" style={{ marginTop: 8 }}>
               <button
                 type="button"
@@ -1928,50 +1941,70 @@ export default function App() {
             <form key={authMode} className="list" style={{ marginTop: 10 }} onSubmit={handleAuthSubmit}>
               {authMode === "signin" && (
                 <>
-                  <label className="field">
-                    <span className="small">Телефон</span>
-                    <input
-                      name="signinPhone"
-                      type="tel"
-                      inputMode="numeric"
-                      className="input"
-                      placeholder={PHONE_COMPACT_PLACEHOLDER}
-                      pattern={PHONE_COMPACT_PATTERN}
-                      autoComplete="tel"
-                      value={signInPhoneValue}
-                      disabled={Boolean(signInLoginValue)}
-                      onInput={(e) => {
-                        handlePhoneInputCompact(e, { allowEmpty: true });
-                        setSignInPhoneValue(e.currentTarget.value);
-                        if (authError) setAuthError("");
+                  <div className="auth-method-switch" role="tablist" aria-label="Способ входа">
+                    <button
+                      type="button"
+                      className={`auth-method-switch-btn ${signInMethod === "phone" ? "active" : ""}`}
+                      onClick={() => {
+                        setSignInMethod("phone");
+                        setAuthError("");
                       }}
-                      onFocus={syncPhonePrev}
-                    />
-                  </label>
-                  <label className="field">
-                    <span className="small">Логин</span>
-                    <input
-                      name="signinLogin"
-                      type="text"
-                      inputMode="text"
-                      className="input"
-                      placeholder="username"
-                      autoComplete="username"
-                      value={signInLoginValue}
-                      disabled={Boolean(signInPhoneValue)}
-                      onChange={(e) => {
-                        setSignInLoginValue(e.currentTarget.value);
-                        if (authError) setAuthError("");
+                      aria-pressed={signInMethod === "phone"}
+                    >
+                      По телефону
+                    </button>
+                    <button
+                      type="button"
+                      className={`auth-method-switch-btn ${signInMethod === "login" ? "active" : ""}`}
+                      onClick={() => {
+                        setSignInMethod("login");
+                        setAuthError("");
                       }}
-                    />
-                  </label>
+                      aria-pressed={signInMethod === "login"}
+                    >
+                      По логину
+                    </button>
+                  </div>
                   <p className="small" style={{ marginTop: 2 }}>
-                    {signInPhoneValue
-                      ? "Вход через телефон. Поле логина временно отключено."
-                      : signInLoginValue
-                        ? "Вход через логин. Поле телефона временно отключено."
-                        : "Введите телефон или логин."}
+                    {signInMethod === "phone"
+                      ? "Введите номер телефона и пароль."
+                      : "Введите логин и пароль."}
                   </p>
+                  <label className="field">
+                    <span className="small">{signInMethod === "phone" ? "Телефон" : "Логин"}</span>
+                    {signInMethod === "phone" ? (
+                      <input
+                        name="signinPhone"
+                        type="tel"
+                        inputMode="numeric"
+                        className="input"
+                        placeholder={PHONE_COMPACT_PLACEHOLDER}
+                        pattern={PHONE_COMPACT_PATTERN}
+                        autoComplete="tel"
+                        value={signInPhoneValue}
+                        onInput={(e) => {
+                          handlePhoneInputCompact(e, { allowEmpty: true });
+                          setSignInPhoneValue(e.currentTarget.value);
+                          if (authError) setAuthError("");
+                        }}
+                        onFocus={syncPhonePrev}
+                      />
+                    ) : (
+                      <input
+                        name="signinLogin"
+                        type="text"
+                        inputMode="text"
+                        className="input"
+                        placeholder="Ваш логин"
+                        autoComplete="username"
+                        value={signInLoginValue}
+                        onChange={(e) => {
+                          setSignInLoginValue(e.currentTarget.value);
+                          if (authError) setAuthError("");
+                        }}
+                      />
+                    )}
+                  </label>
                 </>
               )}
 
