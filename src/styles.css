@@ -13,6 +13,7 @@
   --shadow: 0 12px 30px rgba(2, 20, 41, 0.08);
   --z-topbar: 20;
   --z-bottom-nav: 40;
+  --z-floating: 45;
   --z-modal: 70;
   --z-viewer: 90;
   --app-height: 100dvh;
@@ -54,6 +55,7 @@ body {
 }
 
 .app-shell {
+  position: relative;
   width: min(100vw, 560px);
   min-height: var(--app-height);
   height: var(--app-height);
@@ -1431,6 +1433,44 @@ button {
   background: #f7f8fc;
   border-top: 1px solid var(--line);
   box-shadow: 0 var(--bottom-nav-lift) 0 0 #f7f8fc;
+}
+
+.scroll-top-btn {
+  position: absolute;
+  right: 16px;
+  bottom: calc(96px + max(env(safe-area-inset-bottom), var(--tg-safe-area-bottom), var(--dynamic-safe-area-bottom)) + var(--android-nav-buffer) + var(--bottom-nav-lift));
+  z-index: var(--z-floating);
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.88);
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px) scale(0.96);
+  transition: opacity 180ms ease, transform 180ms ease, background 180ms ease;
+}
+
+.scroll-top-btn.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.scroll-top-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.scroll-top-btn .icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
 }
 
 .tab-btn {

@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Eye, EyeOff, X} from 'lucide-react';
 import {CreateForm, DetailModalContent, ProfileEditForm} from './components/modals';
 import {EntityGroupModalContent} from './components/entity-group-modal-content';
@@ -95,6 +95,7 @@ const withAllCategory = (categories) => ["Все", ...categories.filter((item) =
 const withMyAdsCategory = (categories) => categories.includes("Мои объявления") ? categories : [...categories, "Мои объявления"];
 const SUPPORT_TELEGRAM_URL = "https://t.me/+Bqm7XK8ISl4yMmNi";
 const TELEGRAM_AUTO_AUTH_DISABLED_KEY = "__ircomTelegramAutoAuthDisabled";
+const SCROLL_TOP_VISIBILITY_OFFSET = 420;
 
 export default function App() {
   const [tab, setTab] = useState("ads");
@@ -125,10 +126,13 @@ export default function App() {
   const [signInMethod, setSignInMethod] = useState("phone");
   const [telegramWebAppReady, setTelegramWebAppReady] = useState(false);
   const [isCatalogLoading, setIsCatalogLoading] = useState(true);
+  const [showScrollTopButton, setShowScrollTopButton] = useState(false);
   const [adsData, setAdsData] = useState([]);
   const [servicesData, setServicesData] = useState([]);
   const [taxiData, setTaxiData] = useState([]);
   const [foodData, setFoodData] = useState([]);
+  const screenRef = useRef(null);
+  const scrollTopButtonVisibleRef = useRef(false);
   const {
     isAuth,
     authSession,
@@ -478,9 +482,11 @@ export default function App() {
     };
   }, [authBootstrapDone, isAuth, applyAuthSession, isTelegramAutoAuthDisabled, telegramWebApp, telegramInitData, isTelegramMiniApp]);
 
-  const refreshCatalog = useCallback(async () => {
+  const refreshCatalog = useCallback(async ({ showLoader = true } = {}) => {
     const accountId = toAccountId(authSession?.accountId);
-    setIsCatalogLoading(true);
+    if (showLoader) {
+      setIsCatalogLoading(true);
+    }
     try {
       const [adsRaw, servicesRaw, taxiCityRaw, taxiOutRaw, taxiInRaw, restaurantsRaw, menuRaw] = await Promise.all([
         getListingsRequest({ kind: 1, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
@@ -529,7 +535,9 @@ export default function App() {
       ]);
       setFavorites(nextFavorites);
     } finally {
-      setIsCatalogLoading(false);
+      if (showLoader) {
+        setIsCatalogLoading(false);
+      }
     }
   }, [authSession?.accountId]);
 
@@ -1176,6 +1184,25 @@ export default function App() {
   const fullScreenCreate = createType === "ad" || createType === "service" || createType === "taxi" || createType === "restaurant";
   const fullScreenModal = modal?.type === "detail" || modal?.type === "profileEdit" || modal?.type === "entityGroup" || fullScreenCreate;
   const blockAuthBackdropClose = modal?.type === "auth" && Boolean(modal?.payload?.returnTo);
+  const isListTab = tab === "ads" || tab === "services" || tab === "taxi" || tab === "food";
+  const showFloatingScrollTopButton = isListTab && showScrollTopButton && !fullScreenModal;
+
+  const handleScreenScroll = useCallback((event) => {
+    const nextVisible = event.currentTarget.scrollTop > SCROLL_TOP_VISIBILITY_OFFSET;
+    if (scrollTopButtonVisibleRef.current === nextVisible) return;
+    scrollTopButtonVisibleRef.current = nextVisible;
+    setShowScrollTopButton(nextVisible);
+  }, []);
+
+  const scrollScreenToTop = useCallback(() => {
+    screenRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    const nextVisible = (screenRef.current?.scrollTop || 0) > SCROLL_TOP_VISIBILITY_OFFSET;
+    scrollTopButtonVisibleRef.current = nextVisible;
+    setShowScrollTopButton(nextVisible);
+  }, [tab]);
 
   const submitMock = async (event, type) => {
     event.preventDefault();
@@ -1784,6 +1811,101 @@ export default function App() {
     return null;
   }, [modal, hasRestaurant, restaurantEntity, myAds, customServices, normalizedCustomTaxiItems, normalizedTaxiTemplates]);
 
+  const screenContent = (
+    <>
+      {tab === "ads" && (
+        <AdsTab
+          adsCategoriesVisible={adsCategoriesVisible}
+          adsCategory={adsCategory}
+          setAdsCategory={setAdsCategory}
+          adsSort={adsSort}
+          setAdsSort={setAdsSort}
+          adsItems={adsItems}
+          openCreate={openCreate}
+          openDetail={openDetail}
+          toggleFavorite={toggleFavorite}
+          favorites={favorites}
+          currentOwner={currentOwner}
+          isLoading={isCatalogLoading}
+        />
+      )}
+
+      {tab === "services" && (
+        <ServicesTab
+          serviceCategory={serviceCategory}
+          setServiceCategory={setServiceCategory}
+          servicesSort={servicesSort}
+          setServicesSort={setServicesSort}
+          servicesItems={servicesItems}
+          openCreate={openCreate}
+          openDetail={openDetail}
+          toggleFavorite={toggleFavorite}
+          favorites={favorites}
+          serviceCategories={serviceCategories}
+          currentOwner={currentOwner}
+          isLoading={isCatalogLoading}
+        />
+      )}
+
+      {tab === "taxi" && (
+        <TaxiTab
+          taxiCategory={taxiCategory}
+          setTaxiCategory={setTaxiCategory}
+          taxiSort={taxiSort}
+          setTaxiSort={setTaxiSort}
+          taxiItems={taxiItems}
+          taxiRequestedAt={taxiRequestedAt}
+          setTaxiRequestedAt={setTaxiRequestedAt}
+          taxiCategories={TAXI_CATEGORIES}
+          openCreate={openCreate}
+          openDetail={openDetail}
+          toggleFavorite={toggleFavorite}
+          favorites={favorites}
+          currentOwner={currentOwner}
+          isOwnTaxiItem={isOwnTaxiItem}
+          isLoading={isCatalogLoading}
+        />
+      )}
+
+      {tab === "food" && (
+        <FoodTab
+          foodCategory={foodCategory}
+          setFoodCategory={setFoodCategory}
+          restaurants={visibleFoodRestaurants}
+          foodCategories={foodCategories}
+          isAuth={isAuth}
+          hasRestaurant={hasRestaurant}
+          ownedRestaurantId={restaurantEntity?.id || null}
+          openCreate={openCreate}
+          openEntityGroup={openEntityGroup}
+          openDetail={openDetail}
+          isLoading={isCatalogLoading}
+        />
+      )}
+
+      {tab === "profile" && (
+        <ProfileTab
+          isAuth={isAuth}
+          profile={profile}
+          myAdsCount={myAds.length}
+          myServicesCount={customServices.length}
+          myAds={myAds}
+          hasRestaurant={hasRestaurant}
+          restaurantEntity={restaurantEntity}
+          isTaxiDriver={isTaxiDriver}
+          taxiTemplates={taxiTemplates}
+          oneTimeIntercityOffers={customTaxiItems.filter((x) => x.mode === "one-time")}
+          myServices={customServices}
+          onOpenEntityGroup={openEntityGroup}
+          openCreate={openCreate}
+          openEditProfile={openEditProfile}
+          onOpenSupport={openSupport}
+          toggleAuth={toggleAuthModal}
+        />
+      )}
+    </>
+  );
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -1808,98 +1930,22 @@ export default function App() {
         </div>
       </header>
 
-      <main className="screen">
-        {tab === "ads" && (
-          <AdsTab
-            adsCategoriesVisible={adsCategoriesVisible}
-            adsCategory={adsCategory}
-            setAdsCategory={setAdsCategory}
-            adsSort={adsSort}
-            setAdsSort={setAdsSort}
-            adsItems={adsItems}
-            openCreate={openCreate}
-            openDetail={openDetail}
-            toggleFavorite={toggleFavorite}
-            favorites={favorites}
-            currentOwner={currentOwner}
-            isLoading={isCatalogLoading}
-          />
-        )}
-
-        {tab === "services" && (
-          <ServicesTab
-            serviceCategory={serviceCategory}
-            setServiceCategory={setServiceCategory}
-            servicesSort={servicesSort}
-            setServicesSort={setServicesSort}
-            servicesItems={servicesItems}
-            openCreate={openCreate}
-            openDetail={openDetail}
-            toggleFavorite={toggleFavorite}
-            favorites={favorites}
-            serviceCategories={serviceCategories}
-            currentOwner={currentOwner}
-            isLoading={isCatalogLoading}
-          />
-        )}
-
-        {tab === "taxi" && (
-          <TaxiTab
-            taxiCategory={taxiCategory}
-            setTaxiCategory={setTaxiCategory}
-            taxiSort={taxiSort}
-            setTaxiSort={setTaxiSort}
-            taxiItems={taxiItems}
-            taxiRequestedAt={taxiRequestedAt}
-            setTaxiRequestedAt={setTaxiRequestedAt}
-            taxiCategories={TAXI_CATEGORIES}
-            openCreate={openCreate}
-            openDetail={openDetail}
-            toggleFavorite={toggleFavorite}
-            favorites={favorites}
-            currentOwner={currentOwner}
-            isOwnTaxiItem={isOwnTaxiItem}
-            isLoading={isCatalogLoading}
-          />
-        )}
-
-        {tab === "food" && (
-          <FoodTab
-            foodCategory={foodCategory}
-            setFoodCategory={setFoodCategory}
-            restaurants={visibleFoodRestaurants}
-            foodCategories={foodCategories}
-            isAuth={isAuth}
-            hasRestaurant={hasRestaurant}
-            ownedRestaurantId={restaurantEntity?.id || null}
-            openCreate={openCreate}
-            openEntityGroup={openEntityGroup}
-            openDetail={openDetail}
-            isLoading={isCatalogLoading}
-          />
-        )}
-
-        {tab === "profile" && (
-          <ProfileTab
-            isAuth={isAuth}
-            profile={profile}
-            myAdsCount={myAds.length}
-            myServicesCount={customServices.length}
-            myAds={myAds}
-            hasRestaurant={hasRestaurant}
-            restaurantEntity={restaurantEntity}
-            isTaxiDriver={isTaxiDriver}
-            taxiTemplates={taxiTemplates}
-            oneTimeIntercityOffers={customTaxiItems.filter((x) => x.mode === "one-time")}
-            myServices={customServices}
-            onOpenEntityGroup={openEntityGroup}
-            openCreate={openCreate}
-            openEditProfile={openEditProfile}
-            onOpenSupport={openSupport}
-            toggleAuth={toggleAuthModal}
-          />
-        )}
+      <main
+        ref={screenRef}
+        className="screen"
+        onScroll={handleScreenScroll}
+      >
+        {screenContent}
       </main>
+
+      <button
+        className={`scroll-top-btn ${showFloatingScrollTopButton ? "is-visible" : ""}`}
+        type="button"
+        onClick={scrollScreenToTop}
+        aria-label="Наверх"
+      >
+        <Icon name="up" />
+      </button>
 
       <nav className="bottom-nav">
         {tabConfig.map(([key, icon, label]) => (

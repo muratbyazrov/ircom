@@ -5,6 +5,7 @@ import {
   CakeSlice,
   Car,
   CarFront,
+  ChevronUp,
   Circle,
   Clock3,
   X,
@@ -223,6 +224,7 @@ export function Icon({ name }) {
     heart: Heart,
     "heart-fill": Heart,
     star: Star,
+    up: ChevronUp,
     telegram: Send,
     whatsapp: MessageCircle,
   };
