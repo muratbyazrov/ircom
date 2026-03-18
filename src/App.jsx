@@ -96,6 +96,7 @@ const withMyAdsCategory = (categories) => categories.includes("Мои объяв
 const SUPPORT_TELEGRAM_URL = "https://t.me/+Bqm7XK8ISl4yMmNi";
 const TELEGRAM_AUTO_AUTH_DISABLED_KEY = "__ircomTelegramAutoAuthDisabled";
 const SCROLL_TOP_VISIBILITY_OFFSET = 420;
+const TAB_AUTO_REFRESH_STALE_MS = 30000;
 
 export default function App() {
   const [tab, setTab] = useState("ads");
@@ -126,6 +127,7 @@ export default function App() {
   const [signInMethod, setSignInMethod] = useState("phone");
   const [telegramWebAppReady, setTelegramWebAppReady] = useState(false);
   const [isCatalogLoading, setIsCatalogLoading] = useState(true);
+  const [isListRefreshing, setIsListRefreshing] = useState(false);
   const [showScrollTopButton, setShowScrollTopButton] = useState(false);
   const [adsData, setAdsData] = useState([]);
   const [servicesData, setServicesData] = useState([]);
@@ -133,6 +135,8 @@ export default function App() {
   const [foodData, setFoodData] = useState([]);
   const screenRef = useRef(null);
   const scrollTopButtonVisibleRef = useRef(false);
+  const lastCatalogRefreshAtRef = useRef(0);
+  const listRefreshPromiseRef = useRef(null);
   const {
     isAuth,
     authSession,
@@ -534,6 +538,7 @@ export default function App() {
         ...nextFood.filter((x) => x.isFavorite).map((x) => x.id),
       ]);
       setFavorites(nextFavorites);
+      lastCatalogRefreshAtRef.current = Date.now();
     } finally {
       if (showLoader) {
         setIsCatalogLoading(false);
@@ -627,6 +632,29 @@ export default function App() {
     setRestaurantEntity,
     setIsTaxiDriver,
   ]);
+
+  const runListRefresh = useCallback(async ({ showCatalogLoader = false } = {}) => {
+    if (listRefreshPromiseRef.current) {
+      return listRefreshPromiseRef.current;
+    }
+
+    const refreshPromise = (async () => {
+      setIsListRefreshing(true);
+      try {
+        await Promise.allSettled([
+          refreshCatalog({ showLoader: showCatalogLoader }),
+          refreshDictionaries(),
+          refreshMyData(),
+        ]);
+      } finally {
+        setIsListRefreshing(false);
+        listRefreshPromiseRef.current = null;
+      }
+    })();
+
+    listRefreshPromiseRef.current = refreshPromise;
+    return refreshPromise;
+  }, [refreshCatalog, refreshDictionaries, refreshMyData]);
 
   useEffect(() => {
     refreshDictionaries().catch(() => {});
@@ -1194,9 +1222,24 @@ export default function App() {
     setShowScrollTopButton(nextVisible);
   }, []);
 
+  const handleListRefresh = useCallback(() => {
+    runListRefresh({ showCatalogLoader: false }).catch(() => {});
+  }, [runListRefresh]);
+
   const scrollScreenToTop = useCallback(() => {
     screenRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
+
+  useEffect(() => {
+    if (!isListTab || isCatalogLoading) return undefined;
+
+    const lastRefreshAt = lastCatalogRefreshAtRef.current;
+    const isStale = !lastRefreshAt || (Date.now() - lastRefreshAt) >= TAB_AUTO_REFRESH_STALE_MS;
+    if (!isStale) return undefined;
+
+    runListRefresh({ showCatalogLoader: false }).catch(() => {});
+    return undefined;
+  }, [tab, isListTab, isCatalogLoading, runListRefresh]);
 
   useEffect(() => {
     const nextVisible = (screenRef.current?.scrollTop || 0) > SCROLL_TOP_VISIBILITY_OFFSET;
@@ -1827,6 +1870,8 @@ export default function App() {
           favorites={favorites}
           currentOwner={currentOwner}
           isLoading={isCatalogLoading}
+          onRefresh={handleListRefresh}
+          isRefreshing={isListRefreshing}
         />
       )}
 
@@ -1844,6 +1889,8 @@ export default function App() {
           serviceCategories={serviceCategories}
           currentOwner={currentOwner}
           isLoading={isCatalogLoading}
+          onRefresh={handleListRefresh}
+          isRefreshing={isListRefreshing}
         />
       )}
 
@@ -1864,6 +1911,8 @@ export default function App() {
           currentOwner={currentOwner}
           isOwnTaxiItem={isOwnTaxiItem}
           isLoading={isCatalogLoading}
+          onRefresh={handleListRefresh}
+          isRefreshing={isListRefreshing}
         />
       )}
 
@@ -1880,6 +1929,8 @@ export default function App() {
           openEntityGroup={openEntityGroup}
           openDetail={openDetail}
           isLoading={isCatalogLoading}
+          onRefresh={handleListRefresh}
+          isRefreshing={isListRefreshing}
         />
       )}
 

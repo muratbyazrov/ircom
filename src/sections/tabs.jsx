@@ -25,10 +25,21 @@ export function AdsTab({
   favorites,
   currentOwner,
   isLoading = false,
+  onRefresh,
+  isRefreshing = false,
 }) {
   return (
     <>
-      <SectionHeader title="Объявления" subtitle="Продажа б/у вещей" actionLabel="Разместить" onAction={() => openCreate("ad")} />
+      <SectionHeader
+        title="Объявления"
+        subtitle="Продажа б/у вещей"
+        actionLabel="Разместить"
+        onAction={() => openCreate("ad")}
+        secondaryActionLabel="Обновить список"
+        secondaryActionIcon="refresh"
+        onSecondaryAction={onRefresh}
+        secondaryActionBusy={isRefreshing}
+      />
       <Section>
         <CategoryTabs list={adsCategoriesVisible} value={adsCategory} onChange={setAdsCategory} />
         <SortSelect value={adsSort} onChange={setAdsSort} modes={sectionSortModes.ads} />
@@ -72,10 +83,20 @@ export function ServicesTab({
   serviceCategories,
   currentOwner,
   isLoading = false,
+  onRefresh,
+  isRefreshing = false,
 }) {
   return (
     <>
-      <SectionHeader title="Услуги" actionLabel="Разместить услугу" onAction={() => openCreate("service")} />
+      <SectionHeader
+        title="Услуги"
+        actionLabel="Разместить услугу"
+        onAction={() => openCreate("service")}
+        secondaryActionLabel="Обновить список"
+        secondaryActionIcon="refresh"
+        onSecondaryAction={onRefresh}
+        secondaryActionBusy={isRefreshing}
+      />
       <Section>
         <CategoryTabs list={serviceCategories} value={serviceCategory} onChange={setServiceCategory} />
         <SortSelect value={servicesSort} onChange={setServicesSort} modes={sectionSortModes.services} />
@@ -123,12 +144,22 @@ export function TaxiTab({
   currentOwner,
   isOwnTaxiItem,
   isLoading = false,
+  onRefresh,
+  isRefreshing = false,
 }) {
   const isIntercity = taxiCategory !== "Такси по Цхинвалу";
 
   return (
     <>
-      <SectionHeader title="Такси" actionLabel="Добавить себя" onAction={() => openCreate("taxi")} />
+      <SectionHeader
+        title="Такси"
+        actionLabel="Добавить себя"
+        onAction={() => openCreate("taxi")}
+        secondaryActionLabel="Обновить список"
+        secondaryActionIcon="refresh"
+        onSecondaryAction={onRefresh}
+        secondaryActionBusy={isRefreshing}
+      />
       <Section>
         <CategoryTabs list={taxiCategories} value={taxiCategory} onChange={setTaxiCategory} />
         {isIntercity ? (
@@ -196,6 +227,8 @@ export function FoodTab({
   openEntityGroup,
   openDetail,
   isLoading = false,
+  onRefresh,
+  isRefreshing = false,
 }) {
   const hasOwnedRestaurant = isAuth && hasRestaurant;
 
@@ -205,6 +238,10 @@ export function FoodTab({
         title="Еда"
         actionLabel={hasOwnedRestaurant ? "В мои заведения" : "Создать заведение"}
         onAction={() => (hasOwnedRestaurant ? openEntityGroup("restaurant") : openCreate("restaurant"))}
+        secondaryActionLabel="Обновить список"
+        secondaryActionIcon="refresh"
+        onSecondaryAction={onRefresh}
+        secondaryActionBusy={isRefreshing}
       />
       <Section>
         <CategoryTabs list={foodCategories} value={foodCategory} onChange={setFoodCategory} />

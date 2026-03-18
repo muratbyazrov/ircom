@@ -8,6 +8,7 @@ import {
   ChevronUp,
   Circle,
   Clock3,
+  RotateCw,
   X,
   ExternalLink,
   FileText,
@@ -43,16 +44,42 @@ export function Section({ children, className = "" }) {
   return <section className={classes}>{children}</section>;
 }
 
-export function SectionHeader({ title, subtitle, actionLabel, onAction }) {
+export function SectionHeader({
+  title,
+  subtitle,
+  actionLabel,
+  onAction,
+  secondaryActionLabel,
+  secondaryActionIcon,
+  onSecondaryAction,
+  secondaryActionBusy = false,
+  secondaryActionDisabled = false,
+}) {
   return (
     <Section>
       <div className="row" style={{ justifyContent: "space-between" }}>
         <h2>{title}</h2>
-        {actionLabel ? (
-          <button className="primary-btn" type="button" onClick={onAction}>
-            {actionLabel}
-          </button>
-        ) : null}
+        <div className="section-header-actions">
+          {onSecondaryAction ? (
+            <button
+              className={`ghost-btn section-header-icon-btn ${secondaryActionBusy ? "is-busy" : ""}`}
+              type="button"
+              onClick={onSecondaryAction}
+              aria-label={secondaryActionLabel}
+              title={secondaryActionLabel}
+              disabled={secondaryActionDisabled || secondaryActionBusy}
+            >
+              <span className={secondaryActionBusy ? "section-header-icon-spin" : ""} aria-hidden="true">
+                <Icon name={secondaryActionIcon} />
+              </span>
+            </button>
+          ) : null}
+          {actionLabel ? (
+            <button className="primary-btn" type="button" onClick={onAction}>
+              {actionLabel}
+            </button>
+          ) : null}
+        </div>
       </div>
       {subtitle ? <p className="small">{subtitle}</p> : null}
     </Section>
@@ -221,6 +248,7 @@ export function Icon({ name }) {
     close: X,
     open: ExternalLink,
     phone: Phone,
+    refresh: RotateCw,
     heart: Heart,
     "heart-fill": Heart,
     star: Star,
