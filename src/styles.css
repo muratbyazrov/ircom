@@ -1523,6 +1523,8 @@ button {
   justify-content: center;
   gap: 2px;
   min-height: 54px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .tab-btn .icon {

@@ -1230,6 +1230,15 @@ export default function App() {
     screenRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const handleTabChange = useCallback((nextTab) => {
+    setTab((currentTab) => (currentTab === nextTab ? currentTab : nextTab));
+  }, []);
+
+  const handleTabPointerDown = useCallback((event, nextTab) => {
+    if (event.pointerType === "mouse") return;
+    handleTabChange(nextTab);
+  }, [handleTabChange]);
+
   useEffect(() => {
     if (!isListTab || isCatalogLoading) return undefined;
 
@@ -2000,7 +2009,13 @@ export default function App() {
 
       <nav className="bottom-nav">
         {tabConfig.map(([key, icon, label]) => (
-          <button className={`tab-btn ${tab === key ? "active" : ""}`} key={key} onClick={() => setTab(key)} type="button">
+          <button
+            className={`tab-btn ${tab === key ? "active" : ""}`}
+            key={key}
+            onPointerDown={(event) => handleTabPointerDown(event, key)}
+            onClick={() => handleTabChange(key)}
+            type="button"
+          >
             <Icon name={icon} />
             <span className="tab-label">{label}</span>
           </button>

@@ -147,8 +147,8 @@ export function RestaurantCardSkeleton() {
 
 export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, section = "ads", isOwn = false, canFavorite = true }) {
   const hasRating = typeof item.ratingValue === "number" && Number(item.reviewsCount) > 0;
-  const postedAtText = section === "ads"
-    ? formatListingPostedAt(item.createdAt, item.date)
+  const postedAtText = section === "ads" || section === "services"
+    ? formatListingPostedAt(item.createdAt, item.date, item.importMeta?.date)
     : `${item.date} дн. назад`;
   const cardSectionClass = section === "ads" ? "card-ad" : section === "services" ? "card-service" : "";
   return (

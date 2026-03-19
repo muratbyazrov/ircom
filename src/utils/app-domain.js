@@ -178,6 +178,11 @@ export const getDaysAgo = (value) => {
   const delta = Date.now() - date.getTime();
   return Math.max(0, Math.floor(delta / 86400000));
 };
+export const getAgeMs = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return Number.POSITIVE_INFINITY;
+  return Math.max(0, Date.now() - date.getTime());
+};
 const pickPrimaryContact = (value, { prefix = "" } = {}) => {
   const primary = String(value || "")
     .split(",")
@@ -221,6 +226,7 @@ export const mapListingToUi = (item) => ({
     return {
       createdAt: postedAt,
       date: getDaysAgo(postedAt),
+      dateAgeMs: getAgeMs(postedAt),
     };
   })(),
   id: `${item.kind === 1 ? "ad" : "service"}-${item.listingId}`,
@@ -244,6 +250,7 @@ export const mapTaxiToUi = (item) => ({
   price: Number(item.price ?? item.cityPrice) || 0,
   rating: Number(item.rating ?? item.avgRating) || 0,
   date: getDaysAgo(item.createdAt || item.created_at),
+  dateAgeMs: getAgeMs(item.createdAt || item.created_at),
   seats: pickFirstNumber(item.seatsTotal, item.totalSeats, item.seats_total)
     ? {
       total: pickFirstNumber(item.seatsTotal, item.totalSeats, item.seats_total),

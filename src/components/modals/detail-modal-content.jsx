@@ -48,7 +48,9 @@ export function DetailModalContent({
   const taxiWhenText = isTaxiDetail ? formatTaxiWhenForDisplay(item.when) : "";
   const isServicesDetail = type === "services";
   const isAdsDetail = type === "ads";
-  const adsPostedAtText = isAdsDetail ? formatListingPostedAt(item.createdAt, item.date) : "";
+  const listingPostedAtText = (isAdsDetail || isServicesDetail)
+    ? formatListingPostedAt(item.createdAt, item.date, item.importMeta?.date)
+    : "";
   const isBasicDetail = !isRestaurantDetail && !isTaxiDetail && !isFoodDetail;
   const isFoodOwnerView = isFoodDetail && typeof onEditDish === "function";
   const restaurantDeliveryText = isRestaurantDetail
@@ -409,7 +411,7 @@ export function DetailModalContent({
               {typeof item.date === "number" ? (
                 <div className="detail-basic-meta-item">
                   <Icon name="time" />
-                  <span>{item.date} дн. назад</span>
+                  <span>{listingPostedAtText}</span>
                 </div>
               ) : null}
               {ratingValue !== null ? (
@@ -464,7 +466,7 @@ export function DetailModalContent({
               {typeof item.date === "number" ? (
                 <div className="detail-basic-meta-item">
                   <Icon name="time" />
-                  <span>{adsPostedAtText}</span>
+                  <span>{listingPostedAtText}</span>
                 </div>
               ) : null}
               {ratingValue !== null ? (
