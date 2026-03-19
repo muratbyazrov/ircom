@@ -1,4 +1,5 @@
 import { buildPhotoUrlRequest, deletePhotoRequest, initPhotoUploadRequest } from "../api/media";
+import { prepareImageForUpload } from "./image-compression";
 
 const ENTITY_TYPES = new Set(["listing", "taxi", "dish", "restaurant"]);
 const MAX_SIZE_BYTES = Number(import.meta.env.VITE_S3_MAX_UPLOAD_BYTES || 10485760);
@@ -83,9 +84,17 @@ export async function uploadImagesToS3({ files, accountId, entityType }) {
   const targetEntityType = normalizeEntityType(entityType);
   const uploaded = [];
 
-  for (const file of normalizedFiles) {
+  for (const sourceFile of normalizedFiles) {
+    let file = sourceFile;
+
+    try {
+      file = await prepareImageForUpload(sourceFile);
+    } catch {
+      file = sourceFile;
+    }
+
     if (file.size > MAX_SIZE_BYTES) {
-      throw new Error(`Файл слишком большой: ${file.name}`);
+      throw new Error(`Файл слишком большой даже после оптимизации: ${file.name}`);
     }
 
     const mimeType = String(file.type || "").trim().toLowerCase();
