@@ -314,34 +314,34 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
     return (
       <InteractiveCard className="card card-clickable card-taxi card-taxi-city" onOpen={onOpen}>
         <div className="card-body taxi-card-body taxi-card-body-city">
-          <FavoriteCornerButton
-            activeFav={activeFav}
-            onFav={onFav}
-            canFavorite={canFavorite}
-            isOwn={isOwn}
-            ownerLabel="Вы водитель"
-            ownerAriaLabel="Вы водитель"
-          />
           <div className="taxi-card-toolbar">
             <span className={`taxi-route-badge ${directionAccentClass}`}>{directionBadgeText}</span>
+            {canFavorite ? (
+              <FavoriteCornerButton
+                activeFav={activeFav}
+                onFav={onFav}
+                canFavorite={canFavorite}
+                favoriteClassName="taxi-fav-btn"
+              />
+            ) : isOwn ? (
+              <span className="taxi-owner-badge">Вы водитель</span>
+            ) : null}
           </div>
           <div className="taxi-card-layout taxi-card-layout-city">
             <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full taxi-media-city" blockParentClick />
             <div className="taxi-card-content taxi-card-content-city">
-              <div className="taxi-card-city-copy">
+              <div className="taxi-city-head">
                 {nameLabel ? <p className="taxi-city-name">{nameLabel}</p> : null}
-                {vehicleText ? <span className="taxi-inline-chip taxi-vehicle-chip" title={vehicleRawText}>{vehicleText}</span> : null}
-                {summaryText ? <p className="taxi-card-summary taxi-card-summary-city">{summaryText}</p> : null}
-              </div>
-              <div className="taxi-card-city-footer">
-                {(item.isFilled || hasRating) ? (
-                  <div className="taxi-card-city-meta">
-                    {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
-                    {hasRating ? <span className="badge">{`Оценка ${item.ratingValue.toFixed(1)}`}</span> : null}
-                  </div>
-                ) : null}
                 <div className="price taxi-card-price taxi-card-price-city" title={fullPriceText}>{priceText}</div>
               </div>
+              {vehicleText ? <span className="taxi-inline-chip taxi-vehicle-chip" title={vehicleRawText}>{vehicleText}</span> : null}
+              {summaryText ? <p className="taxi-card-summary taxi-card-summary-city">{summaryText}</p> : null}
+              {(item.isFilled || hasRating) ? (
+                <div className="taxi-card-city-meta">
+                  {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
+                  {hasRating ? <span className="badge">{`Оценка ${item.ratingValue.toFixed(1)}`}</span> : null}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
