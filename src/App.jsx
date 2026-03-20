@@ -62,7 +62,9 @@ import {
   FOOD_CATEGORIES,
   SERVICE_CATEGORIES,
   TAXI_CATEGORIES,
-  TAXI_CATEGORY_TO_DIRECTION,
+  TAXI_CITY_CATEGORY,
+  TAXI_OUTBOUND_CATEGORY,
+  buildTaxiRoutePayload,
   buildInitialFeedback,
   buildRestaurantId,
   deepCopy,
@@ -97,7 +99,6 @@ const SUPPORT_TELEGRAM_URL = "https://t.me/+Bqm7XK8ISl4yMmNi";
 const TELEGRAM_AUTO_AUTH_DISABLED_KEY = "__ircomTelegramAutoAuthDisabled";
 const SCROLL_TOP_VISIBILITY_OFFSET = 420;
 const TAB_AUTO_REFRESH_STALE_MS = 30000;
-
 export default function App() {
   const [tab, setTab] = useState("ads");
   const [favorites, setFavorites] = useState(new Set());
@@ -107,10 +108,10 @@ export default function App() {
   const [adsCategory, setAdsCategory] = useState("Все");
   const [serviceCategory, setServiceCategory] = useState("Все");
   const [foodCategory, setFoodCategory] = useState("Все");
-  const [taxiCategory, setTaxiCategory] = useState("Такси по Цхинвалу");
+  const [taxiCategory, setTaxiCategory] = useState(TAXI_OUTBOUND_CATEGORY);
   const [adsSort, setAdsSort] = useState("date");
   const [servicesSort, setServicesSort] = useState("date");
-  const [taxiSort, setTaxiSort] = useState("rating");
+  const [taxiSort, setTaxiSort] = useState("date");
   const [taxiRequestedAt, setTaxiRequestedAt] = useState("");
   const [feedbackByItem, setFeedbackByItem] = useState(() => buildInitialFeedback());
   const [modal, setModal] = useState(null);
@@ -492,12 +493,11 @@ export default function App() {
       setIsCatalogLoading(true);
     }
     try {
-      const [adsRaw, servicesRaw, taxiCityRaw, taxiOutRaw, taxiInRaw, restaurantsRaw, menuRaw] = await Promise.all([
+      const [adsRaw, servicesRaw, taxiCityRaw, taxiIntercityRaw, restaurantsRaw, menuRaw] = await Promise.all([
         getListingsRequest({ kind: 1, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
         getListingsRequest({ kind: 2, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
         getTaxiOffersRequest({ direction: 1, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
-        getTaxiOffersRequest({ direction: 2, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
-        getTaxiOffersRequest({ direction: 3, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
+        getTaxiOffersRequest({ direction: 2, limit: 400, ...(accountId !== null ? { accountId } : {}) }),
         getRestaurantsRequest({ limit: 300 }),
         getMenuItemsRequest({ limit: 300, ...(accountId !== null ? { accountId } : {}) }),
       ]);
@@ -514,7 +514,9 @@ export default function App() {
 
       const nextAds = toArray(adsRaw).map(mapListingToUi);
       const nextServices = toArray(servicesRaw).map(mapListingToUi);
-      const nextTaxi = [...toArray(taxiCityRaw), ...toArray(taxiOutRaw), ...toArray(taxiInRaw)].map(mapTaxiToUi);
+      const nextTaxi = [...toArray(taxiCityRaw), ...toArray(taxiIntercityRaw)]
+        .map(mapTaxiToUi)
+        .filter((item) => item.category);
       const nextFood = toArray(menuRaw).map((item) => {
         const mapped = mapMenuItemToUi(item);
         const restaurantId = toAccountId(mapped.restaurantId);
@@ -1450,18 +1452,19 @@ export default function App() {
           throw new Error("Редактирование шаблонов такси не поддерживается бэкендом");
         }
         const uploadedTaxiPhotos = await uploadPhotos("images", 1, "taxi");
+        const currentTaxi = isEdit ? customTaxiItems.find((x) => x.id === editEntityId) : null;
         const categories = toArray(payload.category).filter(Boolean);
-        const category = categories[0];
-        const direction = TAXI_CATEGORY_TO_DIRECTION[category];
-        if (!direction) throw new Error("Выберите направление");
+        const category = categories[0] || currentTaxi?.category;
+        const routePayload = buildTaxiRoutePayload(category);
+        if (!routePayload) throw new Error("Выберите направление");
         const seatsValue = Number(payload.seats);
         const seats = Number.isFinite(seatsValue) && seatsValue > 0 ? seatsValue : undefined;
-        const currentTaxi = isEdit ? customTaxiItems.find((x) => x.id === editEntityId) : null;
         const rawDepartureAt = payload.when || currentTaxi?.when || undefined;
         const departureAt = toTaxiDepartureAtApiValue(rawDepartureAt);
         if (typeof rawDepartureAt === "string" && rawDepartureAt.trim() && departureAt === null) {
           throw new Error("Неверный формат даты поездки");
         }
+        const vehicle = String(payload.vehicle || "").trim();
         if (isEdit && editEntityKind === "taxi-one-time") {
           const taxiOfferId = Number(String(editEntityId).split("-")[1]);
           if (!taxiOfferId) throw new Error("Некорректный идентификатор поездки");
@@ -1469,8 +1472,12 @@ export default function App() {
           await updateTaxiOfferRequest({
             accountId,
             taxiOfferId,
-            direction,
-            displayName: payload.name || currentTaxi?.name || "Водитель",
+            direction: routePayload.direction,
+            routeDirection: routePayload.routeDirection ?? undefined,
+            fromPlace: routePayload.fromPlace || undefined,
+            toPlace: routePayload.toPlace || undefined,
+            routeText: routePayload.routeText || undefined,
+            vehicle: vehicle || undefined,
             description: payload.desc || currentTaxi?.desc || "",
             phone: payload.phone || currentTaxi?.contacts?.phone,
             whatsapp: payload.wa || currentTaxi?.contacts?.wa || undefined,
@@ -1485,8 +1492,12 @@ export default function App() {
         } else {
           await createTaxiOfferRequest({
             accountId,
-            direction,
-            displayName: payload.name || "Водитель",
+            direction: routePayload.direction,
+            routeDirection: routePayload.routeDirection ?? undefined,
+            fromPlace: routePayload.fromPlace || undefined,
+            toPlace: routePayload.toPlace || undefined,
+            routeText: routePayload.routeText || undefined,
+            vehicle: vehicle || undefined,
             description: payload.desc || "",
             phone: payload.phone,
             whatsapp: payload.wa || undefined,
@@ -1854,8 +1865,8 @@ export default function App() {
       return {
         title: "Моё такси",
         items: {
-          oneTimeCity: normalizedCustomTaxiItems.filter((x) => x.mode === "one-time" && x.category === "Такси по Цхинвалу"),
-          oneTimeIntercity: normalizedCustomTaxiItems.filter((x) => x.mode === "one-time" && x.category !== "Такси по Цхинвалу"),
+          oneTimeCity: normalizedCustomTaxiItems.filter((x) => x.mode === "one-time" && x.category === TAXI_CITY_CATEGORY),
+          oneTimeIntercity: normalizedCustomTaxiItems.filter((x) => x.mode === "one-time" && x.category !== TAXI_CITY_CATEGORY),
           regular: normalizedTaxiTemplates,
         },
       };

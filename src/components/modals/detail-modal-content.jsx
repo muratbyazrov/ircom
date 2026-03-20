@@ -1,7 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { clamp, fmtRub, getTouchDistance, formatListingPostedAt } from "../../utils/helpers";
 import { applyImageFallback, replaceImageWithEmpty } from "../../utils/images";
-import { formatTaxiWhenForDisplay } from "../../utils/taxi";
+import {
+  formatTaxiDateForDisplay,
+  formatTaxiSeatsForDisplay,
+  getTaxiDirectionAccent,
+  getTaxiDirectionBadgeText,
+  getTaxiExactTimeForDisplay,
+  getTaxiHeadlineFromDescription,
+  hasMeaningfulTaxiHeadline,
+  isIntercityTaxiCategory,
+} from "../../utils/taxi";
 import { ListingImportMeta } from "../listing-import-meta";
 import { Icon, Field } from "../ui";
 import { Media } from "../cards";
@@ -31,12 +40,14 @@ export function DetailModalContent({
   const isRestaurantDetail = type === "restaurant";
   const restaurantLogo = isRestaurantDetail ? String(item.logo || "").trim() : "";
   const reviews = Array.isArray(item.reviews) ? item.reviews : [];
+  const reviewsCount = Math.max(reviews.length, Number(item.reviewsCount) || 0);
   const normalizedUserName = String(currentUserName || "").trim().toLowerCase();
   const alreadyLeftReview = Boolean(
     normalizedUserName && reviews.some((review) => String(review.author || "").trim().toLowerCase() === normalizedUserName)
   );
   const REVIEWS_STEP = 3;
   const ratingValue = typeof item.ratingValue === "number" ? item.ratingValue : null;
+  const hasRating = ratingValue !== null && reviewsCount > 0;
   const foodAvailabilityText = type === "food"
     ? (item.unavailable ? "Нет в наличии" : "В наличии")
     : "";
@@ -45,7 +56,15 @@ export function DetailModalContent({
     : "";
   const isFoodDetail = type === "food";
   const isTaxiDetail = type === "taxi";
-  const taxiWhenText = isTaxiDetail ? formatTaxiWhenForDisplay(item.when) : "";
+  const isTaxiIntercity = isTaxiDetail ? isIntercityTaxiCategory(item.category) : false;
+  const taxiTitleText = isTaxiDetail ? getTaxiHeadlineFromDescription(item.desc, item.title || item.name, item.category) : "";
+  const showTaxiTitle = hasMeaningfulTaxiHeadline(taxiTitleText);
+  const taxiDateText = isTaxiIntercity ? formatTaxiDateForDisplay(item.when) : "";
+  const taxiTimeText = isTaxiIntercity ? getTaxiExactTimeForDisplay(item.when, item.desc) : "";
+  const taxiSeatsText = isTaxiIntercity ? formatTaxiSeatsForDisplay(item.seats) : "";
+  const taxiVehicleText = isTaxiDetail ? String(item.vehicle || item.carModel || "").trim() : "";
+  const taxiDirectionAccentClass = isTaxiDetail ? getTaxiDirectionAccent(item.category) : "";
+  const taxiDirectionBadgeText = isTaxiIntercity ? getTaxiDirectionBadgeText(item.category) : "";
   const isServicesDetail = type === "services";
   const isAdsDetail = type === "ads";
   const listingPostedAtText = (isAdsDetail || isServicesDetail)
@@ -108,9 +127,12 @@ export function DetailModalContent({
     }
 
     if (type === "telegram") {
-      const withoutAt = raw.replace(/^@/, "");
-      return withoutAt ? `https://t.me/${withoutAt}` : null;
-    }
+  const digits = normalizePhoneDigits(raw);
+  if (digits.length >= 10) return null;
+  const withoutAt = raw.replace(/^@/, "");
+  return withoutAt ? `https://t.me/${withoutAt}` : null;
+}
+
 
     return null;
   };
@@ -126,26 +148,35 @@ export function DetailModalContent({
   );
 
   const contactButtons = Object.entries(item.contacts || {})
-    .filter(([, value]) => isPresentContactValue(value))
-    .map(([k, v]) => {
-      const contactType = k === "tg" ? "telegram" : k === "wa" ? "whatsapp" : "phone";
-      const contactLabel = k === "tg" ? "Telegram" : k === "wa" ? "WhatsApp" : "Телефон";
-      const href = buildContactHref(contactType, v);
-      if (!href) return null;
+  .filter(([, value]) => isPresentContactValue(value))
+  .map(([k, v]) => {
+    const contactType = k === "tg" ? "telegram" : k === "wa" ? "whatsapp" : "phone";
+    const contactLabel = k === "tg" ? "Telegram" : k === "wa" ? "WhatsApp" : "Телефон";
+    const href = buildContactHref(contactType, v);
+    const content = (
+      <>
+        <span className={`detail-contact-icon detail-contact-icon-${contactType}`}>
+          <Icon name={contactType} />
+        </span>
+        <span className="detail-contact-text">
+          <b>{contactLabel}</b>
+          <span>{v}</span>
+        </span>
+      </>
+    );
 
-      return (
-        <a className="detail-contact-btn" key={`${k}-${v}`} href={href} target="_blank" rel="noopener noreferrer">
-          <span className={`detail-contact-icon detail-contact-icon-${contactType}`}>
-            <Icon name={contactType} />
-          </span>
-          <span className="detail-contact-text">
-            <b>{contactLabel}</b>
-            <span>{v}</span>
-          </span>
-        </a>
-      );
-    })
-    .filter(Boolean);
+    if (!href) {
+      return <div className="detail-contact-btn" key={`${k}-${v}`} aria-disabled="true">{content}</div>;
+    }
+
+    return (
+      <a className="detail-contact-btn" key={`${k}-${v}`} href={href} target="_blank" rel="noopener noreferrer">
+        {content}
+      </a>
+    );
+  })
+  .filter(Boolean);
+
   const shouldShowMissingContactsHint = (isAdsDetail || isServicesDetail) && !contactButtons.length;
 
   const favoriteButton = !isRestaurantDetail && !isOwnerView ? (
@@ -307,7 +338,7 @@ export function DetailModalContent({
       {!isRestaurantDetail ? (
         isTaxiDetail ? (
           <div className="detail-taxi-head">
-            <h3 className="detail-taxi-title" style={{ marginBottom: 0 }}>{item.title || item.name}</h3>
+            {showTaxiTitle ? <h3 className="detail-taxi-title" style={{ marginBottom: 0 }}>{taxiTitleText}</h3> : null}
           </div>
         ) : !isServicesDetail && !isAdsDetail ? (
           <h3 className="detail-main-title">{item.title || item.name}</h3>
@@ -381,7 +412,7 @@ export function DetailModalContent({
                 <span>{item.date} дн. назад</span>
               </div>
             ) : null}
-            {ratingValue !== null ? (
+            {hasRating ? (
               <div className="detail-basic-meta-item">
                 <Icon name="star" />
                 <span>{ratingValue.toFixed(1)} / 5</span>
@@ -414,7 +445,7 @@ export function DetailModalContent({
                   <span>{listingPostedAtText}</span>
                 </div>
               ) : null}
-              {ratingValue !== null ? (
+              {hasRating ? (
                 <div className="detail-basic-meta-item">
                   <Icon name="star" />
                   <span>{ratingValue.toFixed(1)} / 5</span>
@@ -469,7 +500,7 @@ export function DetailModalContent({
                   <span>{listingPostedAtText}</span>
                 </div>
               ) : null}
-              {ratingValue !== null ? (
+              {hasRating ? (
                 <div className="detail-basic-meta-item">
                   <Icon name="star" />
                   <span>{ratingValue.toFixed(1)} / 5</span>
@@ -511,42 +542,37 @@ export function DetailModalContent({
             />
           </div>
           <div className="detail-taxi-highlight">
+            {isTaxiIntercity ? (
+              <div className={`detail-taxi-direction-pill ${taxiDirectionAccentClass}`}>
+                {taxiDirectionBadgeText || item.category || "Направление не указано"}
+              </div>
+            ) : null}
             <div className="detail-taxi-price-pill">
               <span>Стоимость поездки</span>
               <b>{fmtRub.format(item.price)}</b>
             </div>
+            {(taxiVehicleText || (isTaxiIntercity && (taxiDateText || taxiTimeText || taxiSeatsText || item.isFilled))) ? (
+              <div className="detail-taxi-tag-row">
+                {taxiVehicleText ? <span className="taxi-inline-chip taxi-vehicle-chip">{taxiVehicleText}</span> : null}
+                {isTaxiIntercity && taxiDateText ? <span className="detail-taxi-date-chip">{taxiDateText}</span> : null}
+                {isTaxiIntercity && taxiTimeText ? <span className="taxi-time-chip">Выезд {taxiTimeText}</span> : null}
+                {isTaxiIntercity && taxiSeatsText ? <span className="taxi-inline-chip">{taxiSeatsText}</span> : null}
+                {isTaxiIntercity && item.isFilled ? <span className="detail-taxi-status-chip">Водитель заполнен</span> : null}
+              </div>
+            ) : null}
           </div>
-          <div className="detail-taxi-info-grid">
-            {ratingValue !== null ? (
+          {hasRating ? (
+            <div className="detail-taxi-info-grid">
               <div className="detail-taxi-info-item">
                 <span>Оценка</span>
                 <b>{ratingValue.toFixed(1)} / 5</b>
               </div>
-            ) : null}
-            <div className="detail-taxi-info-item">
-              <span>Направление</span>
-              <b>{item.category || "Не указано"}</b>
             </div>
-            {taxiWhenText ? (
-              <div className="detail-taxi-info-item">
-                <span>Дата и время</span>
-                <b>{taxiWhenText}</b>
-              </div>
-            ) : null}
-            {item.seats ? (
-              <div className="detail-taxi-info-item">
-                <span>Места</span>
-                <b>{item.seats.total ?? item.seats.free}</b>
-              </div>
-            ) : null}
-            {item.isFilled ? (
-              <div className="detail-taxi-info-item">
-                <span>Статус</span>
-                <b>Водитель заполнен</b>
-              </div>
-            ) : null}
+          ) : null}
+          <div className="detail-taxi-desc-block">
+            <div className="detail-content-title">Описание</div>
+            <p className="detail-taxi-desc">{item.desc || "Нет описания"}</p>
           </div>
-          <p className="detail-taxi-desc"><b>Описание:</b> {item.desc || "Нет описания"}</p>
           {contactButtons.length ? (
             <>
               <div className="detail-taxi-contacts-title">Контакты водителя</div>
@@ -622,7 +648,7 @@ export function DetailModalContent({
           <div className="reviews-header">
             <b>Оценка и отзывы</b>
             <span className="small">
-              {ratingValue !== null ? `Средняя: ${ratingValue.toFixed(1)}/5` : "Пока нет оценок"} · {reviews.length} отзыв(ов)
+              {hasRating ? `Средняя: ${ratingValue.toFixed(1)}/5` : "Пока нет оценок"} · {reviewsCount} отзыв(ов)
             </span>
           </div>
           {isAuth && !alreadyLeftReview ? (

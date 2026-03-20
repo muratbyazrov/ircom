@@ -1,6 +1,7 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { sortItems } from "../utils/helpers";
-import { buildRecurringTaxiOccurrences, parseTaxiWhenValue } from "../utils/taxi";
+import { buildRecurringTaxiOccurrences, parseTaxiDateTimeInputInMoscow, parseTaxiWhenValue } from "../utils/taxi";
+import { TAXI_CITY_CATEGORY } from "../utils/app-domain";
 
 export function useTaxiCatalog({
   customTaxiItems,
@@ -9,24 +10,32 @@ export function useTaxiCatalog({
   feedbackByItem,
   decorateWithFeedback,
   taxiRequestedAt,
-  setTaxiRequestedAt,
   taxiCategory,
   taxiSort,
   favorites,
 }) {
   const recurringTaxiItems = useMemo(() => buildRecurringTaxiOccurrences(taxiTemplates, 14), [taxiTemplates]);
   const allTaxiItems = useMemo(() => [...customTaxiItems, ...recurringTaxiItems, ...mockTaxi], [customTaxiItems, recurringTaxiItems, mockTaxi]);
-  const taxiCatalog = useMemo(() => allTaxiItems.map((item) => decorateWithFeedback(item)), [allTaxiItems, feedbackByItem]);
+  const taxiCatalog = useMemo(
+    () => allTaxiItems.map((item) => {
+      const rideDate = parseTaxiWhenValue(item.when);
+
+      return decorateWithFeedback({
+        ...item,
+        dateSortValue: rideDate ? rideDate.getTime() : item.dateSortValue,
+      });
+    }),
+    [allTaxiItems, decorateWithFeedback, feedbackByItem]
+  );
 
   const taxiRequestTime = useMemo(() => {
     if (!taxiRequestedAt) return null;
-    const parsed = new Date(taxiRequestedAt);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
+    return parseTaxiDateTimeInputInMoscow(taxiRequestedAt);
   }, [taxiRequestedAt]);
 
   const taxiItems = useMemo(() => {
     const byCategory = taxiCatalog.filter((x) => x.category === taxiCategory);
-    if (!taxiRequestTime || taxiCategory === "Такси по Цхинвалу") return sortItems(byCategory, taxiSort, favorites);
+    if (!taxiRequestTime || taxiCategory === TAXI_CITY_CATEGORY) return sortItems(byCategory, taxiSort, favorites);
 
     const filteredByTime = byCategory.filter((item) => {
       const rideDate = parseTaxiWhenValue(item.when);
@@ -35,10 +44,6 @@ export function useTaxiCatalog({
     });
     return sortItems(filteredByTime, taxiSort, favorites);
   }, [taxiCatalog, taxiCategory, taxiSort, favorites, taxiRequestTime]);
-
-  useEffect(() => {
-    if (taxiCategory === "Такси по Цхинвалу" && taxiRequestedAt) setTaxiRequestedAt("");
-  }, [taxiCategory, taxiRequestedAt, setTaxiRequestedAt]);
 
   return { taxiCatalog, taxiItems };
 }

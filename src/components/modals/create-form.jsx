@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { applyImageFallback } from "../../utils/images";
 import { formatPhoneValue, handlePhoneInput, PHONE_PATTERN, PHONE_PLACEHOLDER, syncPhonePrev, syncWhatsappFromPhone } from "../../utils/phone";
-import { getTaxiDateByPreset, TAXI_DAY_PRESETS, TAXI_RECURRING_WEEKDAYS } from "../../utils/taxi";
+import { getTaxiDateByPreset, getTaxiPresetState, TAXI_DAY_PRESETS, TAXI_RECURRING_WEEKDAYS } from "../../utils/taxi";
+import { TAXI_CITY_CATEGORY } from "../../utils/app-domain";
 import { FormActions, Field } from "../ui";
 import restaurantHero from "../../assets/restaurant-hero.svg";
 import taxiHero from "../../assets/taxi-hero.svg";
 import serviceHero from "../../assets/service-hero.svg";
 
 const TITLE_MAX = 60;
-const TAXI_NAME_MAX = 50;
 const RESTAURANT_TITLE_MAX = 40;
 const DESCRIPTION_MAX = 4000;
 
@@ -34,16 +34,9 @@ export function CreateForm({
       : [taxiCategories?.[0]].filter(Boolean);
   const initialTaxiMode = initialValues?.mode === "recurring" ? "recurring" : "one-time";
   const initialTaxiWhen = String(initialValues?.when || "");
-  const initialTaxiDayPreset = (() => {
-    const match = initialTaxiWhen.match(/^(Сегодня|Завтра|Пн|Вт|Ср|Чт|Пт|Сб|Вс)\b/);
-    return match ? match[1] : "";
-  })();
-  const initialTaxiHourPreset = (() => {
-    const match = initialTaxiWhen.match(/(\d{1,2}):/);
-    const parsed = Number(match?.[1]);
-    if (!Number.isFinite(parsed)) return 12;
-    return Math.max(4, Math.min(24, parsed));
-  })();
+  const initialTaxiPresetState = getTaxiPresetState(initialTaxiWhen);
+  const initialTaxiDayPreset = initialTaxiPresetState.dayPreset;
+  const initialTaxiHourPreset = initialTaxiPresetState.hourPreset;
   const initialRecurringHourPreset = (() => {
     const match = String(initialValues?.time || "").match(/(\d{1,2}):/);
     const parsed = Number(match?.[1]);
@@ -205,7 +198,7 @@ export function CreateForm({
   const startTimeDrag = () => setIsTimeDragging(true);
   const endTimeDrag = () => setIsTimeDragging(false);
 
-  const cityCategory = "Такси по Цхинвалу";
+  const cityCategory = TAXI_CITY_CATEGORY;
   const isRecurring = taxiOfferMode === "recurring";
 
   const toggleTaxiCategory = (category) => {
@@ -540,18 +533,6 @@ export function CreateForm({
             </p>
             {showTaxiDirectionError ? <p className="small field-invalid-note">Выберите хотя бы одно направление</p> : null}
           </Field>
-          <Field label="Имя">
-            <input
-              required
-              name="name"
-              defaultValue={initialValues?.name || ""}
-              className={`input ${taxiFieldErrors.name ? "is-invalid" : ""}`}
-              minLength={2}
-              maxLength={TAXI_NAME_MAX}
-              onInput={() => setTaxiFieldErrors((prev) => ({ ...prev, name: "" }))}
-            />
-            {taxiFieldErrors.name ? <p className="small field-invalid-note">{taxiFieldErrors.name}</p> : null}
-          </Field>
           <div className={isIntercitySelected ? "grid-2" : undefined}>
             <Field label="Стоимость">
               <input
@@ -582,6 +563,15 @@ export function CreateForm({
               </Field>
             ) : null}
           </div>
+          <Field label="Модель машины">
+            <input
+              name="vehicle"
+              defaultValue={initialValues?.vehicle || initialValues?.carModel || ""}
+              className="input"
+              maxLength={80}
+              placeholder="Например, Toyota Camry"
+            />
+          </Field>
           {isIntercitySelected ? (
             <>
               <Field label="Формат поездок">
@@ -644,6 +634,7 @@ export function CreateForm({
                 </Field>
               ) : (
                 <Field label={taxiDateValue ? `Дата и время (${taxiDateValue} ${taxiTimePreset})` : "Дата и время"}>
+                  <p className="small" style={{ marginTop: 0, marginBottom: 8 }}>Указывайте время по Москве (UTC+3).</p>
                   <div className={`multi-select-buttons ${showTaxiWhenError ? "is-invalid" : ""}`}>
                     {TAXI_DAY_PRESETS.map((x) => (
                       <button

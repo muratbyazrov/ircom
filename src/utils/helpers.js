@@ -9,6 +9,13 @@ export function sortItems(items, mode, favorites) {
   if (mode === "price") out.sort((a, b) => (a.price || 0) - (b.price || 0));
   if (mode === "date") {
     out.sort((a, b) => {
+      const aSortDate = Number.isFinite(a.dateSortValue) ? a.dateSortValue : null;
+      const bSortDate = Number.isFinite(b.dateSortValue) ? b.dateSortValue : null;
+
+      if (aSortDate !== null && bSortDate !== null && aSortDate !== bSortDate) {
+        return aSortDate - bSortDate;
+      }
+
       const aAgeMs = Number.isFinite(a.dateAgeMs) ? a.dateAgeMs : null;
       const bAgeMs = Number.isFinite(b.dateAgeMs) ? b.dateAgeMs : null;
 

@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { clamp, fmtRub, short, formatListingPostedAt } from "../utils/helpers";
-import { formatTaxiWhenForDisplay } from "../utils/taxi";
+import {
+  formatTaxiDateForDisplay,
+  getTaxiExactTimeForDisplay,
+  getTaxiHeadlineFromDescription,
+  hasMeaningfulTaxiHeadline,
+  formatTaxiWhenForDisplay,
+  formatTaxiSeatsForDisplay,
+  getTaxiDirectionAccent,
+  getTaxiDirectionBadgeText,
+  isIntercityTaxiCategory,
+} from "../utils/taxi";
 import { Icon } from "./ui";
 
 const MEDIA_STATUS_LOADING = "loading";
@@ -212,7 +222,17 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
 
 export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFavorite = true }) {
   const hasRating = typeof item.ratingValue === "number" && Number(item.reviewsCount) > 0;
+  const isIntercity = isIntercityTaxiCategory(item.category);
   const whenText = formatTaxiWhenForDisplay(item.when);
+  const whenDateText = formatTaxiDateForDisplay(item.when);
+  const exactTimeText = getTaxiExactTimeForDisplay(item.when, item.desc);
+  const seatsText = isIntercity ? formatTaxiSeatsForDisplay(item.seats) : "";
+  const vehicleText = String(item.vehicle || item.carModel || "").trim();
+  const titleText = getTaxiHeadlineFromDescription(item.desc, item.title || item.name, item.category);
+  const showTitle = hasMeaningfulTaxiHeadline(titleText);
+  const summaryText = short(item.desc);
+  const directionAccentClass = getTaxiDirectionAccent(item.category);
+  const directionBadgeText = getTaxiDirectionBadgeText(item.category);
   return (
     <article
       className="card card-clickable card-taxi"
@@ -252,25 +272,31 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
           <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full" blockParentClick />
           <div className="taxi-card-content">
             <div className="taxi-card-head">
-              <div className="row wrap" style={{ alignItems: "center", gap: 6 }}>
-                <div className="card-title">{item.name}</div>
-              </div>
+              {showTitle ? <div className="card-title taxi-route-title">{titleText}</div> : null}
               <div className="price">{fmtRub.format(item.price)}</div>
             </div>
-            <div className="meta">{item.category}</div>
-            <div className="taxi-rating-line">
-              <span className="badge">{hasRating ? `Оценка ${item.ratingValue.toFixed(1)}` : "Нет оценок"}</span>
-              <span className="small">{item.reviewsCount || 0} отзыв(ов)</span>
-            </div>
+            {(vehicleText || (isIntercity && (whenText || exactTimeText || seatsText))) ? (
+              <div className="taxi-card-meta-row">
+                {isIntercity ? (whenDateText ? <div className="taxi-when-line">{whenDateText}</div> : whenText ? <div className="taxi-when-line">{whenText}</div> : null) : null}
+                {isIntercity && exactTimeText ? <span className="taxi-time-chip">Выезд {exactTimeText}</span> : null}
+                {isIntercity && seatsText ? <span className="taxi-inline-chip">{seatsText}</span> : null}
+                {vehicleText ? <span className="taxi-inline-chip taxi-vehicle-chip">{vehicleText}</span> : null}
+              </div>
+            ) : null}
+            {hasRating ? (
+              <div className="taxi-rating-line">
+                <span className="badge">{`Оценка ${item.ratingValue.toFixed(1)}`}</span>
+                <span className="small">{item.reviewsCount || 0} отзыв(ов)</span>
+              </div>
+            ) : null}
+            {summaryText ? <p className="taxi-card-summary">{summaryText}</p> : null}
           </div>
         </div>
         <div className="row wrap taxi-tags">
+          {isIntercity ? <span className={`taxi-route-badge taxi-route-badge-bottom ${directionAccentClass}`}>{directionBadgeText}</span> : null}
           {item.weekdays ? <span className="badge">Регулярно</span> : null}
-          {whenText ? <span className="badge">{whenText}</span> : null}
-          {item.seats ? <span className="badge">Места: {item.seats.total ?? item.seats.free}</span> : null}
           {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
         </div>
-        <p className="small">{short(item.desc)}</p>
       </div>
     </article>
   );

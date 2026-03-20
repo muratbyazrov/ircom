@@ -68,16 +68,25 @@ export const FEEDBACK_STORAGE_KEY = "__ircomFeedbackByItem";
 export const ADS_CATEGORIES = ["Все", "Авто", "Недвижимость", "Электроника", "Бытовая техника", "Мебель", "Другое", "Мои объявления"];
 export const SERVICE_CATEGORIES = ["Все", "Кондитерка", "Репетиторы", "Красота", "Автосервис", "Другое"];
 export const FOOD_CATEGORIES = ["Все", "Кавказская кухня", "Суши и роллы", "Осетинские пироги", "Бургеры", "Другое"];
-export const TAXI_CATEGORIES = ["Такси по Цхинвалу", "Цхинвал -> Владикавказ", "Владикавказ -> Цхинвал"];
+export const TAXI_CITY_CATEGORY = "Такси по Цхинвалу";
+export const TAXI_OUTBOUND_CATEGORY = "Цхинвал -> Владикавказ";
+export const TAXI_INBOUND_CATEGORY = "Владикавказ -> Цхинвал";
+export const TAXI_ROUTE_DIRECTION_OUTBOUND = 1;
+export const TAXI_ROUTE_DIRECTION_INBOUND = 2;
+export const TAXI_CATEGORIES = [TAXI_OUTBOUND_CATEGORY, TAXI_INBOUND_CATEGORY, TAXI_CITY_CATEGORY];
 export const TAXI_CATEGORY_TO_DIRECTION = {
-  "Такси по Цхинвалу": 1,
-  "Цхинвал -> Владикавказ": 2,
-  "Владикавказ -> Цхинвал": 3,
+  [TAXI_CITY_CATEGORY]: 1,
+  [TAXI_OUTBOUND_CATEGORY]: 2,
+  [TAXI_INBOUND_CATEGORY]: 2,
 };
-export const DIRECTION_TO_TAXI_CATEGORY = {
-  1: "Такси по Цхинвалу",
-  2: "Цхинвал -> Владикавказ",
-  3: "Владикавказ -> Цхинвал",
+export const TAXI_CATEGORY_TO_ROUTE_DIRECTION = {
+  [TAXI_CITY_CATEGORY]: null,
+  [TAXI_OUTBOUND_CATEGORY]: TAXI_ROUTE_DIRECTION_OUTBOUND,
+  [TAXI_INBOUND_CATEGORY]: TAXI_ROUTE_DIRECTION_INBOUND,
+};
+export const ROUTE_DIRECTION_TO_TAXI_CATEGORY = {
+  [TAXI_ROUTE_DIRECTION_OUTBOUND]: TAXI_OUTBOUND_CATEGORY,
+  [TAXI_ROUTE_DIRECTION_INBOUND]: TAXI_INBOUND_CATEGORY,
 };
 
 export const toArray = (value) => (Array.isArray(value) ? value : value ? [value] : []);
@@ -191,11 +200,20 @@ const pickPrimaryContact = (value, { prefix = "" } = {}) => {
   if (!primary) return "";
   return prefix && !primary.startsWith(prefix) ? `${prefix}${primary}` : primary;
 };
+const pickTelegramContact = (value) => {
+  const primary = pickPrimaryContact(value);
+  if (!primary) return "";
+  const digits = primary.replace(/\D/g, "");
+  return digits.length >= 10
+    ? primary
+    : (primary.startsWith("@") ? primary : `@${primary}`);
+};
 export const getContacts = (item) => ({
   ...(pickPrimaryContact(item?.phone) ? { phone: pickPrimaryContact(item?.phone) } : {}),
   ...(item?.whatsapp ? { wa: item.whatsapp } : {}),
-  ...(pickPrimaryContact(item?.telegram, { prefix: "@" }) ? { tg: pickPrimaryContact(item?.telegram, { prefix: "@" }) } : {}),
+  ...(pickTelegramContact(item?.telegram) ? { tg: pickTelegramContact(item?.telegram) } : {}),
 });
+
 export const toAccountId = (value) => {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 1) return null;
@@ -214,6 +232,98 @@ export const pickFirstText = (...values) => {
     if (text) return text;
   }
   return "";
+};
+
+const normalizeTaxiRouteHint = (value) => String(value || "")
+  .trim()
+  .toLowerCase()
+  .replace(/ё/g, "е");
+
+const inferTaxiCategoryFromText = (...values) => {
+  for (const value of values) {
+    const normalized = normalizeTaxiRouteHint(value);
+    if (!normalized) continue;
+
+    if (/по городу|городское такси|в черте города/.test(normalized)) {
+      return TAXI_CITY_CATEGORY;
+    }
+
+    const tskhinvalIndex = normalized.search(/цхинвал/);
+    const vladikavkazIndex = normalized.search(/владикавказ/);
+    if (tskhinvalIndex >= 0 && vladikavkazIndex >= 0) {
+      return tskhinvalIndex < vladikavkazIndex ? TAXI_OUTBOUND_CATEGORY : TAXI_INBOUND_CATEGORY;
+    }
+  }
+
+  return null;
+};
+
+export const buildTaxiRoutePayload = (category) => {
+  const normalized = String(category || "").trim();
+
+  if (normalized === TAXI_CITY_CATEGORY) {
+    return {
+      direction: 1,
+      routeDirection: null,
+      fromPlace: null,
+      toPlace: null,
+      routeText: null,
+    };
+  }
+
+  if (normalized === TAXI_OUTBOUND_CATEGORY) {
+    return {
+      direction: 2,
+      routeDirection: TAXI_ROUTE_DIRECTION_OUTBOUND,
+      fromPlace: "Цхинвал",
+      toPlace: "Владикавказ",
+      routeText: "Цхинвал - Владикавказ",
+    };
+  }
+
+  if (normalized === TAXI_INBOUND_CATEGORY) {
+    return {
+      direction: 2,
+      routeDirection: TAXI_ROUTE_DIRECTION_INBOUND,
+      fromPlace: "Владикавказ",
+      toPlace: "Цхинвал",
+      routeText: "Владикавказ - Цхинвал",
+    };
+  }
+
+  return null;
+};
+
+const looksLikeCargoTaxi = (...values) => {
+  return values.some((value) => /(груз|посыл|доставк|багаж|ozon|wildberries|wb)/i.test(String(value || "")));
+};
+
+const resolveTaxiCategory = (item) => {
+  const explicitDirection = pickFirstNumber(item.direction);
+  const explicitRouteDirection = pickFirstNumber(item.routeDirection, item.route_direction);
+  const inferredCategory = inferTaxiCategoryFromText(
+    `${pickFirstText(item.fromPlace, item.from_place)} ${pickFirstText(item.toPlace, item.to_place)}`,
+    item.routeText,
+    item.route,
+    item.taxiRoute,
+    item.taxi_route,
+    item.name,
+    item.description,
+    item.desc
+  );
+
+  if (explicitDirection === 1) return TAXI_CITY_CATEGORY;
+  if (ROUTE_DIRECTION_TO_TAXI_CATEGORY[explicitRouteDirection]) {
+    return ROUTE_DIRECTION_TO_TAXI_CATEGORY[explicitRouteDirection];
+  }
+  if (inferredCategory) return inferredCategory;
+
+  if (explicitDirection === 3 && looksLikeCargoTaxi(item.name, item.description, item.desc)) {
+    return null;
+  }
+
+  if (explicitDirection === 3) return TAXI_INBOUND_CATEGORY;
+  return explicitDirection === 2 ? TAXI_OUTBOUND_CATEGORY : TAXI_CITY_CATEGORY;
 };
 const getListingPostedAt = (item) => pickFirstText(
   item?.importMeta?.date,
@@ -244,19 +354,29 @@ export const mapListingToUi = (item) => ({
 export const mapTaxiToUi = (item) => ({
   id: `taxi-${pickFirstNumber(item.taxiOfferId, item.offerId, item.id, item.taxi_id) || randomSuffix()}`,
   taxiOfferId: pickFirstNumber(item.taxiOfferId, item.offerId, item.id, item.taxi_id),
-  category: DIRECTION_TO_TAXI_CATEGORY[pickFirstNumber(item.direction, item.routeDirection)] || TAXI_CATEGORIES[0],
-  direction: pickFirstNumber(item.direction, item.routeDirection),
-  name: pickFirstText(item.displayName, item.driverName, item.name, item.nickname, item.accountName, item.ownerName) || "Водитель",
+  category: resolveTaxiCategory(item),
+  direction: pickFirstNumber(item.direction),
+  routeDirection: pickFirstNumber(item.routeDirection, item.route_direction),
+  fromPlace: pickFirstText(item.fromPlace, item.from_place),
+  toPlace: pickFirstText(item.toPlace, item.to_place),
+  routeText: pickFirstText(item.routeText, item.route_text, item.route, item.taxiRoute, item.taxi_route),
+  vehicle: pickFirstText(item.vehicle, item.carModel, item.car_model),
+  name: pickFirstText(item.driverName, item.name, item.nickname, item.accountName, item.ownerName, item.routeText, item.route_text) || "",
   price: Number(item.price ?? item.cityPrice) || 0,
   rating: Number(item.rating ?? item.avgRating) || 0,
   date: getDaysAgo(item.createdAt || item.created_at),
   dateAgeMs: getAgeMs(item.createdAt || item.created_at),
-  seats: pickFirstNumber(item.seatsTotal, item.totalSeats, item.seats_total)
-    ? {
-      total: pickFirstNumber(item.seatsTotal, item.totalSeats, item.seats_total),
-      free: pickFirstNumber(item.seatsFree, item.freeSeats, item.seats_free) || 0,
+  seats: (() => {
+    const total = pickFirstNumber(item.seatsTotal, item.totalSeats, item.seats_total);
+    const free = pickFirstNumber(item.seatsFree, item.freeSeats, item.seats_free);
+    if (total || free || free === 0) {
+      return {
+        total: total || null,
+        free: free || free === 0 ? free : null,
+      };
     }
-    : null,
+    return null;
+  })(),
   when: pickFirstText(item.departureAt, item.departure_at, item.when) || null,
   mode: "one-time",
   isFilled: false,

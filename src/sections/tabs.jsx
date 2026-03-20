@@ -1,5 +1,6 @@
 import { CategoryTabs, Empty, Field, Icon, Section, SectionHeader, SortSelect } from "../components/ui";
 import { ItemCard, ItemCardSkeleton, RestaurantCardSkeleton, TaxiCard, TaxiCardSkeleton } from "../components/cards";
+import { TAXI_CITY_CATEGORY } from "../utils/app-domain";
 import { sectionSortModes } from "../utils/constants";
 import { fmtRub } from "../utils/helpers";
 import { replaceImageWithEmpty } from "../utils/images";
@@ -147,7 +148,7 @@ export function TaxiTab({
   onRefresh,
   isRefreshing = false,
 }) {
-  const isIntercity = taxiCategory !== "Такси по Цхинвалу";
+  const isIntercity = taxiCategory !== TAXI_CITY_CATEGORY;
 
   return (
     <>
@@ -178,7 +179,7 @@ export function TaxiTab({
                   </button>
                 ) : null}
               </div>
-              <p className="small" style={{ marginTop: 6 }}>Показываем поездки не раньше выбранного времени.</p>
+              <p className="small" style={{ marginTop: 6 }}>Показываем поездки не раньше выбранного времени по Москве (UTC+3).</p>
             </Field>
           </div>
         ) : null}
