@@ -373,15 +373,9 @@ export function ProfileTab({
 
   return (
     <Section className="profile-root">
-      <h2 className="profile-title">Профиль</h2>
-      <p className="small profile-status-line">
-        {isAuth ? (
-          <>
-            <span className="profile-status-dot" aria-hidden="true" />
-            Аккаунт активен
-          </>
-        ) : "Войдите для публикации, лайков и редактирования"}
-      </p>
+      {!isAuth && (
+        <p className="small profile-status-line">Войдите для публикации, лайков и редактирования</p>
+      )}
 
       <div className="profile-stack">
         <Section>
