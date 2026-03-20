@@ -101,5 +101,5 @@ export function useNavHistory({ appHistoryKey, tab, setTab, modal, setModal, onB
     };
     backButton.onClick(onBackClick);
     return () => backButton.offClick(onBackClick);
-  }, [tab, modal, onBackAttempt]);
+  }, [tab, modal, setModal, onBackAttempt]);
 }

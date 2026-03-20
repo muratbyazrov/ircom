@@ -20,11 +20,6 @@ const normalizeFivePhotos = (photos) => {
     .slice(0, 8);
 };
 
-const normalizeEntityPhotos = (item) => ({
-  ...item,
-  photos: normalizeSinglePhoto(item?.photos),
-});
-
 const profileOrGuest = (account) => ({
   name: account?.name || "Гость",
   phone: account?.phone || "-",
@@ -46,7 +41,6 @@ export function useAuthState({ deepCopy }) {
   const [customServices, setCustomServices] = useState([]);
   const [customAds, setCustomAds] = useState([]);
   const [userRestaurantDishes, setUserRestaurantDishes] = useState([]);
-  const [taxiTemplates, setTaxiTemplates] = useState([]);
   const [isTaxiDriver, setIsTaxiDriver] = useState(false);
 
   const toggleAuth = useCallback((openAuthModal) => {
@@ -61,7 +55,6 @@ export function useAuthState({ deepCopy }) {
       setCustomServices([]);
       setCustomAds([]);
       setCustomTaxiItems([]);
-      setTaxiTemplates([]);
       setIsTaxiDriver(false);
       return;
     }
@@ -84,7 +77,6 @@ export function useAuthState({ deepCopy }) {
     setCustomServices([]);
     setCustomAds([]);
     setCustomTaxiItems([]);
-    setTaxiTemplates([]);
     setIsTaxiDriver(false);
 
     const data = deepCopy({
@@ -94,7 +86,6 @@ export function useAuthState({ deepCopy }) {
       services: [],
       ads: [],
       taxiItems: [],
-      taxiTemplates: [],
       isTaxiDriver: false,
     });
 
@@ -102,8 +93,7 @@ export function useAuthState({ deepCopy }) {
     setUserRestaurantDishes(sourceDishes.map((dish) => ({ ...dish, photos: normalizeSinglePhoto(dish?.photos) })));
     setCustomServices((deepCopy(data.services) || []).map((item) => ({ ...item, photos: normalizeFivePhotos(item?.photos) })));
     setCustomAds((deepCopy(data.ads) || []).map((item) => ({ ...item, photos: normalizeFivePhotos(item?.photos) })));
-    setCustomTaxiItems((deepCopy(data.taxiItems) || []).map(normalizeEntityPhotos));
-    setTaxiTemplates((deepCopy(data.taxiTemplates) || []).map(normalizeEntityPhotos));
+    setCustomTaxiItems((deepCopy(data.taxiItems) || []).map((item) => ({ ...item, photos: normalizeSinglePhoto(item?.photos) })));
     setIsTaxiDriver(Boolean(data.isTaxiDriver));
 
   }, [deepCopy]);
@@ -126,8 +116,6 @@ export function useAuthState({ deepCopy }) {
     setCustomAds,
     userRestaurantDishes,
     setUserRestaurantDishes,
-    taxiTemplates,
-    setTaxiTemplates,
     isTaxiDriver,
     setIsTaxiDriver,
     toggleAuth,

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { clamp, fmtRub, short, formatListingPostedAt } from "../utils/helpers";
 import {
   formatTaxiDateForDisplay,
@@ -16,9 +16,14 @@ import { Icon } from "./ui";
 const MEDIA_STATUS_LOADING = "loading";
 const MEDIA_STATUS_LOADED = "loaded";
 const MEDIA_STATUS_ERROR = "error";
+const ACTIVATION_KEYS = ["Enter", " "];
 
 function buildPhotoStates(items) {
   return items.map(() => MEDIA_STATUS_LOADING);
+}
+
+function stopCardActionPropagation(event) {
+  event.stopPropagation();
 }
 
 function MediaStateSurface({ state, title, note, tile = false }) {
@@ -41,6 +46,67 @@ function MediaStateSurface({ state, title, note, tile = false }) {
 
 function SkeletonBlock({ className = "" }) {
   return <span className={`skeleton-block ${className}`.trim()} aria-hidden="true" />;
+}
+
+function InteractiveCard({ className = "", onOpen, children }) {
+  return (
+    <article
+      className={className}
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (ACTIVATION_KEYS.includes(event.key)) onOpen();
+      }}
+    >
+      {children}
+    </article>
+  );
+}
+
+function FavoriteCornerButton({
+  activeFav,
+  onFav,
+  canFavorite = true,
+  isOwn = false,
+  ownerLabel = "",
+  ownerAriaLabel = "",
+  favoriteClassName = "",
+  ownerClassName = "",
+}) {
+  const buttonClassName = ["fav-corner-btn", favoriteClassName, activeFav ? "active" : ""]
+    .filter(Boolean)
+    .join(" ");
+  const ownerBadgeClassName = ["fav-corner-btn", ownerClassName].filter(Boolean).join(" ");
+
+  if (canFavorite) {
+    return (
+      <button
+        className={buttonClassName}
+        type="button"
+        aria-label={activeFav ? "Убрать из избранного" : "Добавить в избранное"}
+        onPointerDown={stopCardActionPropagation}
+        onTouchStart={stopCardActionPropagation}
+        onClick={(event) => {
+          stopCardActionPropagation(event);
+          onFav();
+        }}
+      >
+        <Icon name={activeFav ? "heart-fill" : "heart"} />
+        <span>{activeFav ? "В избранном" : "В избранное"}</span>
+      </button>
+    );
+  }
+
+  if (isOwn && ownerLabel) {
+    return (
+      <span className={ownerBadgeClassName} aria-label={ownerAriaLabel || ownerLabel}>
+        {ownerLabel}
+      </span>
+    );
+  }
+
+  return null;
 }
 
 export function ItemCardSkeleton({ section = "ads", showRating = false }) {
@@ -162,40 +228,18 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
     : `${item.date} дн. назад`;
   const cardSectionClass = section === "ads" ? "card-ad" : section === "services" ? "card-service" : "";
   return (
-    <article
-      className={`card card-clickable ${cardSectionClass}`}
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onOpen();
-      }}
-    >
+    <InteractiveCard className={`card card-clickable ${cardSectionClass}`} onOpen={onOpen}>
       <div className="card-body">
-        {canFavorite ? (
-          <button
-            className={`fav-corner-btn taxi-fav-btn ${activeFav ? "active" : ""}`}
-            type="button"
-            aria-label={activeFav ? "Убрать из избранного" : "Добавить в избранное"}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onFav();
-            }}
-          >
-            <Icon name={activeFav ? "heart-fill" : "heart"} />
-            <span>{activeFav ? "В избранном" : "В избранное"}</span>
-          </button>
-        ) : isOwn ? (
-          <span className="fav-corner-btn taxi-fav-btn owner-corner-tag" aria-label="Ваше объявление">
-            Моё объявление
-          </span>
-        ) : null}
+        <FavoriteCornerButton
+          activeFav={activeFav}
+          onFav={onFav}
+          canFavorite={canFavorite}
+          isOwn={isOwn}
+          ownerLabel="Моё объявление"
+          ownerAriaLabel="Ваше объявление"
+          favoriteClassName="taxi-fav-btn"
+          ownerClassName="taxi-fav-btn owner-corner-tag"
+        />
         <Media photos={item.photos} emptyText="Нет фотографий" bleed section={section} />
         <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
@@ -216,7 +260,7 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
         ) : null}
         <p className="small">{short(item.desc)}</p>
       </div>
-    </article>
+    </InteractiveCard>
   );
 }
 
@@ -234,40 +278,18 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
   const directionAccentClass = getTaxiDirectionAccent(item.category);
   const directionBadgeText = getTaxiDirectionBadgeText(item.category);
   return (
-    <article
-      className="card card-clickable card-taxi"
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onOpen();
-      }}
-    >
+    <InteractiveCard className="card card-clickable card-taxi" onOpen={onOpen}>
       <div className="card-body taxi-card-body">
-        {canFavorite ? (
-          <button
-            className={`fav-corner-btn taxi-fav-btn ${activeFav ? "active" : ""}`}
-            type="button"
-            aria-label={activeFav ? "Убрать из избранного" : "Добавить в избранное"}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onFav();
-            }}
-          >
-            <Icon name={activeFav ? "heart-fill" : "heart"} />
-            <span>{activeFav ? "В избранном" : "В избранное"}</span>
-          </button>
-        ) : isOwn ? (
-          <span className="fav-corner-btn taxi-fav-btn owner-corner-tag" aria-label="Ваша поездка">
-            Вы водитель
-          </span>
-        ) : null}
+        <FavoriteCornerButton
+          activeFav={activeFav}
+          onFav={onFav}
+          canFavorite={canFavorite}
+          isOwn={isOwn}
+          ownerLabel="Вы водитель"
+          ownerAriaLabel="Ваша поездка"
+          favoriteClassName="taxi-fav-btn"
+          ownerClassName="taxi-fav-btn owner-corner-tag"
+        />
         <div className="taxi-card-layout">
           <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full" blockParentClick />
           <div className="taxi-card-content">
@@ -294,11 +316,10 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
         </div>
         <div className="row wrap taxi-tags">
           {isIntercity ? <span className={`taxi-route-badge taxi-route-badge-bottom ${directionAccentClass}`}>{directionBadgeText}</span> : null}
-          {item.weekdays ? <span className="badge">Регулярно</span> : null}
           {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
         </div>
       </div>
-    </article>
+    </InteractiveCard>
   );
 }
 
@@ -306,28 +327,9 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
   const foodAddressText = String(item.restaurantAddress || item.address || "").trim();
 
   return (
-    <article
-      className="card card-clickable food-card"
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onOpen();
-      }}
-    >
+    <InteractiveCard className="card card-clickable food-card" onOpen={onOpen}>
       <div className="card-body">
-        <button
-          className={`fav-corner-btn ${activeFav ? "active" : ""}`}
-          type="button"
-          aria-label={activeFav ? "Убрать из избранного" : "Добавить в избранное"}
-          onClick={(e) => {
-            e.stopPropagation();
-            onFav();
-          }}
-        >
-          <Icon name={activeFav ? "heart-fill" : "heart"} />
-          <span>{activeFav ? "В избранном" : "В избранное"}</span>
-        </button>
+        <FavoriteCornerButton activeFav={activeFav} onFav={onFav} />
         <Media photos={item.photos} emptyText="Нет фотографий" bleed section="food" blockParentClick />
         <div className="food-card-head">
           <div className="food-card-main">
@@ -355,12 +357,12 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
         </div>
         <p className="small">{short(item.desc)}</p>
       </div>
-    </article>
+    </InteractiveCard>
   );
 }
 
 export function Media({ photos, emptyText, compact = false, onOpen, bleed = false, className = "", blockParentClick = false, overlay = null }) {
-  const items = Array.isArray(photos) ? photos.filter(Boolean) : [];
+  const items = useMemo(() => (Array.isArray(photos) ? photos.filter(Boolean) : []), [photos]);
   const hasPhotos = items.length > 0;
   const showGrid = hasPhotos && !onOpen;
   const [index, setIndex] = useState(0);
@@ -372,7 +374,7 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
 
   useEffect(() => {
     setIndex(0);
-  }, [photoSignature]);
+  }, [items, photoSignature]);
 
   useEffect(() => {
     if (!items.length) {
@@ -415,7 +417,7 @@ export function Media({ photos, emptyText, compact = false, onOpen, bleed = fals
         image.onerror = null;
       });
     };
-  }, [photoSignature]);
+  }, [items, photoSignature]);
 
   const resolvedPhotoStates = items.map((_, photoIndex) => photoStates[photoIndex] || MEDIA_STATUS_LOADING);
   const hasLoadedPhoto = resolvedPhotoStates.some((state) => state === MEDIA_STATUS_LOADED);

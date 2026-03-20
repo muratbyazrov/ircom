@@ -13,6 +13,34 @@ function LoadingList({ children, label = "Загружаем карточки" }
   );
 }
 
+function InteractiveListCard({ className, onOpen, children }) {
+  return (
+    <article
+      className={className}
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") onOpen();
+      }}
+    >
+      {children}
+    </article>
+  );
+}
+
+function CatalogContent({ isLoading, loadingLabel, skeletons, items, emptyState, renderItem }) {
+  if (isLoading) {
+    return <LoadingList label={loadingLabel}>{skeletons}</LoadingList>;
+  }
+
+  return (
+    <section className="list">
+      {items.length ? items.map(renderItem) : emptyState}
+    </section>
+  );
+}
+
 export function AdsTab({
   adsCategoriesVisible,
   adsCategory,
@@ -45,15 +73,19 @@ export function AdsTab({
         <CategoryTabs list={adsCategoriesVisible} value={adsCategory} onChange={setAdsCategory} />
         <SortSelect value={adsSort} onChange={setAdsSort} modes={sectionSortModes.ads} />
       </Section>
-      {isLoading ? (
-        <LoadingList label="Загружаем объявления">
-          <ItemCardSkeleton section="ads" />
-          <ItemCardSkeleton section="ads" />
-          <ItemCardSkeleton section="ads" />
-        </LoadingList>
-      ) : (
-        <section className="list">
-        {adsItems.length ? adsItems.map((x) => (
+      <CatalogContent
+        isLoading={isLoading}
+        loadingLabel="Загружаем объявления"
+        skeletons={(
+          <>
+            <ItemCardSkeleton section="ads" />
+            <ItemCardSkeleton section="ads" />
+            <ItemCardSkeleton section="ads" />
+          </>
+        )}
+        items={adsItems}
+        emptyState={<Empty text="Пока нет объявлений" />}
+        renderItem={(x) => (
           <ItemCard
             key={x.id}
             item={x}
@@ -64,9 +96,8 @@ export function AdsTab({
             isOwn={Boolean(currentOwner && x.owner === currentOwner)}
             canFavorite={!(currentOwner && x.owner === currentOwner)}
           />
-        )) : <Empty text="Пока нет объявлений" />}
-        </section>
-      )}
+        )}
+      />
     </>
   );
 }
@@ -102,15 +133,19 @@ export function ServicesTab({
         <CategoryTabs list={serviceCategories} value={serviceCategory} onChange={setServiceCategory} />
         <SortSelect value={servicesSort} onChange={setServicesSort} modes={sectionSortModes.services} />
       </Section>
-      {isLoading ? (
-        <LoadingList label="Загружаем услуги">
-          <ItemCardSkeleton section="services" showRating />
-          <ItemCardSkeleton section="services" showRating />
-          <ItemCardSkeleton section="services" showRating />
-        </LoadingList>
-      ) : (
-        <section className="list">
-        {servicesItems.length ? servicesItems.map((x) => (
+      <CatalogContent
+        isLoading={isLoading}
+        loadingLabel="Загружаем услуги"
+        skeletons={(
+          <>
+            <ItemCardSkeleton section="services" showRating />
+            <ItemCardSkeleton section="services" showRating />
+            <ItemCardSkeleton section="services" showRating />
+          </>
+        )}
+        items={servicesItems}
+        emptyState={<Empty text="Пока нет услуг" />}
+        renderItem={(x) => (
           <ItemCard
             key={x.id}
             item={x}
@@ -122,9 +157,8 @@ export function ServicesTab({
             isOwn={Boolean(currentOwner && x.owner === currentOwner)}
             canFavorite={!(currentOwner && x.owner === currentOwner)}
           />
-        )) : <Empty text="Пока нет услуг" />}
-        </section>
-      )}
+        )}
+      />
     </>
   );
 }
@@ -185,16 +219,19 @@ export function TaxiTab({
         ) : null}
         <SortSelect value={taxiSort} onChange={setTaxiSort} modes={sectionSortModes.taxi} />
       </Section>
-      {isLoading ? (
-        <LoadingList label="Загружаем поездки">
-          <TaxiCardSkeleton />
-          <TaxiCardSkeleton />
-          <TaxiCardSkeleton />
-        </LoadingList>
-      ) : (
-        <section className="list">
-        {taxiItems.length
-          ? taxiItems.map((x) => {
+      <CatalogContent
+        isLoading={isLoading}
+        loadingLabel="Загружаем поездки"
+        skeletons={(
+          <>
+            <TaxiCardSkeleton />
+            <TaxiCardSkeleton />
+            <TaxiCardSkeleton />
+          </>
+        )}
+        items={taxiItems}
+        emptyState={<Empty text={taxiRequestedAt && isIntercity ? "Нет поездок на выбранное время" : "Пока нет предложений"} />}
+        renderItem={(x) => {
             const isOwn = typeof isOwnTaxiItem === "function"
               ? Boolean(isOwnTaxiItem(x))
               : Boolean(currentOwner && x.owner === currentOwner);
@@ -209,10 +246,8 @@ export function TaxiTab({
                 canFavorite={!isOwn}
               />
             );
-          })
-          : <Empty text={taxiRequestedAt && isIntercity ? "Нет поездок на выбранное время" : "Пока нет предложений"} />}
-        </section>
-      )}
+          }}
+      />
     </>
   );
 }
@@ -247,24 +282,22 @@ export function FoodTab({
       <Section>
         <CategoryTabs list={foodCategories} value={foodCategory} onChange={setFoodCategory} />
       </Section>
-      {isLoading ? (
-        <LoadingList label="Загружаем заведения">
-          <RestaurantCardSkeleton />
-          <RestaurantCardSkeleton />
-        </LoadingList>
-      ) : (
-        <section className="list">
-        {!restaurants.length ? <Empty text="Пока нет заведений" /> : null}
-        {restaurants.map((restaurant) => (
-          <article
+      <CatalogContent
+        isLoading={isLoading}
+        loadingLabel="Загружаем заведения"
+        skeletons={(
+          <>
+            <RestaurantCardSkeleton />
+            <RestaurantCardSkeleton />
+          </>
+        )}
+        items={restaurants}
+        emptyState={<Empty text="Пока нет заведений" />}
+        renderItem={(restaurant) => (
+          <InteractiveListCard
             className="card card-clickable restaurant-list-card"
             key={restaurant.id}
-            role="button"
-            tabIndex={0}
-            onClick={() => openDetail("restaurant", restaurant.id)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") openDetail("restaurant", restaurant.id);
-            }}
+            onOpen={() => openDetail("restaurant", restaurant.id)}
           >
             <div className="card-body">
               <div className="restaurant-list-photo-wrap">
@@ -298,10 +331,9 @@ export function FoodTab({
                 </span>
               </div>
             </div>
-          </article>
-        ))}
-        </section>
-      )}
+          </InteractiveListCard>
+        )}
+      />
     </>
   );
 }
@@ -312,7 +344,6 @@ export function ProfileTab({
   myAds,
   hasRestaurant,
   isTaxiDriver,
-  taxiTemplates,
   oneTimeIntercityOffers,
   myServices,
   onOpenEntityGroup,
@@ -337,7 +368,7 @@ export function ProfileTab({
     { key: "restaurant", label: "Заведения", count: hasRestaurant ? 1 : 0, icon: "food" },
     { key: "ads", label: "Объявления", count: myAds.length, icon: "ads" },
     { key: "services", label: "Услуги", count: myServices.length, icon: "services" },
-    { key: "taxi", label: "Моё такси", count: oneTimeIntercityOffers.length + taxiTemplates.length, icon: "taxi" },
+    { key: "taxi", label: "Моё такси", count: oneTimeIntercityOffers.length, icon: "taxi" },
   ].filter((entry) => entry.count > 0);
 
   return (
@@ -372,15 +403,10 @@ export function ProfileTab({
             <h4 className="profile-section-title">Мой бизнес</h4>
             <div className="entity-groups-compact">
               {entityGroups.map((entry) => (
-                <article
+                <InteractiveListCard
                   className="entity-compact-card card-clickable"
                   key={entry.key}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onOpenEntityGroup(entry.key)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") onOpenEntityGroup(entry.key);
-                  }}
+                  onOpen={() => onOpenEntityGroup(entry.key)}
                 >
                   <div className="entity-compact-main">
                     <div className="entity-compact-icon-wrap">
@@ -388,9 +414,9 @@ export function ProfileTab({
                     </div>
                     <div className="entity-compact-title">{entry.label} ({entry.count})</div>
                   </div>
-                </article>
+                </InteractiveListCard>
               ))}
-              {!hasRestaurant && !myAds.length && !myServices.length && !oneTimeIntercityOffers.length && !taxiTemplates.length ? (
+              {!hasRestaurant && !myAds.length && !myServices.length && !oneTimeIntercityOffers.length ? (
                 <p className="small">Создайте заведение, объявление, услугу или поездку, чтобы управлять ими из профиля.</p>
               ) : null}
             </div>

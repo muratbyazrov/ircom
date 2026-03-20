@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { applyImageFallback } from "../../utils/images";
 import { formatPhoneValue, handlePhoneInput, PHONE_PATTERN, PHONE_PLACEHOLDER, syncPhonePrev, syncWhatsappFromPhone } from "../../utils/phone";
-import { getTaxiDateByPreset, getTaxiPresetState, TAXI_DAY_PRESETS, TAXI_RECURRING_WEEKDAYS } from "../../utils/taxi";
+import { getTaxiDateByPreset, getTaxiPresetState, TAXI_DAY_PRESETS } from "../../utils/taxi";
 import { TAXI_CITY_CATEGORY } from "../../utils/app-domain";
 import { FormActions, Field } from "../ui";
 import restaurantHero from "../../assets/restaurant-hero.svg";
@@ -32,17 +32,10 @@ export function CreateForm({
     : initialCategory
       ? [initialCategory]
       : [taxiCategories?.[0]].filter(Boolean);
-  const initialTaxiMode = initialValues?.mode === "recurring" ? "recurring" : "one-time";
   const initialTaxiWhen = String(initialValues?.when || "");
   const initialTaxiPresetState = getTaxiPresetState(initialTaxiWhen);
   const initialTaxiDayPreset = initialTaxiPresetState.dayPreset;
   const initialTaxiHourPreset = initialTaxiPresetState.hourPreset;
-  const initialRecurringHourPreset = (() => {
-    const match = String(initialValues?.time || "").match(/(\d{1,2}):/);
-    const parsed = Number(match?.[1]);
-    if (!Number.isFinite(parsed)) return 8;
-    return Math.max(4, Math.min(24, parsed));
-  })();
   const [isPreparingPhotos, setIsPreparingPhotos] = useState(false);
   const [selectedPhotoCount, setSelectedPhotoCount] = useState(0);
   const [selectedPhotoFiles, setSelectedPhotoFiles] = useState([]);
@@ -53,14 +46,8 @@ export function CreateForm({
   const [attemptedTaxiSubmit, setAttemptedTaxiSubmit] = useState(false);
   const [taxiFieldErrors, setTaxiFieldErrors] = useState({});
   const [selectedTaxiCategories, setSelectedTaxiCategories] = useState(() => (type === "taxi" ? initialTaxiCategories : []));
-  const [taxiOfferMode, setTaxiOfferMode] = useState(initialTaxiMode);
   const [taxiDayPreset, setTaxiDayPreset] = useState(initialTaxiDayPreset);
   const [taxiHourPreset, setTaxiHourPreset] = useState(initialTaxiHourPreset);
-  const [recurringDays, setRecurringDays] = useState(() => {
-    const source = Array.isArray(initialValues?.weekdays) ? initialValues.weekdays : ["Пн", "Ср", "Пт"];
-    return source.length ? source : ["Пн", "Ср", "Пт"];
-  });
-  const [recurringHourPreset, setRecurringHourPreset] = useState(initialRecurringHourPreset);
   const [restaurantDeliveryMode, setRestaurantDeliveryMode] = useState(() => {
     const mode = String(initialValues?.deliveryMode || "none");
     return mode === "free" || mode === "paid" ? mode : "none";
@@ -84,7 +71,7 @@ export function CreateForm({
   const taxiWhatsappRef = useRef(null);
   const maxPhotos = type === "ad" || type === "service" ? 8 : 1;
 
-  const collectInitialPhotos = () => {
+  const collectInitialPhotos = useCallback(() => {
     if (!isEdit) return [];
     if (type === "restaurant") {
       const logo = String(initialValues?.logo || "").trim();
@@ -95,7 +82,7 @@ export function CreateForm({
       .map((photo) => String(photo || "").trim())
       .filter(Boolean)
       .slice(0, maxPhotos);
-  };
+  }, [initialValues, isEdit, maxPhotos, type]);
 
   const buildPhotosLimitError = (newCount, keptExistingCount = existingPhotos.length) => {
     const total = Number(newCount || 0) + Number(keptExistingCount || 0);
@@ -122,7 +109,7 @@ export function CreateForm({
     const nextInitial = collectInitialPhotos();
     setExistingPhotos(nextInitial);
     setRemovedExistingPhotos([]);
-  }, [isEdit, type, initialValues, maxPhotos]);
+  }, [collectInitialPhotos]);
 
   const handleImagesChange = (e) => {
     const files = Array.from(e.target.files || []);
@@ -199,8 +186,6 @@ export function CreateForm({
   const endTimeDrag = () => setIsTimeDragging(false);
 
   const cityCategory = TAXI_CITY_CATEGORY;
-  const isRecurring = taxiOfferMode === "recurring";
-
   const toggleTaxiCategory = (category) => {
     const isCity = category === cityCategory;
     setSelectedTaxiCategories((prev) => {
@@ -218,33 +203,20 @@ export function CreateForm({
   const hasTaxiDirection = selectedTaxiCategories.length > 0;
   const formatTaxiHour = (hour) => `${hour % 24}`.padStart(2, "0") + ":00";
   const taxiTimePreset = formatTaxiHour(taxiHourPreset);
-  const recurringTimePreset = formatTaxiHour(recurringHourPreset);
   const taxiDateValue = getTaxiDateByPreset(taxiDayPreset);
   const taxiWhenValue = taxiDayPreset && taxiDateValue
     ? `${taxiDayPreset} (${taxiDateValue})${taxiTimePreset ? ` ${taxiTimePreset}` : ""}`
     : "";
   const hasTaxiWhen = Boolean(String(taxiWhenValue || "").trim());
-  const hasRecurringDays = recurringDays.length > 0;
   const showTaxiDirectionError = attemptedTaxiSubmit && !hasTaxiDirection;
-  const showTaxiWhenError = attemptedTaxiSubmit && isIntercityCreate && !isRecurring && !hasTaxiWhen;
-  const showTaxiRecurringDaysError = attemptedTaxiSubmit && isIntercityCreate && isRecurring && !hasRecurringDays;
-  const toggleRecurringDay = (day) => {
-    setRecurringDays((prev) => (
-      prev.includes(day) ? prev.filter((x) => x !== day) : [...prev, day]
-    ));
-  };
+  const showTaxiWhenError = attemptedTaxiSubmit && isIntercityCreate && !hasTaxiWhen;
 
   useEffect(() => {
-    if (!isIntercitySelected && taxiOfferMode !== "one-time") setTaxiOfferMode("one-time");
-  }, [isIntercitySelected, taxiOfferMode]);
-
-  const isIntercityOneTimeCreate = isIntercityCreate && !isRecurring;
-  useEffect(() => {
-    if (isIntercityOneTimeCreate && !wasIntercityOneTimeCreateRef.current && !taxiDayPreset) {
+    if (isIntercityCreate && !wasIntercityOneTimeCreateRef.current && !taxiDayPreset) {
       setTaxiDayPreset("Сегодня");
     }
-    wasIntercityOneTimeCreateRef.current = isIntercityOneTimeCreate;
-  }, [isIntercityOneTimeCreate, taxiDayPreset]);
+    wasIntercityOneTimeCreateRef.current = isIntercityCreate;
+  }, [isIntercityCreate, taxiDayPreset]);
 
   useEffect(() => {
     syncWhatsappFromPhone(restaurantPhoneRef.current, restaurantWhatsappRef.current);
@@ -257,7 +229,6 @@ export function CreateForm({
     const formData = new FormData(form);
     const nextFieldErrors = {};
 
-    if (!String(formData.get("name") || "").trim()) nextFieldErrors.name = "Укажите имя водителя";
     if (!String(formData.get("price") || "").trim()) nextFieldErrors.price = "Укажите стоимость поездки";
     if (isIntercityCreate && !String(formData.get("seats") || "").trim()) nextFieldErrors.seats = "Укажите количество мест";
     if (!String(formData.get("phone") || "").trim()) nextFieldErrors.phone = "Укажите номер телефона для связи";
@@ -265,10 +236,8 @@ export function CreateForm({
 
     setTaxiFieldErrors(nextFieldErrors);
     const nativeValid = form.reportValidity();
-    const hasRequiredTaxiWhen = !isIntercityCreate || isRecurring || hasTaxiWhen;
-    const hasRequiredRecurringDays = !isIntercityCreate || !isRecurring || hasRecurringDays;
     const hasMissingTaxiFields = Object.values(nextFieldErrors).some(Boolean);
-    if (!nativeValid || hasMissingTaxiFields || !hasTaxiDirection || !hasRequiredTaxiWhen || !hasRequiredRecurringDays || Boolean(photosLimitError)) {
+    if (!nativeValid || hasMissingTaxiFields || !hasTaxiDirection || (isIntercityCreate && !hasTaxiWhen) || Boolean(photosLimitError)) {
       e.preventDefault();
       return;
     }
@@ -574,104 +543,44 @@ export function CreateForm({
           </Field>
           {isIntercitySelected ? (
             <>
-              <Field label="Формат поездок">
-                <div className="multi-select-buttons">
-                  <button
-                    type="button"
-                    className={`multi-select-btn ${taxiOfferMode === "one-time" ? "active" : ""}`}
-                    onClick={() => setTaxiOfferMode("one-time")}
-                    aria-pressed={taxiOfferMode === "one-time"}
-                  >
-                    Разовая
-                  </button>
-                  <button
-                    type="button"
-                    className={`multi-select-btn ${taxiOfferMode === "recurring" ? "active" : ""}`}
-                    onClick={() => setTaxiOfferMode("recurring")}
-                    aria-pressed={taxiOfferMode === "recurring"}
-                  >
-                    Регулярная
-                  </button>
+              <Field label={taxiDateValue ? `Дата и время (${taxiDateValue} ${taxiTimePreset})` : "Дата и время"}>
+                <p className="small" style={{ marginTop: 0, marginBottom: 8 }}>Указывайте время по Москве (UTC+3).</p>
+                <div className={`multi-select-buttons ${showTaxiWhenError ? "is-invalid" : ""}`}>
+                  {TAXI_DAY_PRESETS.map((x) => (
+                    <button
+                      key={x}
+                      type="button"
+                      className={`multi-select-btn ${taxiDayPreset === x ? "active" : ""}`}
+                      onClick={() => setTaxiDayPreset((prev) => (prev === x ? "" : x))}
+                      aria-pressed={taxiDayPreset === x}
+                    >
+                      {x}
+                    </button>
+                  ))}
                 </div>
+                <p className="small" style={{ marginTop: 8, marginBottom: 6 }}>Время выезда</p>
+                <div className={`time-slider-meta${isTimeDragging ? " is-dragging" : ""}`}>
+                  <span>04:00</span>
+                  <b>{taxiTimePreset}</b>
+                  <span>00:00</span>
+                </div>
+                <input
+                  type="range"
+                  className="time-slider"
+                  min={4}
+                  max={24}
+                  step={1}
+                  value={taxiHourPreset}
+                  onChange={(e) => setTaxiHourPreset(Number(e.currentTarget.value))}
+                  onPointerDown={startTimeDrag}
+                  onPointerUp={endTimeDrag}
+                  onPointerCancel={endTimeDrag}
+                  onPointerLeave={endTimeDrag}
+                />
+                <input type="hidden" name="when" value={taxiWhenValue} />
+                <input type="hidden" name="mode" value="one-time" />
+                {showTaxiWhenError ? <p className="small field-invalid-note">Выберите дату выезда</p> : null}
               </Field>
-              {isRecurring ? (
-                <Field label={`Регулярные выезды (${recurringDays.join(", ") || "выберите дни"} · ${recurringTimePreset})`}>
-                  <div className={`multi-select-buttons ${showTaxiRecurringDaysError ? "is-invalid" : ""}`}>
-                    {TAXI_RECURRING_WEEKDAYS.map((x) => (
-                      <button
-                        key={x}
-                        type="button"
-                        className={`multi-select-btn ${recurringDays.includes(x) ? "active" : ""}`}
-                        onClick={() => toggleRecurringDay(x)}
-                        aria-pressed={recurringDays.includes(x)}
-                      >
-                        {x}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="small" style={{ marginTop: 8, marginBottom: 6 }}>Время выезда</p>
-                  <div className={`time-slider-meta${isTimeDragging ? " is-dragging" : ""}`}>
-                    <span>04:00</span>
-                    <b>{recurringTimePreset}</b>
-                    <span>00:00</span>
-                  </div>
-                  <input
-                    type="range"
-                    className="time-slider"
-                    min={4}
-                    max={24}
-                    step={1}
-                    value={recurringHourPreset}
-                    onChange={(e) => setRecurringHourPreset(Number(e.currentTarget.value))}
-                    onPointerDown={startTimeDrag}
-                    onPointerUp={endTimeDrag}
-                    onPointerCancel={endTimeDrag}
-                    onPointerLeave={endTimeDrag}
-                  />
-                  {recurringDays.map((x) => <input key={x} type="hidden" name="scheduleDay" value={x} />)}
-                  <input type="hidden" name="scheduleHour" value={recurringTimePreset} />
-                  {showTaxiRecurringDaysError ? <p className="small field-invalid-note">Выберите хотя бы один день</p> : null}
-                </Field>
-              ) : (
-                <Field label={taxiDateValue ? `Дата и время (${taxiDateValue} ${taxiTimePreset})` : "Дата и время"}>
-                  <p className="small" style={{ marginTop: 0, marginBottom: 8 }}>Указывайте время по Москве (UTC+3).</p>
-                  <div className={`multi-select-buttons ${showTaxiWhenError ? "is-invalid" : ""}`}>
-                    {TAXI_DAY_PRESETS.map((x) => (
-                      <button
-                        key={x}
-                        type="button"
-                        className={`multi-select-btn ${taxiDayPreset === x ? "active" : ""}`}
-                        onClick={() => setTaxiDayPreset((prev) => (prev === x ? "" : x))}
-                        aria-pressed={taxiDayPreset === x}
-                      >
-                        {x}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="small" style={{ marginTop: 8, marginBottom: 6 }}>Время выезда</p>
-                  <div className={`time-slider-meta${isTimeDragging ? " is-dragging" : ""}`}>
-                    <span>04:00</span>
-                    <b>{taxiTimePreset}</b>
-                    <span>00:00</span>
-                  </div>
-                  <input
-                    type="range"
-                    className="time-slider"
-                    min={4}
-                    max={24}
-                    step={1}
-                    value={taxiHourPreset}
-                    onChange={(e) => setTaxiHourPreset(Number(e.currentTarget.value))}
-                    onPointerDown={startTimeDrag}
-                    onPointerUp={endTimeDrag}
-                    onPointerCancel={endTimeDrag}
-                    onPointerLeave={endTimeDrag}
-                  />
-                  <input type="hidden" name="when" value={taxiWhenValue} />
-                  {showTaxiWhenError ? <p className="small field-invalid-note">Выберите дату выезда</p> : null}
-                </Field>
-              )}
-              <input type="hidden" name="mode" value={taxiOfferMode} />
             </>
           ) : null}
           <Field label="Телефон">

@@ -39,6 +39,48 @@ import {
   Wrench,
 } from "lucide-react";
 
+const iconByKey = {
+  ads: FileText,
+  services: Hammer,
+  taxi: CarFront,
+  food: Hamburger,
+  profile: User,
+  all: Grid2x2,
+  auto: Car,
+  realty: House,
+  electronics: Smartphone,
+  appliance: WashingMachine,
+  furniture: Sofa,
+  misc: Plus,
+  mine: User,
+  pastry: CakeSlice,
+  tutor: GraduationCap,
+  beauty: Sparkles,
+  carservice: Wrench,
+  foodall: UtensilsCrossed,
+  caucasus: Mountain,
+  sushi: Fish,
+  pie: Pizza,
+  burger: Hamburger,
+  route: Route,
+  time: Clock3,
+  delivery: Bike,
+  store: Store,
+  "taxi-city": CarFront,
+  "route-fw": MoveRight,
+  "route-bw": MoveLeft,
+  close: X,
+  open: ExternalLink,
+  phone: Phone,
+  refresh: RotateCw,
+  heart: Heart,
+  "heart-fill": Heart,
+  star: Star,
+  up: ChevronUp,
+  telegram: Send,
+  whatsapp: MessageCircle,
+};
+
 export function Section({ children, className = "" }) {
   const classes = className ? `section ${className}` : "section";
   return <section className={classes}>{children}</section>;
@@ -215,48 +257,6 @@ export function Empty({ text }) {
 }
 
 export function Icon({ name }) {
-  const iconByKey = {
-    ads: FileText,
-    services: Hammer,
-    taxi: CarFront,
-    food: Hamburger,
-    profile: User,
-    all: Grid2x2,
-    auto: Car,
-    realty: House,
-    electronics: Smartphone,
-    appliance: WashingMachine,
-    furniture: Sofa,
-    misc: Plus,
-    mine: User,
-    pastry: CakeSlice,
-    tutor: GraduationCap,
-    beauty: Sparkles,
-    carservice: Wrench,
-    foodall: UtensilsCrossed,
-    caucasus: Mountain,
-    sushi: Fish,
-    pie: Pizza,
-    burger: Hamburger,
-    route: Route,
-    time: Clock3,
-    delivery: Bike,
-    store: Store,
-    "taxi-city": CarFront,
-    "route-fw": MoveRight,
-    "route-bw": MoveLeft,
-    close: X,
-    open: ExternalLink,
-    phone: Phone,
-    refresh: RotateCw,
-    heart: Heart,
-    "heart-fill": Heart,
-    star: Star,
-    up: ChevronUp,
-    telegram: Send,
-    whatsapp: MessageCircle,
-  };
-
   const LucideIcon = iconByKey[name] || Circle;
   const isFilledHeart = name === "heart-fill";
 

@@ -99,6 +99,15 @@ const SUPPORT_TELEGRAM_URL = "https://t.me/+Bqm7XK8ISl4yMmNi";
 const TELEGRAM_AUTO_AUTH_DISABLED_KEY = "__ircomTelegramAutoAuthDisabled";
 const SCROLL_TOP_VISIBILITY_OFFSET = 420;
 const TAB_AUTO_REFRESH_STALE_MS = 30000;
+const FULL_SCREEN_CREATE_TYPES = new Set(["ad", "service", "taxi", "restaurant"]);
+const LIST_TABS = new Set(["ads", "services", "taxi", "food"]);
+
+const buildModalSnapshot = (currentModal) => (
+  currentModal ? { type: currentModal.type, payload: currentModal.payload } : null
+);
+
+const getModalReturnTarget = (currentModal) => currentModal?.payload?.returnTo || null;
+
 export default function App() {
   const [tab, setTab] = useState("ads");
   const [favorites, setFavorites] = useState(new Set());
@@ -156,8 +165,6 @@ export default function App() {
     setCustomAds,
     userRestaurantDishes,
     setUserRestaurantDishes,
-    taxiTemplates,
-    setTaxiTemplates,
     isTaxiDriver,
     setIsTaxiDriver,
     toggleAuth,
@@ -178,6 +185,10 @@ export default function App() {
       return;
     }
     window.open(SUPPORT_TELEGRAM_URL, "_blank", "noopener,noreferrer");
+  }, []);
+
+  const showActionError = useCallback((error, fallbackMessage) => {
+    alert(error?.message || fallbackMessage);
   }, []);
 
   const closeMiniApp = useCallback(() => {
@@ -487,6 +498,10 @@ export default function App() {
     };
   }, [authBootstrapDone, isAuth, applyAuthSession, isTelegramAutoAuthDisabled, telegramWebApp, telegramInitData, isTelegramMiniApp]);
 
+  useEffect(() => {
+    setIsTaxiDriver(customTaxiItems.length > 0);
+  }, [customTaxiItems.length, setIsTaxiDriver]);
+
   const refreshCatalog = useCallback(async ({ showLoader = true } = {}) => {
     const accountId = toAccountId(authSession?.accountId);
     if (showLoader) {
@@ -571,7 +586,6 @@ export default function App() {
       setCustomAds([]);
       setCustomServices([]);
       setCustomTaxiItems([]);
-      setTaxiTemplates([]);
       setUserRestaurantDishes([]);
       setHasRestaurant(false);
       setRestaurantEntity(null);
@@ -594,8 +608,6 @@ export default function App() {
     setCustomAds(myAds);
     setCustomServices(myServices);
     setCustomTaxiItems(myActiveTaxi);
-    setTaxiTemplates([]);
-    setIsTaxiDriver(myActiveTaxi.length > 0);
 
     const myRestaurantId = toAccountId(myRestaurantRaw?.restaurantId);
     if (myRestaurantId !== null) {
@@ -628,7 +640,6 @@ export default function App() {
     setCustomAds,
     setCustomServices,
     setCustomTaxiItems,
-    setTaxiTemplates,
     setUserRestaurantDishes,
     setHasRestaurant,
     setRestaurantEntity,
@@ -880,16 +891,11 @@ export default function App() {
     ensureAuth(async () => {
       const accountId = toAccountId(authSession?.accountId);
       if (accountId === null || !id) return;
-      const ownTaxiByTemplate = taxiTemplates.some((item) => {
-        if (!item?.id || typeof id !== "string") return false;
-        return id === item.id || id === `template-preview-${item.id}` || id.startsWith(`${item.id}-`);
-      });
       const isOwnItem =
         customAds.some((item) => item.id === id)
         || customServices.some((item) => item.id === id)
         || customTaxiItems.some((item) => item.id === id)
         || userRestaurantDishes.some((item) => item.id === id)
-        || ownTaxiByTemplate
         || taxiData.some((item) => item.id === id && (item.owner === currentOwner || isTaxiOwnedByProfile(item)));
       if (isOwnItem) return;
       try {
@@ -944,7 +950,7 @@ export default function App() {
     return sortItems(filtered, adsSort, favorites);
   }, [adsCategoriesVisible, adsCategory, adsSort, favorites, currentOwner, adsCatalog]);
 
-  const decorateWithFeedback = (item) => {
+  const decorateWithFeedback = useCallback((item) => {
     const reviews = Array.isArray(feedbackByItem[item.id]) ? feedbackByItem[item.id] : [];
     const reviewsCount = Math.max(reviews.length, Number(item.reviewsCount) || 0);
     const reviewsRating = getFeedbackRating(reviews);
@@ -958,13 +964,13 @@ export default function App() {
       reviewsCount,
       reviews,
     };
-  };
+  }, [feedbackByItem]);
 
   const servicesCatalog = useMemo(
     () => servicesData
       .map((item) => ({ ...item, photos: normalizeFivePhotos(item?.photos) }))
       .map((item) => decorateWithFeedback(item)),
-    [feedbackByItem, servicesData]
+    [decorateWithFeedback, servicesData]
   );
 
   const servicesItems = useMemo(
@@ -1087,29 +1093,33 @@ export default function App() {
     () => customTaxiItems.map((item) => normalizeEntityPhotos(item)),
     [customTaxiItems]
   );
-  const normalizedTaxiTemplates = useMemo(
-    () => taxiTemplates.map((item) => normalizeEntityPhotos(item)),
-    [taxiTemplates]
+  const oneTimeTaxiOffers = useMemo(
+    () => customTaxiItems.filter((item) => item.mode === "one-time"),
+    [customTaxiItems]
   );
+  const oneTimeCityOffers = useMemo(
+    () => normalizedCustomTaxiItems.filter((item) => item.mode === "one-time" && item.category === TAXI_CITY_CATEGORY),
+    [normalizedCustomTaxiItems]
+  );
+  const oneTimeIntercityOffers = useMemo(
+    () => normalizedCustomTaxiItems.filter((item) => item.mode === "one-time" && item.category !== TAXI_CITY_CATEGORY),
+    [normalizedCustomTaxiItems]
+  );
+  const ownedAdIds = useMemo(() => new Set(customAds.map((item) => item.id)), [customAds]);
+  const ownedServiceIds = useMemo(() => new Set(customServices.map((item) => item.id)), [customServices]);
+  const ownedDishIds = useMemo(() => new Set(userRestaurantDishes.map((item) => item.id)), [userRestaurantDishes]);
   const isOwnTaxiItem = useCallback((item) => {
     if (!item) return false;
     if (currentOwner && item.owner === currentOwner) return true;
     if (isTaxiOwnedByProfile(item)) return true;
     const id = String(item.id || "");
     if (!id) return false;
-    if (normalizedCustomTaxiItems.some((entry) => entry.id === id)) return true;
-    return normalizedTaxiTemplates.some((entry) => {
-      const templateId = String(entry.id || "");
-      if (!templateId) return false;
-      return id === templateId || id === `template-preview-${templateId}` || id.startsWith(`${templateId}-`);
-    });
-  }, [currentOwner, normalizedCustomTaxiItems, normalizedTaxiTemplates, isTaxiOwnedByProfile]);
+    return normalizedCustomTaxiItems.some((entry) => entry.id === id);
+  }, [currentOwner, normalizedCustomTaxiItems, isTaxiOwnedByProfile]);
 
   const { taxiCatalog, taxiItems } = useTaxiCatalog({
     customTaxiItems: normalizedTaxiFeedItems,
-    taxiTemplates: normalizedTaxiTemplates,
     mockTaxi: [],
-    feedbackByItem,
     decorateWithFeedback,
     taxiRequestedAt,
     setTaxiRequestedAt,
@@ -1180,7 +1190,7 @@ export default function App() {
   };
 
   const openCreate = (type, options = {}) => ensureAuth(() => {
-    const fallbackReturnTo = modal ? { type: modal.type, payload: modal.payload } : null;
+    const fallbackReturnTo = buildModalSnapshot(modal);
     setModal({
       type: "create",
       payload: {
@@ -1190,7 +1200,7 @@ export default function App() {
     });
   });
   const openEditEntity = (payload) => ensureAuth(() => {
-    const fallbackReturnTo = modal ? { type: modal.type, payload: modal.payload } : null;
+    const fallbackReturnTo = buildModalSnapshot(modal);
     setModal({
       type: "editEntity",
       payload: {
@@ -1201,7 +1211,7 @@ export default function App() {
   });
   const openEntityGroup = (group) => ensureAuth(() => setModal({ type: "entityGroup", payload: { group } }));
   const openEditProfile = () => ensureAuth(() => {
-    const fallbackReturnTo = modal ? { type: modal.type, payload: modal.payload } : null;
+    const fallbackReturnTo = buildModalSnapshot(modal);
     setModal({
       type: "profileEdit",
       payload: {
@@ -1211,10 +1221,10 @@ export default function App() {
     });
   });
   const createType = modal?.type === "create" || modal?.type === "editEntity" ? modal.payload?.type : null;
-  const fullScreenCreate = createType === "ad" || createType === "service" || createType === "taxi" || createType === "restaurant";
+  const fullScreenCreate = FULL_SCREEN_CREATE_TYPES.has(createType);
   const fullScreenModal = modal?.type === "detail" || modal?.type === "profileEdit" || modal?.type === "entityGroup" || fullScreenCreate;
   const blockAuthBackdropClose = modal?.type === "auth" && Boolean(modal?.payload?.returnTo);
-  const isListTab = tab === "ads" || tab === "services" || tab === "taxi" || tab === "food";
+  const isListTab = LIST_TABS.has(tab);
   const showFloatingScrollTopButton = isListTab && showScrollTopButton && !fullScreenModal;
 
   const handleScreenScroll = useCallback((event) => {
@@ -1448,11 +1458,10 @@ export default function App() {
       }
 
       if (type === "taxi") {
-        if (isEdit && editEntityKind === "taxi-template") {
-          throw new Error("Редактирование шаблонов такси не поддерживается бэкендом");
-        }
         const uploadedTaxiPhotos = await uploadPhotos("images", 1, "taxi");
-        const currentTaxi = isEdit ? customTaxiItems.find((x) => x.id === editEntityId) : null;
+        const currentTaxi = isEdit
+          ? customTaxiItems.find((x) => x.id === editEntityId) || null
+          : null;
         const categories = toArray(payload.category).filter(Boolean);
         const category = categories[0] || currentTaxi?.category;
         const routePayload = buildTaxiRoutePayload(category);
@@ -1525,16 +1534,6 @@ export default function App() {
     }
   };
 
-  const setTemplateStatus = (id, status) => {
-    setTaxiTemplates((prev) => prev.map((x) => (x.id === id ? { ...x, status } : x)));
-  };
-
-  const removeTemplate = (id) => {
-    setTaxiTemplates((prev) => prev.filter((x) => x.id !== id));
-  };
-
-  const editTemplate = (id) => openEditEntity({ type: "taxi", id, kind: "taxi-template" });
-
   const toggleTaxiFilled = (id) => {
     setCustomTaxiItems((prev) => prev.map((x) => (x.id === id ? { ...x, isFilled: !x.isFilled } : x)));
   };
@@ -1591,18 +1590,22 @@ export default function App() {
       closeModal();
       return;
     }
-    const accountId = toAccountId(authSession?.accountId);
-    const menuItemId = Number(String(dishId).split("-").pop());
-    if (accountId !== null && menuItemId) {
-      await deleteMenuItemRequest({ accountId, menuItemId });
-      await refreshMyData();
-      await refreshCatalog();
+    try {
+      const accountId = toAccountId(authSession?.accountId);
+      const menuItemId = Number(String(dishId).split("-").pop());
+      if (accountId !== null && menuItemId) {
+        await deleteMenuItemRequest({ accountId, menuItemId });
+        await refreshMyData();
+        await refreshCatalog();
+      }
+      if (modal?.payload?.returnTo) {
+        setModal(modal.payload.returnTo);
+        return;
+      }
+      setModal(null);
+    } catch (error) {
+      showActionError(error, "Не удалось удалить блюдо");
     }
-    if (modal?.payload?.returnTo) {
-      setModal(modal.payload.returnTo);
-      return;
-    }
-    setModal(null);
   };
   const confirmRemoveTaxiOffer = async () => {
     if (modal?.type !== "confirmTaxiDelete") return;
@@ -1611,66 +1614,62 @@ export default function App() {
       closeModal();
       return;
     }
-    const accountId = toAccountId(authSession?.accountId);
-    const taxiOfferId = Number(String(taxiId).split("-")[1]);
-    if (accountId !== null && taxiOfferId) {
-      await deleteTaxiOfferRequest({ accountId, taxiOfferId });
-      await refreshMyData();
-      await refreshCatalog();
-      setFeedbackByItem((prev) => {
-        if (!Object.prototype.hasOwnProperty.call(prev, taxiId)) return prev;
-        const next = { ...prev };
-        delete next[taxiId];
-        return next;
-      });
-      setFavorites((prev) => {
-        if (!prev.has(taxiId)) return prev;
-        const next = new Set(prev);
-        next.delete(taxiId);
-        return next;
-      });
+    try {
+      const accountId = toAccountId(authSession?.accountId);
+      const taxiOfferId = Number(String(taxiId).split("-")[1]);
+      if (accountId !== null && taxiOfferId) {
+        await deleteTaxiOfferRequest({ accountId, taxiOfferId });
+        await refreshMyData();
+        await refreshCatalog();
+        setFeedbackByItem((prev) => {
+          if (!Object.prototype.hasOwnProperty.call(prev, taxiId)) return prev;
+          const next = { ...prev };
+          delete next[taxiId];
+          return next;
+        });
+        setFavorites((prev) => {
+          if (!prev.has(taxiId)) return prev;
+          const next = new Set(prev);
+          next.delete(taxiId);
+          return next;
+        });
+      }
+      if (modal?.payload?.returnTo) {
+        setModal(modal.payload.returnTo);
+        return;
+      }
+      setModal(null);
+    } catch (error) {
+      showActionError(error, "Не удалось удалить поездку");
     }
-    if (modal?.payload?.returnTo) {
-      setModal(modal.payload.returnTo);
-      return;
-    }
-    setModal(null);
   };
   const toggleDishAvailability = async (id) => {
-    const accountId = toAccountId(authSession?.accountId);
-    const menuItemId = Number(String(id).split("-").pop());
-    const dish = userRestaurantDishes.find((x) => x.id === id);
-    if (accountId === null || !menuItemId || !dish) return;
-    await updateMenuItemRequest({
-      accountId,
-      menuItemId,
-      category: dish.category,
-      name: dish.title,
-      description: dish.desc || "",
-      price: Number(dish.price) || 1,
-      isAvailable: Boolean(dish.unavailable),
-      photos: normalizeSinglePhoto(dish.photos),
-    });
-    await refreshMyData();
-    await refreshCatalog();
+    try {
+      const accountId = toAccountId(authSession?.accountId);
+      const menuItemId = Number(String(id).split("-").pop());
+      const dish = userRestaurantDishes.find((x) => x.id === id);
+      if (accountId === null || !menuItemId || !dish) return;
+      await updateMenuItemRequest({
+        accountId,
+        menuItemId,
+        category: dish.category,
+        name: dish.title,
+        description: dish.desc || "",
+        price: Number(dish.price) || 1,
+        isAvailable: Boolean(dish.unavailable),
+        photos: normalizeSinglePhoto(dish.photos),
+      });
+      await refreshMyData();
+      await refreshCatalog();
+    } catch (error) {
+      showActionError(error, "Не удалось обновить наличие блюда");
+    }
   };
 
   const editRestaurant = () => openEditEntity({ type: "restaurant", kind: "restaurant" });
   const viewRestaurant = () => {
     if (!restaurantEntity?.id) return;
     openBusinessDetail("restaurant", restaurantEntity.id, "restaurant");
-  };
-  const viewTaxiTemplate = (id) => {
-    if (!id) return;
-    setModal({
-      type: "detail",
-      payload: {
-        type: "taxi",
-        id: `template-preview-${id}`,
-        fromBusiness: true,
-        returnTo: { type: "entityGroup", payload: { group: "taxi" } },
-      },
-    });
   };
 
   const addFeedback = ({ itemId, rating, text }) => {
@@ -1712,13 +1711,23 @@ export default function App() {
   };
 
   const closeModal = () => {
-    if (modal?.payload?.returnTo) {
-      setModal(modal.payload.returnTo);
+    const returnTarget = getModalReturnTarget(modal);
+    if (returnTarget) {
+      setModal(returnTarget);
       return;
     }
     setModal(null);
   };
 
+  const detailCatalogs = useMemo(
+    () => ({
+      ads: adsCatalog,
+      services: servicesCatalog,
+      food: foodCatalog,
+      taxi: taxiCatalog,
+    }),
+    [adsCatalog, servicesCatalog, foodCatalog, taxiCatalog]
+  );
   const detailData = useMemo(() => {
     if (modal?.type !== "detail") return null;
     const detailType = modal.payload?.type;
@@ -1728,61 +1737,44 @@ export default function App() {
       if (!restaurant) return null;
       return { type: "restaurant", item: restaurant };
     }
-    const source = detailType === "ads"
-      ? adsCatalog
-      : detailType === "services"
-        ? servicesCatalog
-        : detailType === "food"
-          ? foodCatalog
-          : taxiCatalog;
+    const source = detailCatalogs[detailType] || [];
     const item = source.find((x) => x.id === detailId);
-    if (!item && detailType === "taxi" && typeof detailId === "string" && detailId.startsWith("template-preview-")) {
-      const templateId = detailId.slice("template-preview-".length);
-      const template = normalizedTaxiTemplates.find((x) => x.id === templateId);
-      if (!template) return null;
-      return {
-        type: "taxi",
-        item: {
-          ...template,
-          id: detailId,
-          mode: "one-time",
-          when: template.weekdays?.length
-            ? `${template.weekdays.join(", ")} · ${template.time || "Время не указано"}`
-            : template.time || "Время не указано",
-          isFilled: false,
-        },
-      };
-    }
     if (!item) return null;
     return { type: detailType, item };
-  }, [modal, adsCatalog, servicesCatalog, foodCatalog, taxiCatalog, normalizedTaxiTemplates, foodRestaurants]);
+  }, [modal, detailCatalogs, foodRestaurants]);
 
-  const createInitialValues = useMemo(() => {
-    if (modal?.type !== "create") return null;
-    const createTarget = modal.payload?.type;
-
-    if (createTarget === "taxi") {
-      return {
+  const createDrafts = useMemo(
+    () => ({
+      taxi: {
         name: profileValue(profile.name),
         contacts: {
           phone: profileValue(profile.phone),
           wa: profileValue(profile.whatsapp),
           tg: profileValue(profile.telegram),
         },
-      };
-    }
-
-    if (createTarget === "restaurant") {
-      return {
+      },
+      restaurant: {
         phone: profileValue(profile.phone),
         telegram: profileValue(profile.telegram),
         whatsapp: profileValue(profile.whatsapp),
-      };
-    }
+      },
+    }),
+    [profile]
+  );
+  const createInitialValues = useMemo(() => {
+    if (modal?.type !== "create") return null;
+    return createDrafts[modal.payload?.type] || null;
+  }, [modal, createDrafts]);
 
-    return null;
-  }, [modal, profile]);
-
+  const editEntityCollections = useMemo(
+    () => ({
+      service: customServices,
+      ad: customAds,
+      dish: userRestaurantDishes,
+      taxi: normalizedCustomTaxiItems,
+    }),
+    [customServices, customAds, userRestaurantDishes, normalizedCustomTaxiItems]
+  );
   const editEntityData = useMemo(() => {
     if (modal?.type !== "editEntity") return null;
     const editType = modal.payload?.type;
@@ -1797,48 +1789,10 @@ export default function App() {
       };
     }
 
-    if (editType === "service") {
-      const item = customServices.find((x) => x.id === editId);
-      if (!item) return null;
-      return {
-        type: "service",
-        initialValues: item,
-        editMeta: { id: item.id, kind: editKind || "service" },
-      };
-    }
-
-    if (editType === "ad") {
-      const item = customAds.find((x) => x.id === editId);
-      if (!item) return null;
-      return {
-        type: "ad",
-        initialValues: item,
-        editMeta: { id: item.id, kind: editKind || "ad" },
-      };
-    }
-
-    if (editType === "dish") {
-      const item = userRestaurantDishes.find((x) => x.id === editId);
-      if (!item) return null;
-      return {
-        type: "dish",
-        initialValues: item,
-        editMeta: { id: item.id, kind: editKind || "dish" },
-      };
-    }
+    const item = editEntityCollections[editType]?.find((entry) => entry.id === editId);
+    if (!item) return null;
 
     if (editType === "taxi") {
-      if (editKind === "taxi-template") {
-        const item = normalizedTaxiTemplates.find((x) => x.id === editId);
-        if (!item) return null;
-        return {
-          type: "taxi",
-          initialValues: { ...item, mode: "recurring", categories: [item.category] },
-          editMeta: { id: item.id, kind: "taxi-template" },
-        };
-      }
-      const item = normalizedCustomTaxiItems.find((x) => x.id === editId);
-      if (!item) return null;
       return {
         type: "taxi",
         initialValues: { ...item, mode: "one-time", categories: [item.category] },
@@ -1846,8 +1800,12 @@ export default function App() {
       };
     }
 
-    return null;
-  }, [modal, restaurantEntity, customServices, customAds, normalizedTaxiTemplates, normalizedCustomTaxiItems, userRestaurantDishes]);
+    return {
+      type: editType,
+      initialValues: item,
+      editMeta: { id: item.id, kind: editKind || editType },
+    };
+  }, [modal, restaurantEntity, editEntityCollections]);
 
   const entityGroupData = useMemo(() => {
     if (modal?.type !== "entityGroup") return null;
@@ -1865,14 +1823,62 @@ export default function App() {
       return {
         title: "Моё такси",
         items: {
-          oneTimeCity: normalizedCustomTaxiItems.filter((x) => x.mode === "one-time" && x.category === TAXI_CITY_CATEGORY),
-          oneTimeIntercity: normalizedCustomTaxiItems.filter((x) => x.mode === "one-time" && x.category !== TAXI_CITY_CATEGORY),
-          regular: normalizedTaxiTemplates,
+          oneTimeCity: oneTimeCityOffers,
+          oneTimeIntercity: oneTimeIntercityOffers,
         },
       };
     }
     return null;
-  }, [modal, hasRestaurant, restaurantEntity, myAds, customServices, normalizedCustomTaxiItems, normalizedTaxiTemplates]);
+  }, [modal, hasRestaurant, restaurantEntity, myAds, customServices, oneTimeCityOffers, oneTimeIntercityOffers]);
+
+  const detailFromBusiness = Boolean(modal?.payload?.fromBusiness);
+  const isOwnedRestaurantDetail = Boolean(
+    detailData?.type === "restaurant" && detailData.item.id === restaurantEntity?.id
+  );
+  const isOwnedAdDetail = Boolean(
+    detailData?.type === "ads"
+      && (detailData.item.owner === currentOwner || ownedAdIds.has(detailData.item.id))
+  );
+  const isOwnedServiceDetail = Boolean(
+    detailData?.type === "services"
+      && (detailData.item.owner === currentOwner || ownedServiceIds.has(detailData.item.id))
+  );
+  const isOwnedFoodDetail = Boolean(
+    detailData?.type === "food" && ownedDishIds.has(detailData.item.id)
+  );
+  const isOwnedTaxiDetail = Boolean(
+    detailData?.type === "taxi" && isOwnTaxiItem(detailData.item)
+  );
+  const canEditDetailFromHeader = detailFromBusiness || isOwnedRestaurantDetail;
+  const canManageDishesFromDetail = isOwnedRestaurantDetail || isOwnedFoodDetail;
+  const isDetailOwnerView = detailFromBusiness
+    || isOwnedRestaurantDetail
+    || isOwnedAdDetail
+    || isOwnedServiceDetail
+    || isOwnedFoodDetail
+    || isOwnedTaxiDetail;
+  const handleDetailEdit = () => {
+    if (!detailData) return;
+    if (detailData.type === "restaurant") {
+      editRestaurant();
+      return;
+    }
+    if (detailData.type === "ads") {
+      editAd(detailData.item.id);
+      return;
+    }
+    if (detailData.type === "services") {
+      editService(detailData.item.id);
+      return;
+    }
+    if (detailData.type === "food") {
+      editDish(detailData.item.id);
+      return;
+    }
+    if (detailData.type === "taxi") {
+      editTaxiOffer(detailData.item.id);
+    }
+  };
 
   const screenContent = (
     <>
@@ -1944,7 +1950,6 @@ export default function App() {
           foodCategories={foodCategories}
           isAuth={isAuth}
           hasRestaurant={hasRestaurant}
-          ownedRestaurantId={restaurantEntity?.id || null}
           openCreate={openCreate}
           openEntityGroup={openEntityGroup}
           openDetail={openDetail}
@@ -1958,14 +1963,10 @@ export default function App() {
         <ProfileTab
           isAuth={isAuth}
           profile={profile}
-          myAdsCount={myAds.length}
-          myServicesCount={customServices.length}
           myAds={myAds}
           hasRestaurant={hasRestaurant}
-          restaurantEntity={restaurantEntity}
           isTaxiDriver={isTaxiDriver}
-          taxiTemplates={taxiTemplates}
-          oneTimeIntercityOffers={customTaxiItems.filter((x) => x.mode === "one-time")}
+          oneTimeIntercityOffers={oneTimeTaxiOffers}
           myServices={customServices}
           onOpenEntityGroup={openEntityGroup}
           openCreate={openCreate}
@@ -2242,68 +2243,13 @@ export default function App() {
                 },
               });
             }}
-            onEdit={
-              (modal?.payload?.fromBusiness
-                || (detailData.type === "restaurant" && detailData.item.id === restaurantEntity?.id))
-                ? () => {
-                  if (detailData.type === "restaurant") {
-                    editRestaurant();
-                    return;
-                  }
-                  if (detailData.type === "ads") {
-                    editAd(detailData.item.id);
-                    return;
-                  }
-                  if (detailData.type === "services") {
-                    editService(detailData.item.id);
-                    return;
-                  }
-                  if (detailData.type === "food") {
-                    editDish(detailData.item.id);
-                    return;
-                  }
-                  if (detailData.type === "taxi") {
-                    if (typeof detailData.item.id === "string" && detailData.item.id.startsWith("template-preview-")) {
-                      editTemplate(detailData.item.id.slice("template-preview-".length));
-                    } else {
-                      editTaxiOffer(detailData.item.id);
-                    }
-                  }
-                }
-                : null
-            }
-            onAddDish={detailData.type === "restaurant" && detailData.item.id === restaurantEntity?.id ? () => openCreate("dish") : null}
-            onEditDish={
-              (detailData.type === "restaurant" && detailData.item.id === restaurantEntity?.id)
-              || (detailData.type === "food" && userRestaurantDishes.some((dish) => dish.id === detailData.item.id))
-                ? editDish
-                : null
-            }
-            onDeleteDish={
-              (detailData.type === "restaurant" && detailData.item.id === restaurantEntity?.id)
-              || (detailData.type === "food" && userRestaurantDishes.some((dish) => dish.id === detailData.item.id))
-                ? removeDish
-                : null
-            }
-            onToggleDishAvailability={
-              (detailData.type === "restaurant" && detailData.item.id === restaurantEntity?.id)
-              || (detailData.type === "food" && userRestaurantDishes.some((dish) => dish.id === detailData.item.id))
-                ? toggleDishAvailability
-                : null
-            }
-            onDeleteTaxi={
-              detailData.type === "taxi" && isOwnTaxiItem(detailData.item)
-                ? removeTaxiOffer
-                : null
-            }
-            isOwnerView={Boolean(
-              modal?.payload?.fromBusiness
-              || (detailData.type === "restaurant" && detailData.item.id === restaurantEntity?.id)
-              || (detailData.type === "ads" && (detailData.item.owner === currentOwner || customAds.some((item) => item.id === detailData.item.id)))
-              || (detailData.type === "services" && (detailData.item.owner === currentOwner || customServices.some((item) => item.id === detailData.item.id)))
-              || (detailData.type === "food" && userRestaurantDishes.some((dish) => dish.id === detailData.item.id))
-              || (detailData.type === "taxi" && isOwnTaxiItem(detailData.item))
-            )}
+            onEdit={canEditDetailFromHeader ? handleDetailEdit : null}
+            onAddDish={isOwnedRestaurantDetail ? () => openCreate("dish") : null}
+            onEditDish={canManageDishesFromDetail ? editDish : null}
+            onDeleteDish={canManageDishesFromDetail ? removeDish : null}
+            onToggleDishAvailability={canManageDishesFromDetail ? toggleDishAvailability : null}
+            onDeleteTaxi={isOwnedTaxiDetail ? removeTaxiOffer : null}
+            isOwnerView={isDetailOwnerView}
           />
         )}
 
@@ -2376,9 +2322,6 @@ export default function App() {
             onCreateService={() => openCreate("service")}
             onCreateTaxi={() => openCreate("taxi")}
             onToggleTaxiFilled={toggleTaxiFilled}
-            onOpenTaxiTemplate={viewTaxiTemplate}
-            onSetTemplateStatus={setTemplateStatus}
-            onRemoveTemplate={removeTemplate}
           />
         )}
 

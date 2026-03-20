@@ -14,9 +14,6 @@ export function EntityGroupModalContent({
   onCreateService,
   onCreateTaxi,
   onToggleTaxiFilled,
-  onOpenTaxiTemplate,
-  onSetTemplateStatus,
-  onRemoveTemplate,
 }) {
   const groupMeta = {
     restaurant: {
@@ -241,71 +238,6 @@ export function EntityGroupModalContent({
               </div>
             ) : (
               <p className="small">Межгородских поездок пока нет.</p>
-            )}
-          </section>
-
-          <section className="section" style={{ padding: 10 }}>
-            <h4 style={{ marginBottom: 4 }}>Межгород (регулярные)</h4>
-            {(entityGroupData.items.regular || []).length ? (
-              <div className="list">
-                {entityGroupData.items.regular.map((item) => (
-                  <article
-                    className="card card-clickable"
-                    key={item.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => onOpenTaxiTemplate(item.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") onOpenTaxiTemplate(item.id);
-                    }}
-                  >
-                    <div className="card-body">
-                      <div className="card-title">{item.category}</div>
-                      <p className="small">{item.weekdays.join(", ")} · {item.time}</p>
-                      <div className="row wrap">
-                        <span className="badge">{item.status === "paused" ? "На паузе" : "Активна"}</span>
-                      </div>
-                      <div className="actions">
-                        {item.status === "paused" ? (
-                          <button
-                            className="ghost-btn"
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSetTemplateStatus(item.id, "active");
-                            }}
-                          >
-                            Возобновить
-                          </button>
-                        ) : (
-                          <button
-                            className="ghost-btn"
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSetTemplateStatus(item.id, "paused");
-                            }}
-                          >
-                            Пауза
-                          </button>
-                        )}
-                        <button
-                          className="danger-btn"
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveTemplate(item.id);
-                          }}
-                        >
-                          Удалить
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p className="small">Регулярных межгородских поездок пока нет.</p>
             )}
           </section>
         </div>
