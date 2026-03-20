@@ -7,19 +7,6 @@ const GUEST_PROFILE = {
   whatsapp: "-",
 };
 
-const normalizeSinglePhoto = (photos) => {
-  if (!Array.isArray(photos)) return [];
-  const firstPhoto = photos.find((photo) => Boolean(String(photo || "").trim()));
-  return firstPhoto ? [firstPhoto] : [];
-};
-
-const normalizeFivePhotos = (photos) => {
-  if (!Array.isArray(photos)) return [];
-  return photos
-    .filter((photo) => Boolean(String(photo || "").trim()))
-    .slice(0, 8);
-};
-
 const profileOrGuest = (account) => ({
   name: account?.name || "Гость",
   phone: account?.phone || "-",
@@ -27,7 +14,7 @@ const profileOrGuest = (account) => ({
   whatsapp: account?.whatsapp || "-",
 });
 
-export function useAuthState({ deepCopy }) {
+export function useAuthState() {
   const [isAuth, setIsAuth] = useState(false);
   const [authSession, setAuthSession] = useState({
     sessionToken: null,
@@ -78,25 +65,7 @@ export function useAuthState({ deepCopy }) {
     setCustomAds([]);
     setCustomTaxiItems([]);
     setIsTaxiDriver(false);
-
-    const data = deepCopy({
-      hasRestaurant: false,
-      restaurantEntity: null,
-      dishes: [],
-      services: [],
-      ads: [],
-      taxiItems: [],
-      isTaxiDriver: false,
-    });
-
-    const sourceDishes = deepCopy(data.dishes) || [];
-    setUserRestaurantDishes(sourceDishes.map((dish) => ({ ...dish, photos: normalizeSinglePhoto(dish?.photos) })));
-    setCustomServices((deepCopy(data.services) || []).map((item) => ({ ...item, photos: normalizeFivePhotos(item?.photos) })));
-    setCustomAds((deepCopy(data.ads) || []).map((item) => ({ ...item, photos: normalizeFivePhotos(item?.photos) })));
-    setCustomTaxiItems((deepCopy(data.taxiItems) || []).map((item) => ({ ...item, photos: normalizeSinglePhoto(item?.photos) })));
-    setIsTaxiDriver(Boolean(data.isTaxiDriver));
-
-  }, [deepCopy]);
+  }, []);
 
   return {
     isAuth,
