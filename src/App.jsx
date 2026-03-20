@@ -569,7 +569,9 @@ export default function App() {
     const phone = formatPhoneValueCompact(rawPhone, { allowEmpty: true });
     const name = String(fd.get("name") || "").trim();
     const password = String(fd.get("password") || "");
-    const isValidPhone = /^\+7\(\d{3}\)\d{3}-\d{2}-\d{2}$/.test(signInPhone);
+    const phoneRegex = /^\+7\(\d{3}\)\d{3}-\d{2}-\d{2}$/;
+    const isValidPhone = phoneRegex.test(signInPhone);
+    const isValidSignupPhone = phoneRegex.test(phone);
     const loginPattern = new RegExp(`^[A-Za-z0-9_]{${LOGIN_MIN},${LOGIN_MAX}}$`);
     const isValidLogin = loginPattern.test(login);
     const hasSignInPhone = signInMethod === "phone" && Boolean(signInPhone);
@@ -613,7 +615,7 @@ export default function App() {
         setAuthError("Введите телефон");
         return;
       }
-      if (!isValidPhone) {
+      if (!isValidSignupPhone) {
         setAuthError("Введите телефон в формате +7(XXX)XXX-XX-XX");
         return;
       }
