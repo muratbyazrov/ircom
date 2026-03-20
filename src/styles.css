@@ -707,7 +707,7 @@ body {
 }
 
 .card-taxi .taxi-card-layout.taxi-card-layout-city {
-  grid-template-columns: 86px minmax(0, 1fr);
+  grid-template-columns: 88px minmax(0, 1fr);
   gap: 12px;
   align-items: flex-start;
 }
@@ -722,7 +722,23 @@ body {
 }
 
 .card-taxi .taxi-card-content.taxi-card-content-city {
-  gap: 8px;
+  gap: 6px;
+}
+
+.taxi-city-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.taxi-city-head .taxi-city-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.taxi-city-head .taxi-card-price-city {
+  flex: 0 0 auto;
 }
 
 .card-taxi .media-compact {
@@ -806,13 +822,6 @@ body {
   margin-left: auto;
 }
 
-.taxi-card-city-copy {
-  display: grid;
-  align-content: start;
-  gap: 6px;
-  min-width: 0;
-}
-
 .taxi-city-name {
   margin: 0;
   overflow: hidden;
@@ -821,13 +830,6 @@ body {
   font-size: 15px;
   font-weight: 700;
   line-height: 1.2;
-}
-
-.taxi-card-city-footer {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  margin-top: auto;
 }
 
 .taxi-card-city-meta {
@@ -988,11 +990,14 @@ body {
 }
 
 .card-taxi .taxi-media-full.taxi-media-city {
-  flex-basis: 86px;
-  width: 86px;
-  min-width: 86px;
-  max-width: 86px;
-  min-height: 118px;
+  flex: 0 0 88px;
+  width: 88px;
+  min-width: 88px;
+  max-width: 88px;
+  height: 88px;
+  min-height: 88px;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .card-taxi .taxi-media-full.taxi-media-city .media-state {
@@ -1083,7 +1088,6 @@ body {
 }
 
 .taxi-card-price.taxi-card-price-city {
-  margin-left: auto;
   font-size: 19px;
   line-height: 1;
 }
@@ -1244,7 +1248,7 @@ body {
   }
 
   .card-taxi .taxi-card-layout.taxi-card-layout-city {
-    grid-template-columns: 78px minmax(0, 1fr);
+    grid-template-columns: 80px minmax(0, 1fr);
   }
 
   .card-taxi .taxi-media-full {
@@ -1255,10 +1259,12 @@ body {
   }
 
   .card-taxi .taxi-media-full.taxi-media-city {
-    width: 78px;
-    min-width: 78px;
-    max-width: 78px;
-    min-height: 110px;
+    flex-basis: 80px;
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    height: 80px;
+    min-height: 80px;
   }
 
   .card-taxi .taxi-media-full.taxi-media-city .media-state-title {
