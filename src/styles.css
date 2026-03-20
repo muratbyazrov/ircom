@@ -723,7 +723,6 @@ body {
 
 .card-taxi .taxi-card-content.taxi-card-content-city {
   gap: 8px;
-  min-height: 118px;
 }
 
 .card-taxi .media-compact {
@@ -814,16 +813,14 @@ body {
   min-width: 0;
 }
 
-.taxi-city-chip {
-  width: 100%;
-  max-width: 100%;
-  justify-content: flex-start;
+.taxi-city-name {
+  margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 15px;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.2;
 }
 
 .taxi-card-city-footer {
@@ -1267,7 +1264,7 @@ body {
     font-size: 12px;
   }
 
-  .taxi-city-chip {
+  .taxi-city-name {
     font-size: 14px;
   }
 
