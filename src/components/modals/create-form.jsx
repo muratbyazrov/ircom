@@ -716,9 +716,9 @@ export function CreateForm({
   }
 
   const categories = type === "ad"
-    ? adsCategories.filter((x) => x !== "Мои объявления")
+    ? adsCategories.filter((x) => x !== "Мои объявления" && (isEdit || x !== "Все"))
     : type === "service"
-      ? serviceCategories
+      ? serviceCategories.filter((x) => isEdit || x !== "Все")
       : foodCategories;
   const safeCategories = categories.length ? categories : ["Другое"];
 
@@ -763,7 +763,17 @@ export function CreateForm({
         {existingPhotos.map((photo, index) => <input key={`existing-${type}-${photo}-${index}`} type="hidden" name="existingPhotos" value={photo} />)}
         {removedExistingPhotos.map((photo, index) => <input key={`removed-${type}-${photo}-${index}`} type="hidden" name="removedPhotos" value={photo} />)}
         <Field label="Название"><input required name="title" defaultValue={initialValues?.title || ""} className="input" minLength={3} maxLength={TITLE_MAX} /></Field>
-        <Field label="Категория"><select className="select" name="category" defaultValue={initialValues?.category || safeCategories[0]}>{safeCategories.map((x) => <option key={x}>{x}</option>)}</select></Field>
+        <Field label="Категория">
+          <select
+            className="select"
+            name="category"
+            required
+            defaultValue={initialValues?.category || ""}
+          >
+            {!isEdit ? <option value="" disabled>Выберите категорию</option> : null}
+            {safeCategories.map((x) => <option key={x} value={x}>{x}</option>)}
+          </select>
+        </Field>
         <Field label="Цена, ₽"><input required name="price" defaultValue={initialValues?.price || ""} type="number" min={1} inputMode="numeric" pattern="[0-9]*" className="input" /></Field>
         <Field label="Описание"><textarea required name="desc" defaultValue={initialValues?.desc || ""} className="textarea" minLength={10} maxLength={DESCRIPTION_MAX} /></Field>
         {type === "dish" ? (

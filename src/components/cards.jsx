@@ -154,34 +154,43 @@ export function TaxiCardSkeleton() {
   return (
     <article className="card card-skeleton card-taxi" aria-hidden="true">
       <div className="card-body taxi-card-body">
-        <span className="card-skeleton-pill card-skeleton-pill-floating">
-          <SkeletonBlock className="card-skeleton-icon" />
-          <SkeletonBlock className="card-skeleton-pill-text" />
-        </span>
+        <div className="taxi-card-toolbar">
+          <span className="card-skeleton-pill">
+            <SkeletonBlock className="card-skeleton-pill-text" />
+          </span>
+          <span className="card-skeleton-pill">
+            <SkeletonBlock className="card-skeleton-icon" />
+            <SkeletonBlock className="card-skeleton-pill-text" />
+          </span>
+        </div>
         <div className="taxi-card-layout">
           <div className="media taxi-media-full card-skeleton-media card-skeleton-media-square">
             <SkeletonBlock className="card-skeleton-square-art" />
           </div>
           <div className="taxi-card-content">
             <div className="taxi-card-head">
-              <SkeletonBlock className="card-skeleton-line card-skeleton-line-title" />
+              <div className="taxi-card-head-main">
+                <SkeletonBlock className="card-skeleton-line card-skeleton-line-title" />
+                <SkeletonBlock className="card-skeleton-line card-skeleton-line-meta" />
+              </div>
               <SkeletonBlock className="card-skeleton-price" />
             </div>
-            <SkeletonBlock className="card-skeleton-line card-skeleton-line-meta" />
-            <div className="card-skeleton-rating">
-              <SkeletonBlock className="card-skeleton-badge" />
-              <SkeletonBlock className="card-skeleton-line card-skeleton-line-caption" />
+            <div className="card-skeleton-chips">
+              <SkeletonBlock className="card-skeleton-chip" />
+              <SkeletonBlock className="card-skeleton-chip" />
+              <SkeletonBlock className="card-skeleton-chip card-skeleton-chip-wide" />
+            </div>
+            <div className="card-skeleton-copy">
+              <SkeletonBlock className="card-skeleton-line" />
+              <SkeletonBlock className="card-skeleton-line card-skeleton-line-wide" />
             </div>
           </div>
         </div>
-        <div className="card-skeleton-chips">
-          <SkeletonBlock className="card-skeleton-chip" />
-          <SkeletonBlock className="card-skeleton-chip card-skeleton-chip-wide" />
-          <SkeletonBlock className="card-skeleton-chip" />
-        </div>
-        <div className="card-skeleton-copy">
-          <SkeletonBlock className="card-skeleton-line" />
-          <SkeletonBlock className="card-skeleton-line card-skeleton-line-wide" />
+        <div className="taxi-card-footer">
+          <div className="card-skeleton-rating">
+            <SkeletonBlock className="card-skeleton-badge" />
+            <SkeletonBlock className="card-skeleton-line card-skeleton-line-caption" />
+          </div>
         </div>
       </div>
     </article>
@@ -275,49 +284,59 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
   const titleText = getTaxiHeadlineFromDescription(item.desc, item.title || item.name, item.category);
   const showTitle = hasMeaningfulTaxiHeadline(titleText);
   const summaryText = short(item.desc);
+  const normalizedTitleText = String(titleText || "").trim().toLowerCase();
+  const normalizedSummaryText = String(summaryText || "").trim().toLowerCase();
+  const showSummary = Boolean(summaryText) && normalizedSummaryText !== normalizedTitleText;
   const directionAccentClass = getTaxiDirectionAccent(item.category);
   const directionBadgeText = getTaxiDirectionBadgeText(item.category);
+  const showDateLine = isIntercity && (whenDateText || whenText);
   return (
     <InteractiveCard className="card card-clickable card-taxi" onOpen={onOpen}>
       <div className="card-body taxi-card-body">
-        <FavoriteCornerButton
-          activeFav={activeFav}
-          onFav={onFav}
-          canFavorite={canFavorite}
-          isOwn={isOwn}
-          ownerLabel="Вы водитель"
-          ownerAriaLabel="Ваша поездка"
-          favoriteClassName="taxi-fav-btn"
-          ownerClassName="taxi-fav-btn owner-corner-tag"
-        />
+        <div className="taxi-card-toolbar">
+          <span className={`taxi-route-badge ${directionAccentClass}`}>{directionBadgeText}</span>
+          <FavoriteCornerButton
+            activeFav={activeFav}
+            onFav={onFav}
+            canFavorite={canFavorite}
+            isOwn={isOwn}
+            ownerLabel="Вы водитель"
+            ownerAriaLabel="Ваша поездка"
+            favoriteClassName="taxi-fav-btn"
+            ownerClassName="taxi-fav-btn owner-corner-tag"
+          />
+        </div>
         <div className="taxi-card-layout">
           <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full" blockParentClick />
           <div className="taxi-card-content">
             <div className="taxi-card-head">
-              {showTitle ? <div className="card-title taxi-route-title">{titleText}</div> : null}
+              <div className="taxi-card-head-main">
+                {showTitle ? <div className="card-title taxi-route-title">{titleText}</div> : null}
+                {showDateLine ? <div className="taxi-when-line">{whenDateText || whenText}</div> : null}
+              </div>
               <div className="price">{fmtRub.format(item.price)}</div>
             </div>
-            {(vehicleText || (isIntercity && (whenText || exactTimeText || seatsText))) ? (
+            {(vehicleText || (isIntercity && (exactTimeText || seatsText))) ? (
               <div className="taxi-card-meta-row">
-                {isIntercity ? (whenDateText ? <div className="taxi-when-line">{whenDateText}</div> : whenText ? <div className="taxi-when-line">{whenText}</div> : null) : null}
                 {isIntercity && exactTimeText ? <span className="taxi-time-chip">Выезд {exactTimeText}</span> : null}
                 {isIntercity && seatsText ? <span className="taxi-inline-chip">{seatsText}</span> : null}
                 {vehicleText ? <span className="taxi-inline-chip taxi-vehicle-chip">{vehicleText}</span> : null}
               </div>
             ) : null}
+            {showSummary ? <p className="taxi-card-summary">{summaryText}</p> : null}
+          </div>
+        </div>
+        {(hasRating || item.isFilled) ? (
+          <div className="taxi-card-footer">
             {hasRating ? (
               <div className="taxi-rating-line">
                 <span className="badge">{`Оценка ${item.ratingValue.toFixed(1)}`}</span>
                 <span className="small">{item.reviewsCount || 0} отзыв(ов)</span>
               </div>
-            ) : null}
-            {summaryText ? <p className="taxi-card-summary">{summaryText}</p> : null}
+            ) : <span />}
+            {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
           </div>
-        </div>
-        <div className="row wrap taxi-tags">
-          {isIntercity ? <span className={`taxi-route-badge taxi-route-badge-bottom ${directionAccentClass}`}>{directionBadgeText}</span> : null}
-          {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
-        </div>
+        ) : null}
       </div>
     </InteractiveCard>
   );
