@@ -322,6 +322,9 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
             ownerLabel="Вы водитель"
             ownerAriaLabel="Вы водитель"
           />
+          <div className="taxi-card-toolbar">
+            <span className={`taxi-route-badge ${directionAccentClass}`}>{directionBadgeText}</span>
+          </div>
           <div className="taxi-card-layout taxi-card-layout-city">
             <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full taxi-media-city" blockParentClick />
             <div className="taxi-card-content taxi-card-content-city">

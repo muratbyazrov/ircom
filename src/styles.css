@@ -735,7 +735,7 @@ body {
 }
 
 .taxi-card-body.taxi-card-body-city {
-  gap: 0;
+  gap: 10px;
 }
 
 .taxi-card-toolbar {
