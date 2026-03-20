@@ -79,10 +79,19 @@ body {
   background: linear-gradient(180deg, rgba(247, 248, 252, 0.95) 60%, rgba(247, 248, 252, 0.55) 100%);
 }
 
+.topbar > div:first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
 .topbar h1 {
   margin: 0;
   font-size: 22px;
   font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .topbar-status {
