@@ -308,10 +308,9 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
   ) : null;
 
   if (!isIntercity) {
-    const citySeatsText = formatTaxiSeatsForDisplay(item.seats);
-    const cityWhenText = whenText || whenDateText;
     const driverName = String(item.name || "").trim();
-    const showDriverName = driverName && driverName !== cityTitle;
+    const mainTitle = driverName || cityTitle;
+    const subTitle = driverName && cityTitle !== driverName ? cityTitle : "";
 
     return (
       <InteractiveCard className="card card-clickable card-taxi card-taxi-city" onOpen={onOpen}>
@@ -320,16 +319,10 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
             <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full taxi-media-city" blockParentClick />
             <div className="taxi-card-content taxi-card-content-city">
               <div className="taxi-card-city-copy">
-                <span className="taxi-inline-chip taxi-vehicle-chip taxi-city-chip" title={vehicleRawText || cityTitle}>{cityTitle}</span>
-                {showDriverName ? <p className="small taxi-card-city-driver">{driverName}</p> : null}
+                <p className="taxi-city-name" title={mainTitle}>{mainTitle}</p>
+                {subTitle ? <p className="taxi-city-subtitle">{subTitle}</p> : null}
                 {summaryText ? <p className="taxi-card-summary taxi-card-summary-city">{summaryText}</p> : null}
               </div>
-              {(cityWhenText || citySeatsText) ? (
-                <div className="taxi-card-meta-row">
-                  {cityWhenText ? <span className="taxi-time-chip">Выезд {cityWhenText}</span> : null}
-                  {citySeatsText ? <span className="taxi-inline-chip">{citySeatsText}</span> : null}
-                </div>
-              ) : null}
               <div className="taxi-card-city-footer">
                 {(isOwn || item.isFilled || hasRating) ? (
                   <div className="taxi-card-city-meta">
