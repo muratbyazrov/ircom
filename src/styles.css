@@ -1083,6 +1083,7 @@ body {
 }
 
 .taxi-card-price.taxi-card-price-city {
+  margin-left: auto;
   font-size: 19px;
   line-height: 1;
 }
