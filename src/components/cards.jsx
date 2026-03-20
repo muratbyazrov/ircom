@@ -309,7 +309,7 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
 
   if (!isIntercity) {
     const driverName = String(item.name || "").trim();
-    const nameLabel = driverName || (!vehicleText ? cityTitle : "");
+    const nameLabel = driverName || "Такси по городу";
 
     return (
       <InteractiveCard className="card card-clickable card-taxi card-taxi-city" onOpen={onOpen}>
@@ -324,22 +324,43 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
                 favoriteClassName="taxi-fav-btn"
               />
             ) : isOwn ? (
-              <span className="taxi-owner-badge">Вы водитель</span>
+              <span className="taxi-owner-badge taxi-owner-badge-city">Вы водитель</span>
             ) : null}
           </div>
           <div className="taxi-card-layout taxi-card-layout-city">
-            <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full taxi-media-city" blockParentClick />
-            <div className="taxi-card-content taxi-card-content-city">
-              <div className="taxi-city-head">
-                {nameLabel ? <p className="taxi-city-name">{nameLabel}</p> : null}
-                <div className="price taxi-card-price taxi-card-price-city" title={fullPriceText}>{priceText}</div>
+            <Media
+              photos={item.photos}
+              emptyText="Нет фото"
+              section="taxi"
+              className="taxi-media-full taxi-media-city"
+              blockParentClick
+            />
+            <div className="taxi-card-content">
+              <div className="taxi-card-head">
+                <div className="taxi-card-head-main">
+                  {nameLabel ? <div className="taxi-route-title taxi-route-title-city">{nameLabel}</div> : null}
+                </div>
+                <div className="taxi-card-head-actions">
+                  <div className="price taxi-card-price" title={fullPriceText}>{priceText}</div>
+                </div>
               </div>
-              {vehicleText ? <span className="taxi-inline-chip taxi-vehicle-chip" title={vehicleRawText}>{vehicleText}</span> : null}
+              {vehicleText ? (
+                <div className="taxi-card-meta-row">
+                  <span className="taxi-inline-chip taxi-vehicle-chip" title={vehicleRawText}>{vehicleText}</span>
+                </div>
+              ) : null}
               {summaryText ? <p className="taxi-card-summary taxi-card-summary-city">{summaryText}</p> : null}
-              {(item.isFilled || hasRating) ? (
-                <div className="taxi-card-city-meta">
-                  {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
-                  {hasRating ? <span className="badge">{`Оценка ${item.ratingValue.toFixed(1)}`}</span> : null}
+              {item.isFilled ? (
+                <div className="taxi-card-statuses taxi-card-statuses-city">
+                  <div className="taxi-card-footer-tags">
+                    {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
+                  </div>
+                </div>
+              ) : null}
+              {hasRating ? (
+                <div className="taxi-rating-line taxi-rating-line-compact">
+                  <span className="badge">{`Оценка ${item.ratingValue.toFixed(1)}`}</span>
+                  <span className="small">{item.reviewsCount || 0} отзыв(ов)</span>
                 </div>
               ) : null}
             </div>
@@ -379,7 +400,6 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
                 {vehicleText ? <span className="taxi-inline-chip taxi-vehicle-chip" title={vehicleRawText}>{vehicleText}</span> : null}
               </div>
             ) : null}
-            {summaryText ? <p className="taxi-card-summary">{summaryText}</p> : null}
             {(isOwn || item.isFilled) ? (
               <div className="taxi-card-statuses">
                 <div className="taxi-card-footer-tags">
@@ -396,6 +416,7 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
             ) : null}
           </div>
         </div>
+        {summaryText ? <p className="taxi-card-summary taxi-card-summary-wide">{summaryText}</p> : null}
       </div>
     </InteractiveCard>
   );

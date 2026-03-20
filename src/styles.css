@@ -703,13 +703,13 @@ body {
 }
 
 .card-taxi.card-taxi-city {
-  background: linear-gradient(180deg, #ffffff 0%, #fffdfd 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #fffafb 100%);
 }
 
 .card-taxi .taxi-card-layout.taxi-card-layout-city {
-  grid-template-columns: 88px minmax(0, 1fr);
-  gap: 12px;
-  align-items: flex-start;
+  grid-template-columns: clamp(88px, 27vw, 112px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
 }
 
 .card-taxi .taxi-card-content {
@@ -721,26 +721,6 @@ body {
   gap: 10px;
 }
 
-.card-taxi .taxi-card-content.taxi-card-content-city {
-  gap: 6px;
-}
-
-.taxi-city-head {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  min-width: 0;
-}
-
-.taxi-city-head .taxi-city-name {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.taxi-city-head .taxi-card-price-city {
-  flex: 0 0 auto;
-}
-
 .card-taxi .media-compact {
   min-height: 104px;
   height: 104px;
@@ -748,10 +728,6 @@ body {
 
 .taxi-card-body {
   gap: 12px;
-}
-
-.taxi-card-body.taxi-card-body-city {
-  gap: 10px;
 }
 
 .taxi-card-toolbar {
@@ -822,24 +798,6 @@ body {
   margin-left: auto;
 }
 
-.taxi-city-name {
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.taxi-card-city-meta {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
 .taxi-route-badge {
   display: inline-flex;
   align-items: center;
@@ -892,6 +850,10 @@ body {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.taxi-route-title.taxi-route-title-city {
+  font-size: 16px;
 }
 
 .taxi-card-meta-row {
@@ -981,30 +943,31 @@ body {
 
 .card-taxi .taxi-media-full {
   flex: 0 0 clamp(88px, 27vw, 112px);
-  align-self: stretch;
+  align-self: flex-start;
   width: clamp(88px, 27vw, 112px);
-  height: auto;
+  height: 104px;
   min-width: 88px;
   max-width: 112px;
-  min-height: 112px;
+  min-height: 104px;
 }
 
 .card-taxi .taxi-media-full.taxi-media-city {
-  flex: 0 0 88px;
-  width: 88px;
+  flex: 0 0 clamp(88px, 27vw, 112px);
+  width: clamp(88px, 27vw, 112px);
   min-width: 88px;
-  max-width: 88px;
-  height: 88px;
-  min-height: 88px;
-  border-radius: 10px;
-  overflow: hidden;
+  max-width: 112px;
+  min-height: 112px;
+  height: auto;
+  border-radius: 18px;
 }
 
 .card-taxi .taxi-media-full.taxi-media-city .media-state {
-  gap: 4px;
-  padding: 8px 6px;
-  border: 1px solid #e2e8f0;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  gap: 8px;
+  padding: 12px 10px;
+  border: none;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0) 46%),
+    linear-gradient(180deg, #f6faf8 0%, #e9f3ee 100%);
 }
 
 .card-taxi .taxi-media-full.taxi-media-city .media-state-art {
@@ -1014,7 +977,7 @@ body {
 .card-taxi .taxi-media-full.taxi-media-city .media-state-title {
   font-size: 13px;
   line-height: 1.2;
-  color: #334155;
+  color: #28463f;
 }
 
 .taxi-card-summary {
@@ -1025,18 +988,18 @@ body {
   overflow-wrap: anywhere;
   word-break: break-word;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
 .taxi-card-summary.taxi-card-summary-city {
-  color: #64748b;
-  font-size: 13px;
-  line-height: 1.35;
   -webkit-line-clamp: 2;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+}
+
+.taxi-card-summary.taxi-card-summary-wide {
+  width: 100%;
+  -webkit-line-clamp: 3;
 }
 
 .taxi-card-footer-tags {
@@ -1078,18 +1041,24 @@ body {
   white-space: nowrap;
 }
 
-.taxi-owner-badge.taxi-owner-badge-city {
-  padding: 5px 9px;
-  font-size: 11px;
-}
-
 .taxi-card-price {
   white-space: nowrap;
 }
 
-.taxi-card-price.taxi-card-price-city {
-  font-size: 19px;
-  line-height: 1;
+.card-taxi.card-taxi-city .taxi-route-badge.route-city {
+  color: #0f5c4b;
+  background: linear-gradient(135deg, #e7f8f2, #f7fffc);
+  border: 1px solid #86efac;
+}
+
+.card-taxi.card-taxi-city .fav-corner-btn.taxi-fav-btn {
+  min-height: 30px;
+}
+
+.card-taxi.card-taxi-city .fav-corner-btn.taxi-fav-btn.active {
+  background: linear-gradient(180deg, #fff4f6 0%, #ffecef 100%);
+  color: #b42346;
+  border-color: #f0c2cf;
 }
 
 .card-taxi .taxi-media-full.media-has-image,
@@ -1248,57 +1217,47 @@ body {
   }
 
   .card-taxi .taxi-card-layout.taxi-card-layout-city {
-    grid-template-columns: 80px minmax(0, 1fr);
+    grid-template-columns: clamp(84px, 30vw, 108px) minmax(0, 1fr);
+    gap: 10px;
   }
 
   .card-taxi .taxi-media-full {
     min-width: 84px;
     max-width: 108px;
     width: clamp(84px, 30vw, 108px);
-    min-height: 108px;
+    height: 96px;
+    min-height: 96px;
   }
 
   .card-taxi .taxi-media-full.taxi-media-city {
-    flex-basis: 80px;
-    width: 80px;
-    min-width: 80px;
-    max-width: 80px;
-    height: 80px;
-    min-height: 80px;
-  }
-
-  .card-taxi .taxi-media-full.taxi-media-city .media-state-title {
-    font-size: 12px;
-  }
-
-  .taxi-city-name {
-    font-size: 14px;
-  }
-
-  .taxi-card-price.taxi-card-price-city {
-    font-size: 17px;
+    flex-basis: clamp(84px, 30vw, 108px);
+    width: clamp(84px, 30vw, 108px);
+    min-width: 84px;
+    max-width: 108px;
+    min-height: 108px;
   }
 
   .taxi-route-title {
     font-size: 15px;
   }
-
-  .taxi-card-head .price {
-    font-size: 18px;
-  }
 }
 
 @media (max-width: 430px) {
+  .taxi-card-toolbar {
+    flex-wrap: wrap;
+  }
+
   .card-taxi .fav-corner-btn.taxi-fav-btn {
-    width: 34px;
-    min-width: 34px;
+    width: auto;
+    min-width: fit-content;
     height: 34px;
-    padding: 0;
+    padding: 0 10px;
     justify-content: center;
+    white-space: nowrap;
   }
 
   .card-taxi .fav-corner-btn.taxi-fav-btn span {
-    display: none;
+    display: inline;
   }
 }
 
