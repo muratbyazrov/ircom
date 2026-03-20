@@ -4,6 +4,22 @@ export const fmtRub = new Intl.NumberFormat("ru-RU", {
   maximumFractionDigits: 0,
 });
 
+const fmtRubCompact = new Intl.NumberFormat("ru-RU", {
+  notation: "compact",
+  compactDisplay: "short",
+  maximumFractionDigits: 1,
+});
+
+export function formatCompactRub(value, { fallback = "По договору", compactThreshold = 1000000 } = {}) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0) return fallback;
+
+  const fullText = fmtRub.format(amount);
+  if (amount < compactThreshold) return fullText;
+
+  return `${fmtRubCompact.format(amount)} ₽`.replace(/\s+/g, " ").trim();
+}
+
 export function sortItems(items, mode, favorites) {
   const out = [...items];
   if (mode === "price") out.sort((a, b) => (a.price || 0) - (b.price || 0));

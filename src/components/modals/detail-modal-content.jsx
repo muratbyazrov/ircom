@@ -14,6 +14,14 @@ import {
 import { ListingImportMeta } from "../listing-import-meta";
 import { Icon, Field } from "../ui";
 import { Media } from "../cards";
+import { REVIEW_TEXT_MAX } from "../../utils/validation";
+
+const truncateSingleLine = (value, maxLength = 32) => {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  if (!normalized) return "";
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength - 1).trim()}…`;
+};
 
 export function DetailModalContent({
   data,
@@ -54,6 +62,7 @@ export function DetailModalContent({
   const foodAddressText = type === "food"
     ? String(item.restaurantAddress || item.address || "").trim()
     : "";
+  const clampTextLength = (value, maxLength) => String(value || "").slice(0, maxLength);
   const isFoodDetail = type === "food";
   const isTaxiDetail = type === "taxi";
   const isTaxiIntercity = isTaxiDetail ? isIntercityTaxiCategory(item.category) : false;
@@ -62,7 +71,8 @@ export function DetailModalContent({
   const taxiDateText = isTaxiIntercity ? formatTaxiDateForDisplay(item.when) : "";
   const taxiTimeText = isTaxiIntercity ? getTaxiExactTimeForDisplay(item.when, item.desc) : "";
   const taxiSeatsText = isTaxiIntercity ? formatTaxiSeatsForDisplay(item.seats) : "";
-  const taxiVehicleText = isTaxiDetail ? String(item.vehicle || item.carModel || "").trim() : "";
+  const taxiVehicleRawText = isTaxiDetail ? String(item.vehicle || item.carModel || "").trim() : "";
+  const taxiVehicleText = isTaxiDetail ? truncateSingleLine(taxiVehicleRawText, 32) : "";
   const taxiDirectionAccentClass = isTaxiDetail ? getTaxiDirectionAccent(item.category) : "";
   const taxiDirectionBadgeText = isTaxiIntercity ? getTaxiDirectionBadgeText(item.category) : "";
   const isServicesDetail = type === "services";
@@ -553,7 +563,7 @@ export function DetailModalContent({
             </div>
             {(taxiVehicleText || (isTaxiIntercity && (taxiDateText || taxiTimeText || taxiSeatsText || item.isFilled))) ? (
               <div className="detail-taxi-tag-row">
-                {taxiVehicleText ? <span className="taxi-inline-chip taxi-vehicle-chip">{taxiVehicleText}</span> : null}
+                {taxiVehicleText ? <span className="taxi-inline-chip taxi-vehicle-chip" title={taxiVehicleRawText}>{taxiVehicleText}</span> : null}
                 {isTaxiIntercity && taxiDateText ? <span className="detail-taxi-date-chip">{taxiDateText}</span> : null}
                 {isTaxiIntercity && taxiTimeText ? <span className="taxi-time-chip">Выезд {taxiTimeText}</span> : null}
                 {isTaxiIntercity && taxiSeatsText ? <span className="taxi-inline-chip">{taxiSeatsText}</span> : null}
@@ -677,8 +687,8 @@ export function DetailModalContent({
                 <textarea
                   className="textarea"
                   value={reviewText}
-                  onChange={(e) => setReviewText(e.currentTarget.value)}
-                  maxLength={500}
+                  onChange={(e) => setReviewText(clampTextLength(e.currentTarget.value, REVIEW_TEXT_MAX))}
+                  maxLength={REVIEW_TEXT_MAX}
                   placeholder="Напишите коротко о вашем опыте (необязательно)"
                 />
               </Field>

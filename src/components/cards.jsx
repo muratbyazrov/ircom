@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { clamp, fmtRub, short, formatListingPostedAt } from "../utils/helpers";
+import { clamp, fmtRub, formatCompactRub, short, formatListingPostedAt } from "../utils/helpers";
 import {
   formatTaxiDateForDisplay,
   getTaxiExactTimeForDisplay,
-  getTaxiHeadlineFromDescription,
-  hasMeaningfulTaxiHeadline,
   formatTaxiWhenForDisplay,
   formatTaxiSeatsForDisplay,
   getTaxiDirectionAccent,
@@ -17,6 +15,12 @@ const MEDIA_STATUS_LOADING = "loading";
 const MEDIA_STATUS_LOADED = "loaded";
 const MEDIA_STATUS_ERROR = "error";
 const ACTIVATION_KEYS = ["Enter", " "];
+const truncateSingleLine = (value, maxLength = 32) => {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  if (!normalized) return "";
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength - 1).trim()}…`;
+};
 
 function buildPhotoStates(items) {
   return items.map(() => MEDIA_STATUS_LOADING);
@@ -158,7 +162,7 @@ export function TaxiCardSkeleton() {
           <span className="card-skeleton-pill">
             <SkeletonBlock className="card-skeleton-pill-text" />
           </span>
-          <span className="card-skeleton-pill">
+          <span className="card-skeleton-pill taxi-card-toolbar-action">
             <SkeletonBlock className="card-skeleton-icon" />
             <SkeletonBlock className="card-skeleton-pill-text" />
           </span>
@@ -170,7 +174,6 @@ export function TaxiCardSkeleton() {
           <div className="taxi-card-content">
             <div className="taxi-card-head">
               <div className="taxi-card-head-main">
-                <SkeletonBlock className="card-skeleton-line card-skeleton-line-title" />
                 <SkeletonBlock className="card-skeleton-line card-skeleton-line-meta" />
               </div>
               <SkeletonBlock className="card-skeleton-price" />
@@ -184,12 +187,14 @@ export function TaxiCardSkeleton() {
               <SkeletonBlock className="card-skeleton-line" />
               <SkeletonBlock className="card-skeleton-line card-skeleton-line-wide" />
             </div>
-          </div>
-        </div>
-        <div className="taxi-card-footer">
-          <div className="card-skeleton-rating">
-            <SkeletonBlock className="card-skeleton-badge" />
-            <SkeletonBlock className="card-skeleton-line card-skeleton-line-caption" />
+            <div className="card-skeleton-chips">
+              <SkeletonBlock className="card-skeleton-chip card-skeleton-chip-wide" />
+              <SkeletonBlock className="card-skeleton-chip" />
+            </div>
+            <div className="card-skeleton-rating">
+              <SkeletonBlock className="card-skeleton-badge" />
+              <SkeletonBlock className="card-skeleton-line card-skeleton-line-caption" />
+            </div>
           </div>
         </div>
       </div>
@@ -276,67 +281,110 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
 export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFavorite = true }) {
   const hasRating = typeof item.ratingValue === "number" && Number(item.reviewsCount) > 0;
   const isIntercity = isIntercityTaxiCategory(item.category);
+  const numericPrice = Number(item.price);
+  const hasValidPrice = Number.isFinite(numericPrice) && numericPrice > 0;
+  const fullPriceText = hasValidPrice ? fmtRub.format(numericPrice) : "По договору";
+  const priceText = formatCompactRub(numericPrice);
   const whenText = formatTaxiWhenForDisplay(item.when);
   const whenDateText = formatTaxiDateForDisplay(item.when);
   const exactTimeText = getTaxiExactTimeForDisplay(item.when, item.desc);
   const seatsText = isIntercity ? formatTaxiSeatsForDisplay(item.seats) : "";
-  const vehicleText = String(item.vehicle || item.carModel || "").trim();
-  const titleText = getTaxiHeadlineFromDescription(item.desc, item.title || item.name, item.category);
-  const showTitle = hasMeaningfulTaxiHeadline(titleText);
+  const vehicleRawText = String(item.vehicle || item.carModel || "").trim();
+  const vehicleText = truncateSingleLine(vehicleRawText, 32);
+  const cityTitle = vehicleText || "Такси по городу";
   const summaryText = short(item.desc);
-  const normalizedTitleText = String(titleText || "").trim().toLowerCase();
-  const normalizedSummaryText = String(summaryText || "").trim().toLowerCase();
-  const showSummary = Boolean(summaryText) && normalizedSummaryText !== normalizedTitleText;
   const directionAccentClass = getTaxiDirectionAccent(item.category);
   const directionBadgeText = getTaxiDirectionBadgeText(item.category);
   const showDateLine = isIntercity && (whenDateText || whenText);
+  const showToolbar = isIntercity;
+  const showInlineFavorite = !isIntercity && canFavorite;
+  const favoriteButton = canFavorite ? (
+    <FavoriteCornerButton
+      activeFav={activeFav}
+      onFav={onFav}
+      canFavorite={canFavorite}
+      favoriteClassName={`taxi-fav-btn${showInlineFavorite ? " taxi-fav-inline" : ""}`}
+    />
+  ) : null;
+
+  if (!isIntercity) {
+    return (
+      <InteractiveCard className="card card-clickable card-taxi card-taxi-city" onOpen={onOpen}>
+        <div className="card-body taxi-card-body taxi-card-body-city">
+          <div className="taxi-card-layout taxi-card-layout-city">
+            <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full taxi-media-city" blockParentClick />
+            <div className="taxi-card-content taxi-card-content-city">
+              <div className="taxi-card-city-copy">
+                <span className="taxi-inline-chip taxi-vehicle-chip taxi-city-chip" title={vehicleRawText || cityTitle}>{cityTitle}</span>
+                {summaryText ? <p className="taxi-card-summary taxi-card-summary-city">{summaryText}</p> : null}
+              </div>
+              <div className="taxi-card-city-footer">
+                {(isOwn || item.isFilled || hasRating) ? (
+                  <div className="taxi-card-city-meta">
+                    {isOwn ? <span className="taxi-owner-badge taxi-owner-badge-city">Вы водитель</span> : null}
+                    {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
+                    {hasRating ? <span className="badge">{`Оценка ${item.ratingValue.toFixed(1)}`}</span> : null}
+                  </div>
+                ) : null}
+                <div className="taxi-card-head-actions taxi-card-head-actions-city">
+                  <div className="price taxi-card-price taxi-card-price-city" title={fullPriceText}>{priceText}</div>
+                  {favoriteButton}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </InteractiveCard>
+    );
+  }
+
   return (
     <InteractiveCard className="card card-clickable card-taxi" onOpen={onOpen}>
       <div className="card-body taxi-card-body">
-        <div className="taxi-card-toolbar">
-          <span className={`taxi-route-badge ${directionAccentClass}`}>{directionBadgeText}</span>
-          <FavoriteCornerButton
-            activeFav={activeFav}
-            onFav={onFav}
-            canFavorite={canFavorite}
-            isOwn={isOwn}
-            ownerLabel="Вы водитель"
-            ownerAriaLabel="Ваша поездка"
-            favoriteClassName="taxi-fav-btn"
-            ownerClassName="taxi-fav-btn owner-corner-tag"
-          />
-        </div>
+        {showToolbar ? (
+          <div className="taxi-card-toolbar">
+            {isIntercity ? <span className={`taxi-route-badge ${directionAccentClass}`}>{directionBadgeText}</span> : null}
+            {favoriteButton}
+          </div>
+        ) : null}
         <div className="taxi-card-layout">
           <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full" blockParentClick />
           <div className="taxi-card-content">
-            <div className="taxi-card-head">
-              <div className="taxi-card-head-main">
-                {showTitle ? <div className="card-title taxi-route-title">{titleText}</div> : null}
+            <div className={`taxi-card-head${showDateLine ? "" : " taxi-card-head-price-only"}`}>
+              {showDateLine ? (
+                <div className="taxi-card-head-main">
                 {showDateLine ? <div className="taxi-when-line">{whenDateText || whenText}</div> : null}
+                </div>
+              ) : null}
+              <div className="taxi-card-head-actions">
+                <div className="price taxi-card-price" title={fullPriceText}>{priceText}</div>
+                {showInlineFavorite ? favoriteButton : null}
               </div>
-              <div className="price">{fmtRub.format(item.price)}</div>
             </div>
             {(vehicleText || (isIntercity && (exactTimeText || seatsText))) ? (
               <div className="taxi-card-meta-row">
                 {isIntercity && exactTimeText ? <span className="taxi-time-chip">Выезд {exactTimeText}</span> : null}
                 {isIntercity && seatsText ? <span className="taxi-inline-chip">{seatsText}</span> : null}
-                {vehicleText ? <span className="taxi-inline-chip taxi-vehicle-chip">{vehicleText}</span> : null}
+                {vehicleText ? <span className="taxi-inline-chip taxi-vehicle-chip" title={vehicleRawText}>{vehicleText}</span> : null}
               </div>
             ) : null}
-            {showSummary ? <p className="taxi-card-summary">{summaryText}</p> : null}
-          </div>
-        </div>
-        {(hasRating || item.isFilled) ? (
-          <div className="taxi-card-footer">
+            {summaryText ? <p className="taxi-card-summary">{summaryText}</p> : null}
+            {(isOwn || item.isFilled) ? (
+              <div className="taxi-card-statuses">
+                <div className="taxi-card-footer-tags">
+                  {isOwn ? <span className="taxi-owner-badge">Вы водитель</span> : null}
+                  {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
+                </div>
+              </div>
+            ) : null}
             {hasRating ? (
-              <div className="taxi-rating-line">
+              <div className="taxi-rating-line taxi-rating-line-compact">
                 <span className="badge">{`Оценка ${item.ratingValue.toFixed(1)}`}</span>
                 <span className="small">{item.reviewsCount || 0} отзыв(ов)</span>
               </div>
-            ) : <span />}
-            {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
+            ) : null}
           </div>
-        ) : null}
+        </div>
       </div>
     </InteractiveCard>
   );

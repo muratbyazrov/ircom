@@ -3,14 +3,52 @@ import { applyImageFallback } from "../../utils/images";
 import { formatPhoneValue, handlePhoneInput, PHONE_PATTERN, PHONE_PLACEHOLDER, syncPhonePrev, syncWhatsappFromPhone } from "../../utils/phone";
 import { getTaxiDateByPreset, getTaxiPresetState, TAXI_DAY_PRESETS } from "../../utils/taxi";
 import { TAXI_CITY_CATEGORY } from "../../utils/app-domain";
+import {
+  ADDRESS_MAX,
+  ADDRESS_MIN,
+  DELIVERY_PRICE_MAX,
+  DESCRIPTION_MAX,
+  DISH_TITLE_MAX,
+  DISH_TITLE_MIN,
+  LISTING_TITLE_MAX,
+  LISTING_TITLE_MIN,
+  PHONE_INPUT_MAX,
+  PRICE_MAX,
+  RESTAURANT_NAME_MAX,
+  RESTAURANT_NAME_MIN,
+  TAXI_SEATS_MAX,
+  TAXI_VEHICLE_MAX,
+  TELEGRAM_MAX,
+} from "../../utils/validation";
 import { FormActions, Field } from "../ui";
 import restaurantHero from "../../assets/restaurant-hero.svg";
 import taxiHero from "../../assets/taxi-hero.svg";
 import serviceHero from "../../assets/service-hero.svg";
 
-const TITLE_MAX = 60;
-const RESTAURANT_TITLE_MAX = 40;
-const DESCRIPTION_MAX = 4000;
+const clampTextLength = (value, maxLength) => String(value || "").slice(0, maxLength);
+
+const sanitizeIntegerInput = (value, maxValue, minValue = 1) => {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return "";
+  const limitedDigits = digits.slice(0, String(maxValue).length);
+  const parsed = Number(limitedDigits);
+  if (!Number.isFinite(parsed)) return "";
+  if (parsed < minValue) return "";
+  return String(Math.min(parsed, maxValue));
+};
+
+const limitIntegerInput = (event, maxValue) => {
+  const nextValue = sanitizeIntegerInput(event.currentTarget.value, maxValue);
+  if (event.currentTarget.value !== nextValue) {
+    event.currentTarget.value = nextValue;
+  }
+};
+
+const limitTextInput = (event, maxLength) => {
+  if (event.currentTarget.value.length > maxLength) {
+    event.currentTarget.value = event.currentTarget.value.slice(0, maxLength);
+  }
+};
 
 export function CreateForm({
   type,
@@ -54,7 +92,8 @@ export function CreateForm({
   });
   const [restaurantDeliveryPrice, setRestaurantDeliveryPrice] = useState(() => {
     const price = Number(initialValues?.deliveryPrice);
-    return Number.isFinite(price) && price > 0 ? String(price) : "";
+    if (!Number.isFinite(price) || price <= 0) return "";
+    return String(Math.min(price, DELIVERY_PRICE_MAX));
   });
   const [dishIsAvailable, setDishIsAvailable] = useState(() => {
     if (type !== "dish") return true;
@@ -70,6 +109,8 @@ export function CreateForm({
   const taxiPhoneRef = useRef(null);
   const taxiWhatsappRef = useRef(null);
   const maxPhotos = type === "ad" || type === "service" ? 8 : 1;
+  const genericTitleMin = type === "dish" ? DISH_TITLE_MIN : LISTING_TITLE_MIN;
+  const genericTitleMax = type === "dish" ? DISH_TITLE_MAX : LISTING_TITLE_MAX;
 
   const collectInitialPhotos = useCallback(() => {
     if (!isEdit) return [];
@@ -277,13 +318,9 @@ export function CreateForm({
           {isEdit && editMeta?.kind ? <input type="hidden" name="editEntityKind" value={editMeta.kind} /> : null}
           {existingPhotos.map((photo, index) => <input key={`existing-restaurant-${photo}-${index}`} type="hidden" name="existingPhotos" value={photo} />)}
           {removedExistingPhotos.map((photo, index) => <input key={`removed-restaurant-${photo}-${index}`} type="hidden" name="removedPhotos" value={photo} />)}
-          <Field label="Название"><input required name="title" defaultValue={initialValues?.title || ""} className="input" minLength={2} maxLength={RESTAURANT_TITLE_MAX} onInput={(e) => {
-            if (e.currentTarget.value.length > RESTAURANT_TITLE_MAX) {
-              e.currentTarget.value = e.currentTarget.value.slice(0, RESTAURANT_TITLE_MAX);
-            }
-          }} /></Field>
-          <Field label="Описание"><textarea required name="desc" defaultValue={initialValues?.desc || ""} className="textarea" maxLength={DESCRIPTION_MAX} /></Field>
-          <Field label="Адрес"><input required name="address" defaultValue={initialValues?.address || ""} className="input" minLength={5} maxLength={200} /></Field>
+          <Field label="Название"><input required name="title" defaultValue={clampTextLength(initialValues?.title, RESTAURANT_NAME_MAX)} className="input" minLength={RESTAURANT_NAME_MIN} maxLength={RESTAURANT_NAME_MAX} onInput={(e) => limitTextInput(e, RESTAURANT_NAME_MAX)} /></Field>
+          <Field label="Описание"><textarea required name="desc" defaultValue={clampTextLength(initialValues?.desc, DESCRIPTION_MAX)} className="textarea" maxLength={DESCRIPTION_MAX} onInput={(e) => limitTextInput(e, DESCRIPTION_MAX)} /></Field>
+          <Field label="Адрес"><input required name="address" defaultValue={clampTextLength(initialValues?.address, ADDRESS_MAX)} className="input" minLength={ADDRESS_MIN} maxLength={ADDRESS_MAX} onInput={(e) => limitTextInput(e, ADDRESS_MAX)} /></Field>
           <div className="grid-2">
             <Field label="Телефон">
               <input
@@ -294,7 +331,7 @@ export function CreateForm({
                 defaultValue={formatPhoneValue(initialValues?.phone, { allowEmpty: true })}
                 className="input"
                 placeholder={PHONE_PLACEHOLDER}
-                maxLength={18}
+                maxLength={PHONE_INPUT_MAX}
                 pattern={PHONE_PATTERN}
                 title="Введите номер в формате +7 (999) 999-99-99"
                 ref={restaurantPhoneRef}
@@ -305,7 +342,7 @@ export function CreateForm({
                 onFocus={syncPhonePrev}
               />
             </Field>
-            <Field label="Telegram"><input name="telegram" defaultValue={initialValues?.telegram || ""} className="input" placeholder="@username" /></Field>
+            <Field label="Telegram"><input name="telegram" defaultValue={clampTextLength(initialValues?.telegram, TELEGRAM_MAX)} className="input" placeholder="@username" maxLength={TELEGRAM_MAX} onInput={(e) => limitTextInput(e, TELEGRAM_MAX)} /></Field>
           </div>
           <Field label="WhatsApp">
             <input
@@ -315,7 +352,7 @@ export function CreateForm({
               defaultValue={formatPhoneValue(initialValues?.whatsapp, { allowEmpty: true })}
               className="input"
               placeholder={PHONE_PLACEHOLDER}
-              maxLength={18}
+              maxLength={PHONE_INPUT_MAX}
               pattern={PHONE_PATTERN}
               title="Введите номер в формате +7 (999) 999-99-99"
               ref={restaurantWhatsappRef}
@@ -365,11 +402,19 @@ export function CreateForm({
                 name="deliveryPrice"
                 type="number"
                 min={1}
+                max={DELIVERY_PRICE_MAX}
+                step={1}
                 inputMode="numeric"
                 pattern="[0-9]*"
                 className="input"
                 value={restaurantDeliveryPrice}
-                onChange={(e) => setRestaurantDeliveryPrice(e.currentTarget.value)}
+                onInput={(e) => {
+                  const nextValue = sanitizeIntegerInput(e.currentTarget.value, DELIVERY_PRICE_MAX);
+                  if (e.currentTarget.value !== nextValue) {
+                    e.currentTarget.value = nextValue;
+                  }
+                  setRestaurantDeliveryPrice(nextValue);
+                }}
               />
             </Field>
           ) : null}
@@ -507,13 +552,18 @@ export function CreateForm({
               <input
                 required
                 name="price"
-                defaultValue={initialValues?.price || ""}
+                defaultValue={sanitizeIntegerInput(initialValues?.price, PRICE_MAX)}
                 type="number"
                 min={1}
+                max={PRICE_MAX}
+                step={1}
                 inputMode="numeric"
                 pattern="[0-9]*"
                 className={`input ${taxiFieldErrors.price ? "is-invalid" : ""}`}
-                onInput={() => setTaxiFieldErrors((prev) => ({ ...prev, price: "" }))}
+                onInput={(e) => {
+                  limitIntegerInput(e, PRICE_MAX);
+                  setTaxiFieldErrors((prev) => ({ ...prev, price: "" }));
+                }}
               />
               {taxiFieldErrors.price ? <p className="small field-invalid-note">{taxiFieldErrors.price}</p> : null}
             </Field>
@@ -522,11 +572,18 @@ export function CreateForm({
                 <input
                   required={isIntercityCreate}
                   name="seats"
-                  defaultValue={initialValues?.seats?.free || initialValues?.seats?.total || ""}
+                  defaultValue={sanitizeIntegerInput(initialValues?.seats?.free || initialValues?.seats?.total, TAXI_SEATS_MAX)}
                   type="number"
                   min={1}
+                  max={TAXI_SEATS_MAX}
+                  step={1}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   className={`input ${taxiFieldErrors.seats ? "is-invalid" : ""}`}
-                  onInput={() => setTaxiFieldErrors((prev) => ({ ...prev, seats: "" }))}
+                  onInput={(e) => {
+                    limitIntegerInput(e, TAXI_SEATS_MAX);
+                    setTaxiFieldErrors((prev) => ({ ...prev, seats: "" }));
+                  }}
                 />
                 {taxiFieldErrors.seats ? <p className="small field-invalid-note">{taxiFieldErrors.seats}</p> : null}
               </Field>
@@ -535,10 +592,11 @@ export function CreateForm({
           <Field label="Модель машины">
             <input
               name="vehicle"
-              defaultValue={initialValues?.vehicle || initialValues?.carModel || ""}
+              defaultValue={clampTextLength(initialValues?.vehicle || initialValues?.carModel, TAXI_VEHICLE_MAX)}
               className="input"
-              maxLength={80}
+              maxLength={TAXI_VEHICLE_MAX}
               placeholder="Например, Toyota Camry"
+              onInput={(e) => limitTextInput(e, TAXI_VEHICLE_MAX)}
             />
           </Field>
           {isIntercitySelected ? (
@@ -592,7 +650,7 @@ export function CreateForm({
               defaultValue={formatPhoneValue(initialValues?.contacts?.phone, { allowEmpty: true })}
               className={`input ${taxiFieldErrors.phone ? "is-invalid" : ""}`}
               placeholder={PHONE_PLACEHOLDER}
-              maxLength={18}
+              maxLength={PHONE_INPUT_MAX}
               pattern={PHONE_PATTERN}
               title="Введите номер в формате +7 (999) 999-99-99"
               ref={taxiPhoneRef}
@@ -614,7 +672,7 @@ export function CreateForm({
               defaultValue={formatPhoneValue(initialValues?.contacts?.wa, { allowEmpty: true })}
               className={`input ${taxiFieldErrors.wa ? "is-invalid" : ""}`}
               placeholder={PHONE_PLACEHOLDER}
-              maxLength={18}
+              maxLength={PHONE_INPUT_MAX}
               pattern={PHONE_PATTERN}
               title="Введите номер в формате +7 (999) 999-99-99"
               ref={taxiWhatsappRef}
@@ -626,14 +684,17 @@ export function CreateForm({
             />
             {taxiFieldErrors.wa ? <p className="small field-invalid-note">{taxiFieldErrors.wa}</p> : null}
           </Field>
-          <Field label="Telegram"><input name="tg" defaultValue={initialValues?.contacts?.tg || ""} className="input" /></Field>
+          <Field label="Telegram"><input name="tg" defaultValue={clampTextLength(initialValues?.contacts?.tg, TELEGRAM_MAX)} className="input" maxLength={TELEGRAM_MAX} onInput={(e) => limitTextInput(e, TELEGRAM_MAX)} /></Field>
           <Field label="Описание">
             <textarea
               name="desc"
-              defaultValue={initialValues?.desc || ""}
+              defaultValue={clampTextLength(initialValues?.desc, DESCRIPTION_MAX)}
               className={`textarea ${taxiFieldErrors.desc ? "is-invalid" : ""}`}
               maxLength={DESCRIPTION_MAX}
-              onInput={() => setTaxiFieldErrors((prev) => ({ ...prev, desc: "" }))}
+              onInput={(e) => {
+                limitTextInput(e, DESCRIPTION_MAX);
+                setTaxiFieldErrors((prev) => ({ ...prev, desc: "" }));
+              }}
             />
             {taxiFieldErrors.desc ? <p className="small field-invalid-note">{taxiFieldErrors.desc}</p> : null}
           </Field>
@@ -762,7 +823,7 @@ export function CreateForm({
         {isEdit && editMeta?.kind ? <input type="hidden" name="editEntityKind" value={editMeta.kind} /> : null}
         {existingPhotos.map((photo, index) => <input key={`existing-${type}-${photo}-${index}`} type="hidden" name="existingPhotos" value={photo} />)}
         {removedExistingPhotos.map((photo, index) => <input key={`removed-${type}-${photo}-${index}`} type="hidden" name="removedPhotos" value={photo} />)}
-        <Field label="Название"><input required name="title" defaultValue={initialValues?.title || ""} className="input" minLength={3} maxLength={TITLE_MAX} /></Field>
+        <Field label="Название"><input required name="title" defaultValue={clampTextLength(initialValues?.title, genericTitleMax)} className="input" minLength={genericTitleMin} maxLength={genericTitleMax} onInput={(e) => limitTextInput(e, genericTitleMax)} /></Field>
         <Field label="Категория">
           <select
             className="select"
@@ -774,8 +835,8 @@ export function CreateForm({
             {safeCategories.map((x) => <option key={x} value={x}>{x}</option>)}
           </select>
         </Field>
-        <Field label="Цена, ₽"><input required name="price" defaultValue={initialValues?.price || ""} type="number" min={1} inputMode="numeric" pattern="[0-9]*" className="input" /></Field>
-        <Field label="Описание"><textarea required name="desc" defaultValue={initialValues?.desc || ""} className="textarea" minLength={10} maxLength={DESCRIPTION_MAX} /></Field>
+        <Field label="Цена, ₽"><input required name="price" defaultValue={sanitizeIntegerInput(initialValues?.price, PRICE_MAX)} type="number" min={1} max={PRICE_MAX} step={1} inputMode="numeric" pattern="[0-9]*" className="input" onInput={(e) => limitIntegerInput(e, PRICE_MAX)} /></Field>
+        <Field label="Описание"><textarea required name="desc" defaultValue={clampTextLength(initialValues?.desc, DESCRIPTION_MAX)} className="textarea" minLength={10} maxLength={DESCRIPTION_MAX} onInput={(e) => limitTextInput(e, DESCRIPTION_MAX)} /></Field>
         {type === "dish" ? (
           <Field label="Наличие">
             <div className="multi-select-buttons">

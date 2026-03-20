@@ -53,6 +53,15 @@ import {
   PHONE_COMPACT_PLACEHOLDER,
   syncPhonePrev,
 } from './utils/phone';
+import {
+  ACCOUNT_NAME_MAX,
+  ACCOUNT_NAME_MIN,
+  LOGIN_MAX,
+  LOGIN_MIN,
+  PASSWORD_MAX,
+  PASSWORD_MIN,
+  PHONE_INPUT_MAX,
+} from './utils/validation';
 
 import {
   ADS_CATEGORIES,
@@ -101,6 +110,7 @@ const SCROLL_TOP_VISIBILITY_OFFSET = 420;
 const TAB_AUTO_REFRESH_STALE_MS = 30000;
 const FULL_SCREEN_CREATE_TYPES = new Set(["ad", "service", "taxi", "restaurant"]);
 const LIST_TABS = new Set(["ads", "services", "taxi", "food"]);
+const clampTextLength = (value, maxLength) => String(value || "").slice(0, maxLength);
 
 const buildModalSnapshot = (currentModal) => (
   currentModal ? { type: currentModal.type, payload: currentModal.payload } : null
@@ -759,7 +769,8 @@ export default function App() {
     const name = String(fd.get("name") || "").trim();
     const password = String(fd.get("password") || "");
     const isValidPhone = /^\+7\(\d{3}\)\d{3}-\d{2}-\d{2}$/.test(signInPhone);
-    const isValidLogin = /^[A-Za-z0-9_]{3,64}$/.test(login);
+    const loginPattern = new RegExp(`^[A-Za-z0-9_]{${LOGIN_MIN},${LOGIN_MAX}}$`);
+    const isValidLogin = loginPattern.test(login);
     const hasSignInPhone = signInMethod === "phone" && Boolean(signInPhone);
     const hasSignInLogin = signInMethod === "login" && Boolean(login);
 
@@ -1145,18 +1156,6 @@ export default function App() {
           : taxiCatalog;
     const item = source.find((x) => x.id === id);
     if (!item) return;
-    if (type === "taxi" && isOwnTaxiItem(item)) {
-      setModal({
-        type: "detail",
-        payload: {
-          type,
-          id,
-          fromBusiness: true,
-          returnTo: { type: "entityGroup", payload: { group: "taxi" } },
-        },
-      });
-      return;
-    }
     setModal({ type: "detail", payload: { type, id } });
   };
 
@@ -1849,7 +1848,6 @@ export default function App() {
   const isOwnedTaxiDetail = Boolean(
     detailData?.type === "taxi" && isOwnTaxiItem(detailData.item)
   );
-  const canEditDetailFromHeader = detailFromBusiness || isOwnedRestaurantDetail;
   const canManageDishesFromDetail = isOwnedRestaurantDetail || isOwnedFoodDetail;
   const isDetailOwnerView = detailFromBusiness
     || isOwnedRestaurantDetail
@@ -2114,6 +2112,7 @@ export default function App() {
                         className="input"
                         placeholder={PHONE_COMPACT_PLACEHOLDER}
                         pattern={PHONE_COMPACT_PATTERN}
+                        maxLength={PHONE_INPUT_MAX}
                         autoComplete="tel"
                         value={signInPhoneValue}
                         onInput={(e) => {
@@ -2131,9 +2130,11 @@ export default function App() {
                         className="input"
                         placeholder="Ваш логин"
                         autoComplete="username"
+                        minLength={LOGIN_MIN}
+                        maxLength={LOGIN_MAX}
                         value={signInLoginValue}
                         onChange={(e) => {
-                          setSignInLoginValue(e.currentTarget.value);
+                          setSignInLoginValue(clampTextLength(e.currentTarget.value, LOGIN_MAX));
                           if (authError) setAuthError("");
                         }}
                       />
@@ -2150,10 +2151,15 @@ export default function App() {
                       required
                       name="name"
                       className="input"
-                      minLength={2}
-                      maxLength={80}
+                      minLength={ACCOUNT_NAME_MIN}
+                      maxLength={ACCOUNT_NAME_MAX}
                       placeholder="Ваше имя"
                       autoComplete="name"
+                      onInput={(e) => {
+                        if (e.currentTarget.value.length > ACCOUNT_NAME_MAX) {
+                          e.currentTarget.value = e.currentTarget.value.slice(0, ACCOUNT_NAME_MAX);
+                        }
+                      }}
                     />
                   </label>
                   <label className="field">
@@ -2166,6 +2172,7 @@ export default function App() {
                       className="input"
                       placeholder={PHONE_COMPACT_PLACEHOLDER}
                       pattern={PHONE_COMPACT_PATTERN}
+                      maxLength={PHONE_INPUT_MAX}
                       autoComplete="tel"
                       onInput={(e) => handlePhoneInputCompact(e, { allowEmpty: true })}
                       onFocus={syncPhonePrev}
@@ -2182,9 +2189,14 @@ export default function App() {
                     type={showAuthPassword ? "text" : "password"}
                     name="password"
                     className="input password-input"
-                    minLength={6}
-                    maxLength={128}
+                    minLength={PASSWORD_MIN}
+                    maxLength={PASSWORD_MAX}
                     autoComplete={authMode === "signin" ? "current-password" : "new-password"}
+                    onInput={(e) => {
+                      if (e.currentTarget.value.length > PASSWORD_MAX) {
+                        e.currentTarget.value = e.currentTarget.value.slice(0, PASSWORD_MAX);
+                      }
+                    }}
                   />
                   <button
                     type="button"
@@ -2243,7 +2255,7 @@ export default function App() {
                 },
               });
             }}
-            onEdit={canEditDetailFromHeader ? handleDetailEdit : null}
+            onEdit={isDetailOwnerView ? handleDetailEdit : null}
             onAddDish={isOwnedRestaurantDetail ? () => openCreate("dish") : null}
             onEditDish={canManageDishesFromDetail ? editDish : null}
             onDeleteDish={canManageDishesFromDetail ? removeDish : null}
