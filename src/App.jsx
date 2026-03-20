@@ -1,12 +1,13 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Eye, EyeOff, X} from 'lucide-react';
-import {CreateForm, DetailModalContent, ProfileEditForm} from './components/modals';
+import {X} from 'lucide-react';
+import {AuthModalContent, CreateForm, DetailModalContent, ProfileEditForm} from './components/modals';
 import {EntityGroupModalContent} from './components/entity-group-modal-content';
 import {Icon, Modal} from './components/ui';
 import {useAuthState} from './hooks/use-auth-state';
 import {useGestureGuard} from './hooks/use-gesture-guard';
 import {useNavHistory} from './hooks/use-nav-history';
 import {useTaxiCatalog} from './hooks/use-taxi-catalog';
+import {useTelegramSetup} from './hooks/use-telegram-setup';
 import {AdsTab, FoodTab, ProfileTab, ServicesTab, TaxiTab} from './sections/tabs';
 import {
   createOrUpdateAccountRequest,
@@ -46,22 +47,8 @@ import {deleteImagesFromS3, uploadImagesToS3} from './utils/s3-upload';
 import {tabConfig} from './utils/constants';
 import {sortItems} from './utils/helpers';
 import {toTaxiDepartureAtApiValue} from './utils/taxi';
-import {
-  formatPhoneValueCompact,
-  handlePhoneInputCompact,
-  PHONE_COMPACT_PATTERN,
-  PHONE_COMPACT_PLACEHOLDER,
-  syncPhonePrev,
-} from './utils/phone';
-import {
-  ACCOUNT_NAME_MAX,
-  ACCOUNT_NAME_MIN,
-  LOGIN_MAX,
-  LOGIN_MIN,
-  PASSWORD_MAX,
-  PASSWORD_MIN,
-  PHONE_INPUT_MAX,
-} from './utils/validation';
+import {formatPhoneValueCompact} from './utils/phone';
+import {LOGIN_MAX, LOGIN_MIN} from './utils/validation';
 
 import {
   ADS_CATEGORIES,
@@ -76,7 +63,6 @@ import {
   buildTaxiRoutePayload,
   buildInitialFeedback,
   buildRestaurantId,
-  deepCopy,
   getFeedbackRating,
   getRestaurantDeliveryMode,
   getRestaurantDeliveryPrice,
@@ -110,8 +96,6 @@ const SCROLL_TOP_VISIBILITY_OFFSET = 420;
 const TAB_AUTO_REFRESH_STALE_MS = 30000;
 const FULL_SCREEN_CREATE_TYPES = new Set(["ad", "service", "taxi", "restaurant"]);
 const LIST_TABS = new Set(["ads", "services", "taxi", "food"]);
-const clampTextLength = (value, maxLength) => String(value || "").slice(0, maxLength);
-
 const buildModalSnapshot = (currentModal) => (
   currentModal ? { type: currentModal.type, payload: currentModal.payload } : null
 );
@@ -145,7 +129,6 @@ export default function App() {
   const [signInPhoneValue, setSignInPhoneValue] = useState("");
   const [signInLoginValue, setSignInLoginValue] = useState("");
   const [signInMethod, setSignInMethod] = useState("phone");
-  const [telegramWebAppReady, setTelegramWebAppReady] = useState(false);
   const [isCatalogLoading, setIsCatalogLoading] = useState(true);
   const [isListRefreshing, setIsListRefreshing] = useState(false);
   const [showScrollTopButton, setShowScrollTopButton] = useState(false);
@@ -179,15 +162,13 @@ export default function App() {
     setIsTaxiDriver,
     toggleAuth,
     applyAuthSession,
-  } = useAuthState({ deepCopy });
+  } = useAuthState();
 
   const adsCategoriesVisible = useMemo(
     () => (isAuth ? adsCategories : adsCategories.filter((x) => x !== "Мои объявления")),
     [isAuth, adsCategories]
   );
-  const telegramWebApp = telegramWebAppReady ? window.Telegram?.WebApp : null;
-  const telegramInitData = String(telegramWebApp?.initData || "").trim();
-  const isTelegramMiniApp = Boolean(telegramWebApp && telegramInitData);
+  const { telegramWebApp, telegramInitData, isTelegramMiniApp } = useTelegramSetup();
   const openSupport = useCallback(() => {
     const tg = window.Telegram?.WebApp;
     if (tg?.openTelegramLink) {
@@ -214,34 +195,6 @@ export default function App() {
     }
 
     window.close();
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
-      setTelegramWebAppReady(true);
-      return undefined;
-    }
-
-    let cancelled = false;
-    let attempts = 0;
-    const maxAttempts = 60;
-    const timer = window.setInterval(() => {
-      if (cancelled) return;
-      if (window.Telegram?.WebApp) {
-        setTelegramWebAppReady(true);
-        window.clearInterval(timer);
-        return;
-      }
-      attempts += 1;
-      if (attempts >= maxAttempts) {
-        window.clearInterval(timer);
-      }
-    }, 250);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
   }, []);
 
   const resetSignInFields = useCallback(() => {
@@ -273,158 +226,6 @@ export default function App() {
       // ignore storage errors
     }
   }, []);
-
-  useEffect(() => {
-    const tg = isTelegramMiniApp ? telegramWebApp : null;
-    const root = document.documentElement;
-    let fullscreenRetryTimer = null;
-    let fullscreenAttempts = 0;
-    const MAX_FULLSCREEN_ATTEMPTS = 6;
-    const FULLSCREEN_RETRY_DELAY = 180;
-    const telegramCapabilities = {
-      disableVerticalSwipes: true,
-      requestFullscreen: true,
-      enableClosingConfirmation: true,
-    };
-    const clampInset = (value) => {
-      const numeric = Number(value);
-      if (!Number.isFinite(numeric)) return 0;
-      return Math.max(0, Math.min(numeric, 96));
-    };
-    const callTelegramMethod = (methodName) => {
-      const method = tg?.[methodName];
-      if (!method || telegramCapabilities[methodName] === false) {
-        return false;
-      }
-
-      try {
-        method.call(tg);
-        return true;
-      } catch (error) {
-        if (error?.message === "WebAppMethodUnsupported") {
-          telegramCapabilities[methodName] = false;
-          return false;
-        }
-        throw error;
-      }
-    };
-    const applyViewportVars = () => {
-      const telegramPlatform = String(tg?.platform || "").toLowerCase();
-      const ua = String(window.navigator?.userAgent || "");
-      const isAndroidUa = /Android/i.test(ua);
-      const isIosUa = /iPhone|iPad|iPod/i.test(ua);
-      const isAndroidTelegram = Boolean(tg) && telegramPlatform === "android";
-      const isAndroidPlatform = telegramPlatform === "android" || (!tg && isAndroidUa);
-      const isIosPlatform = telegramPlatform === "ios" || (!tg && isIosUa);
-      const stableHeight = Number(tg?.viewportStableHeight);
-      const viewportHeight = Number(tg?.viewportHeight);
-      const appHeight = Number.isFinite(stableHeight) && stableHeight > 0
-        ? stableHeight
-        : (Number.isFinite(viewportHeight) && viewportHeight > 0 ? viewportHeight : window.innerHeight);
-
-      const safeTopFromTg = clampInset(tg?.contentSafeAreaInset?.top ?? tg?.safeAreaInset?.top);
-      const safeBottomFromTg = clampInset(tg?.contentSafeAreaInset?.bottom ?? tg?.safeAreaInset?.bottom);
-      const topFallback = clampInset(window.innerHeight - appHeight);
-      const safeTop = Math.max(safeTopFromTg, topFallback);
-      const visualViewportHeight = Number(window.visualViewport?.height);
-      const visualViewportOffsetTop = Number(window.visualViewport?.offsetTop);
-      const visualViewportBottomEdge = Number.isFinite(visualViewportHeight) && visualViewportHeight > 0
-        ? (visualViewportHeight + (Number.isFinite(visualViewportOffsetTop) ? visualViewportOffsetTop : 0))
-        : null;
-      const visualViewportBottomInset = visualViewportBottomEdge !== null
-        ? clampInset(Math.max(
-          window.innerHeight - visualViewportBottomEdge,
-          appHeight - visualViewportBottomEdge
-        ))
-        : 0;
-      const viewportGapFromTg = Number.isFinite(stableHeight) && stableHeight > 0 && Number.isFinite(viewportHeight) && viewportHeight > 0
-        ? clampInset(stableHeight - viewportHeight)
-        : 0;
-      const safeBottom = Math.max(safeBottomFromTg, visualViewportBottomInset, viewportGapFromTg);
-
-      root.style.setProperty("--app-height", `${Math.max(appHeight, 320)}px`);
-      root.style.setProperty("--tg-safe-area-top", `${safeTop}px`);
-      root.style.setProperty("--tg-safe-area-bottom", `${safeBottom}px`);
-      root.style.setProperty("--dynamic-safe-area-bottom", `${visualViewportBottomInset}px`);
-      root.style.setProperty("--android-nav-buffer", `${isAndroidPlatform ? (isAndroidTelegram ? 10 : 6) : 0}px`);
-      root.style.setProperty("--bottom-nav-lift", `${isAndroidPlatform ? 14 : 0}px`);
-      root.style.setProperty("--topbar-global-offset", `${isAndroidPlatform ? 38 : (isIosPlatform ? 40 : 0)}px`);
-    };
-
-    if (!tg) {
-      applyViewportVars();
-      window.addEventListener("resize", applyViewportVars);
-      window.visualViewport?.addEventListener("resize", applyViewportVars);
-      window.visualViewport?.addEventListener("scroll", applyViewportVars);
-      return () => {
-        window.removeEventListener("resize", applyViewportVars);
-        window.visualViewport?.removeEventListener("resize", applyViewportVars);
-        window.visualViewport?.removeEventListener("scroll", applyViewportVars);
-      };
-    }
-
-    const enforceFullscreen = () => {
-      tg.expand?.();
-      callTelegramMethod("disableVerticalSwipes");
-      callTelegramMethod("requestFullscreen");
-    };
-    const scheduleFullscreenRetry = () => {
-      if (fullscreenAttempts >= MAX_FULLSCREEN_ATTEMPTS) return;
-      if (fullscreenRetryTimer) return;
-      fullscreenRetryTimer = window.setTimeout(() => {
-        fullscreenRetryTimer = null;
-        fullscreenAttempts += 1;
-        enforceFullscreen();
-      }, FULLSCREEN_RETRY_DELAY);
-    };
-    const handleViewportChanged = () => {
-      applyViewportVars();
-      const isExpanded = tg.isExpanded !== false;
-      const isFullscreen = tg.isFullscreen !== false;
-      if (!isExpanded || !isFullscreen) {
-        enforceFullscreen();
-        scheduleFullscreenRetry();
-      }
-    };
-    const handleFullscreenChanged = () => {
-      if (tg.isFullscreen === false) {
-        enforceFullscreen();
-        scheduleFullscreenRetry();
-      }
-    };
-    const handleFullscreenFailed = () => {
-      scheduleFullscreenRetry();
-    };
-
-    tg.ready();
-    enforceFullscreen();
-    callTelegramMethod("enableClosingConfirmation");
-    applyViewportVars();
-    scheduleFullscreenRetry();
-
-    tg.onEvent?.("viewportChanged", handleViewportChanged);
-    tg.onEvent?.("safeAreaChanged", applyViewportVars);
-    tg.onEvent?.("contentSafeAreaChanged", applyViewportVars);
-    tg.onEvent?.("fullscreenChanged", handleFullscreenChanged);
-    tg.onEvent?.("fullscreenFailed", handleFullscreenFailed);
-    window.addEventListener("resize", applyViewportVars);
-    window.visualViewport?.addEventListener("resize", applyViewportVars);
-    window.visualViewport?.addEventListener("scroll", applyViewportVars);
-
-    return () => {
-      if (fullscreenRetryTimer) {
-        window.clearTimeout(fullscreenRetryTimer);
-      }
-      tg.offEvent?.("viewportChanged", handleViewportChanged);
-      tg.offEvent?.("safeAreaChanged", applyViewportVars);
-      tg.offEvent?.("contentSafeAreaChanged", applyViewportVars);
-      tg.offEvent?.("fullscreenChanged", handleFullscreenChanged);
-      tg.offEvent?.("fullscreenFailed", handleFullscreenFailed);
-      window.removeEventListener("resize", applyViewportVars);
-      window.visualViewport?.removeEventListener("resize", applyViewportVars);
-      window.visualViewport?.removeEventListener("scroll", applyViewportVars);
-    };
-  }, [telegramWebApp, isTelegramMiniApp]);
 
   useEffect(() => {
     let isMounted = true;
@@ -2039,187 +1840,24 @@ export default function App() {
         closeOnBackdrop={!blockAuthBackdropClose}
       >
         {modal?.type === "auth" && (
-          <>
-            <h3>Требуется авторизация</h3>
-            <p className="small">Выберите способ входа. Для регистрации новый аккаунт по-прежнему создаётся по номеру телефона.</p>
-            <div className="multi-select-buttons" style={{ marginTop: 8 }}>
-              <button
-                type="button"
-                className={`multi-select-btn ${authMode === "signin" ? "active" : ""}`}
-                onClick={() => {
-                  setAuthMode("signin");
-                  setAuthError("");
-                  setShowAuthPassword(false);
-                  resetSignInFields();
-                }}
-                aria-pressed={authMode === "signin"}
-              >
-                Вход
-              </button>
-              <button
-                type="button"
-                className={`multi-select-btn ${authMode === "signup" ? "active" : ""}`}
-                onClick={() => {
-                  setAuthMode("signup");
-                  setAuthError("");
-                  setShowAuthPassword(false);
-                  resetSignInFields();
-                }}
-                aria-pressed={authMode === "signup"}
-              >
-                Регистрация
-              </button>
-            </div>
-            <form key={authMode} className="list" style={{ marginTop: 10 }} onSubmit={handleAuthSubmit}>
-              {authMode === "signin" && (
-                <>
-                  <div className="auth-method-switch" role="tablist" aria-label="Способ входа">
-                    <button
-                      type="button"
-                      className={`auth-method-switch-btn ${signInMethod === "phone" ? "active" : ""}`}
-                      onClick={() => {
-                        setSignInMethod("phone");
-                        setAuthError("");
-                      }}
-                      aria-pressed={signInMethod === "phone"}
-                    >
-                      По телефону
-                    </button>
-                    <button
-                      type="button"
-                      className={`auth-method-switch-btn ${signInMethod === "login" ? "active" : ""}`}
-                      onClick={() => {
-                        setSignInMethod("login");
-                        setAuthError("");
-                      }}
-                      aria-pressed={signInMethod === "login"}
-                    >
-                      По логину
-                    </button>
-                  </div>
-                  <p className="small" style={{ marginTop: 2 }}>
-                    {signInMethod === "phone"
-                      ? "Введите номер телефона и пароль."
-                      : "Введите логин и пароль."}
-                  </p>
-                  <label className="field">
-                    <span className="small">{signInMethod === "phone" ? "Телефон" : "Логин"}</span>
-                    {signInMethod === "phone" ? (
-                      <input
-                        name="signinPhone"
-                        type="tel"
-                        inputMode="numeric"
-                        className="input"
-                        placeholder={PHONE_COMPACT_PLACEHOLDER}
-                        pattern={PHONE_COMPACT_PATTERN}
-                        maxLength={PHONE_INPUT_MAX}
-                        autoComplete="tel"
-                        value={signInPhoneValue}
-                        onInput={(e) => {
-                          handlePhoneInputCompact(e, { allowEmpty: true });
-                          setSignInPhoneValue(e.currentTarget.value);
-                          if (authError) setAuthError("");
-                        }}
-                        onFocus={syncPhonePrev}
-                      />
-                    ) : (
-                      <input
-                        name="signinLogin"
-                        type="text"
-                        inputMode="text"
-                        className="input"
-                        placeholder="Ваш логин"
-                        autoComplete="username"
-                        minLength={LOGIN_MIN}
-                        maxLength={LOGIN_MAX}
-                        value={signInLoginValue}
-                        onChange={(e) => {
-                          setSignInLoginValue(clampTextLength(e.currentTarget.value, LOGIN_MAX));
-                          if (authError) setAuthError("");
-                        }}
-                      />
-                    )}
-                  </label>
-                </>
-              )}
-
-              {authMode === "signup" && (
-                <>
-                  <label className="field">
-                    <span className="small">Имя</span>
-                    <input
-                      required
-                      name="name"
-                      className="input"
-                      minLength={ACCOUNT_NAME_MIN}
-                      maxLength={ACCOUNT_NAME_MAX}
-                      placeholder="Ваше имя"
-                      autoComplete="name"
-                      onInput={(e) => {
-                        if (e.currentTarget.value.length > ACCOUNT_NAME_MAX) {
-                          e.currentTarget.value = e.currentTarget.value.slice(0, ACCOUNT_NAME_MAX);
-                        }
-                      }}
-                    />
-                  </label>
-                  <label className="field">
-                    <span className="small">Телефон</span>
-                    <input
-                      required
-                      name="phone"
-                      type="tel"
-                      inputMode="numeric"
-                      className="input"
-                      placeholder={PHONE_COMPACT_PLACEHOLDER}
-                      pattern={PHONE_COMPACT_PATTERN}
-                      maxLength={PHONE_INPUT_MAX}
-                      autoComplete="tel"
-                      onInput={(e) => handlePhoneInputCompact(e, { allowEmpty: true })}
-                      onFocus={syncPhonePrev}
-                    />
-                  </label>
-                </>
-              )}
-
-              <label className="field">
-                <span className="small">Пароль</span>
-                <div className="password-input-wrap">
-                  <input
-                    required
-                    type={showAuthPassword ? "text" : "password"}
-                    name="password"
-                    className="input password-input"
-                    minLength={PASSWORD_MIN}
-                    maxLength={PASSWORD_MAX}
-                    autoComplete={authMode === "signin" ? "current-password" : "new-password"}
-                    onInput={(e) => {
-                      if (e.currentTarget.value.length > PASSWORD_MAX) {
-                        e.currentTarget.value = e.currentTarget.value.slice(0, PASSWORD_MAX);
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="password-toggle-btn"
-                    onClick={() => setShowAuthPassword((v) => !v)}
-                    aria-label={showAuthPassword ? "Скрыть пароль" : "Показать пароль"}
-                    aria-pressed={showAuthPassword}
-                  >
-                    {showAuthPassword ? <EyeOff className="icon" aria-hidden="true" /> : <Eye className="icon" aria-hidden="true" />}
-                  </button>
-                </div>
-              </label>
-
-              {authError ? <p className="small" style={{ color: "#c62828", marginTop: 6 }}>{authError}</p> : null}
-
-              <div className="actions" style={{ marginTop: 8 }}>
-                <button className="primary-btn" type="submit" disabled={authPending}>
-                  {authPending ? "Отправка..." : authMode === "signin" ? "Войти" : "Зарегистрироваться"}
-                </button>
-                <button className="ghost-btn" type="button" onClick={closeModal} disabled={authPending}>Отмена</button>
-              </div>
-            </form>
-          </>
+          <AuthModalContent
+            authMode={authMode}
+            setAuthMode={setAuthMode}
+            authError={authError}
+            setAuthError={setAuthError}
+            authPending={authPending}
+            showAuthPassword={showAuthPassword}
+            setShowAuthPassword={setShowAuthPassword}
+            signInMethod={signInMethod}
+            setSignInMethod={setSignInMethod}
+            signInPhoneValue={signInPhoneValue}
+            setSignInPhoneValue={setSignInPhoneValue}
+            signInLoginValue={signInLoginValue}
+            setSignInLoginValue={setSignInLoginValue}
+            onSubmit={handleAuthSubmit}
+            onClose={closeModal}
+            resetSignInFields={resetSignInFields}
+          />
         )}
 
         {modal?.type === "detail" && detailData && (
