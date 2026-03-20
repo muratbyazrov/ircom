@@ -601,8 +601,20 @@ export function CreateForm({
           </Field>
           {isIntercitySelected ? (
             <>
-              <Field label={taxiDateValue ? `Дата и время (${taxiDateValue} ${taxiTimePreset})` : "Дата и время"}>
-                <p className="small" style={{ marginTop: 0, marginBottom: 8 }}>Указывайте время по Москве (UTC+3).</p>
+              <Field label="Дата и время">
+                <div className={`taxi-when-highlight${showTaxiWhenError ? " is-invalid" : ""}`}>
+                  <div className="taxi-when-highlight-head">Выбрано для поездки</div>
+                  <div className="taxi-when-highlight-grid">
+                    <div className={`taxi-when-highlight-item${taxiDateValue ? " is-active" : " is-placeholder"}`}>
+                      <span className="taxi-when-highlight-caption">Дата</span>
+                      <strong>{taxiDateValue ? `${taxiDayPreset}, ${taxiDateValue}` : "Выберите дату"}</strong>
+                    </div>
+                    <div className="taxi-when-highlight-item is-active">
+                      <span className="taxi-when-highlight-caption">Время</span>
+                      <strong>{taxiTimePreset}</strong>
+                    </div>
+                  </div>
+                </div>
                 <div className={`multi-select-buttons ${showTaxiWhenError ? "is-invalid" : ""}`}>
                   {TAXI_DAY_PRESETS.map((x) => (
                     <button

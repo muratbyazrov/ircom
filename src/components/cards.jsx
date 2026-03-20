@@ -298,6 +298,9 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
   const showDateLine = isIntercity && (whenDateText || whenText);
   const showToolbar = isIntercity;
   const showInlineFavorite = !isIntercity && canFavorite;
+  const taxiRatingText = hasRating ? `Оценка ${item.ratingValue.toFixed(1)}` : "Нет оценки";
+  const shouldStretchTaxiMedia = Boolean(showDateLine || exactTimeText || seatsText || vehicleText || isOwn || item.isFilled);
+  const shouldLowerSparseRating = isIntercity && !shouldStretchTaxiMedia;
   const favoriteButton = canFavorite ? (
     <FavoriteCornerButton
       activeFav={activeFav}
@@ -357,12 +360,10 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
                   </div>
                 </div>
               ) : null}
-              {hasRating ? (
-                <div className="taxi-rating-line taxi-rating-line-compact">
-                  <span className="badge">{`Оценка ${item.ratingValue.toFixed(1)}`}</span>
-                  <span className="small">{item.reviewsCount || 0} отзыв(ов)</span>
-                </div>
-              ) : null}
+              <div className="taxi-rating-line taxi-rating-line-compact">
+                <span className={`badge ${hasRating ? "" : "badge-muted"}`}>{taxiRatingText}</span>
+                <span className="small">{item.reviewsCount || 0} отзыв(ов)</span>
+              </div>
             </div>
           </div>
         </div>
@@ -380,7 +381,13 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
           </div>
         ) : null}
         <div className="taxi-card-layout">
-          <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full" blockParentClick />
+          <Media
+            photos={item.photos}
+            emptyText="Нет фото"
+            section="taxi"
+            className={`taxi-media-full${shouldStretchTaxiMedia ? " taxi-media-stretch" : ""}`}
+            blockParentClick
+          />
           <div className="taxi-card-content">
             <div className={`taxi-card-head${showDateLine ? "" : " taxi-card-head-price-only"}`}>
               {showDateLine ? (
@@ -408,12 +415,10 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
                 </div>
               </div>
             ) : null}
-            {hasRating ? (
-              <div className="taxi-rating-line taxi-rating-line-compact">
-                <span className="badge">{`Оценка ${item.ratingValue.toFixed(1)}`}</span>
-                <span className="small">{item.reviewsCount || 0} отзыв(ов)</span>
-              </div>
-            ) : null}
+            <div className={`taxi-rating-line taxi-rating-line-compact${shouldLowerSparseRating ? " taxi-rating-line-sparse" : ""}`}>
+              <span className={`badge ${hasRating ? "" : "badge-muted"}`}>{taxiRatingText}</span>
+              <span className="small">{item.reviewsCount || 0} отзыв(ов)</span>
+            </div>
           </div>
         </div>
         {summaryText ? <p className="taxi-card-summary taxi-card-summary-wide">{summaryText}</p> : null}
