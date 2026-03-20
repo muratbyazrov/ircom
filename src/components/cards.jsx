@@ -309,8 +309,7 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
 
   if (!isIntercity) {
     const driverName = String(item.name || "").trim();
-    const mainTitle = driverName || cityTitle;
-    const subTitle = driverName && cityTitle !== driverName ? cityTitle : "";
+    const nameLabel = driverName || (!vehicleText ? cityTitle : "");
 
     return (
       <InteractiveCard className="card card-clickable card-taxi card-taxi-city" onOpen={onOpen}>
@@ -319,8 +318,8 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
             <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full taxi-media-city" blockParentClick />
             <div className="taxi-card-content taxi-card-content-city">
               <div className="taxi-card-city-copy">
-                <p className="taxi-city-name" title={mainTitle}>{mainTitle}</p>
-                {subTitle ? <p className="taxi-city-subtitle">{subTitle}</p> : null}
+                {nameLabel ? <p className="taxi-city-name">{nameLabel}</p> : null}
+                {vehicleText ? <span className="taxi-inline-chip taxi-vehicle-chip" title={vehicleRawText}>{vehicleText}</span> : null}
                 {summaryText ? <p className="taxi-card-summary taxi-card-summary-city">{summaryText}</p> : null}
               </div>
               <div className="taxi-card-city-footer">
