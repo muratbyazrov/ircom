@@ -314,6 +314,14 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
     return (
       <InteractiveCard className="card card-clickable card-taxi card-taxi-city" onOpen={onOpen}>
         <div className="card-body taxi-card-body taxi-card-body-city">
+          <FavoriteCornerButton
+            activeFav={activeFav}
+            onFav={onFav}
+            canFavorite={canFavorite}
+            isOwn={isOwn}
+            ownerLabel="Вы водитель"
+            ownerAriaLabel="Вы водитель"
+          />
           <div className="taxi-card-layout taxi-card-layout-city">
             <Media photos={item.photos} emptyText="Нет фото" section="taxi" className="taxi-media-full taxi-media-city" blockParentClick />
             <div className="taxi-card-content taxi-card-content-city">
@@ -323,17 +331,13 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
                 {summaryText ? <p className="taxi-card-summary taxi-card-summary-city">{summaryText}</p> : null}
               </div>
               <div className="taxi-card-city-footer">
-                {(isOwn || item.isFilled || hasRating) ? (
+                {(item.isFilled || hasRating) ? (
                   <div className="taxi-card-city-meta">
-                    {isOwn ? <span className="taxi-owner-badge taxi-owner-badge-city">Вы водитель</span> : null}
                     {item.isFilled ? <span className="badge">Водитель заполнен</span> : null}
                     {hasRating ? <span className="badge">{`Оценка ${item.ratingValue.toFixed(1)}`}</span> : null}
                   </div>
                 ) : null}
-                <div className="taxi-card-head-actions taxi-card-head-actions-city">
-                  <div className="price taxi-card-price taxi-card-price-city" title={fullPriceText}>{priceText}</div>
-                  {favoriteButton}
-                </div>
+                <div className="price taxi-card-price taxi-card-price-city" title={fullPriceText}>{priceText}</div>
               </div>
             </div>
           </div>
