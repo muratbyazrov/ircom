@@ -39,6 +39,7 @@ export function DetailModalContent({
   onDeleteDish,
   onToggleDishAvailability,
   onDeleteTaxi,
+  onDeleteListing,
   closeViewerSignal = 0,
   onViewerOpenChange,
 }) {
@@ -816,6 +817,9 @@ export function DetailModalContent({
         <div className="actions" style={{ marginTop: 8 }}>
           {typeof onEdit === "function" ? <button className="primary-btn" type="button" onClick={onEdit}>Редактировать</button> : null}
           {isTaxiDetail && typeof onDeleteTaxi === "function" ? <button className="danger-btn" type="button" onClick={() => onDeleteTaxi(item.id)}>Удалить</button> : null}
+          {(type === "ads" || type === "services") && typeof onDeleteListing === "function" ? (
+            <button className="danger-ghost-btn" type="button" onClick={() => onDeleteListing(item.id)}>Удалить</button>
+          ) : null}
         </div>
       ) : null}
 

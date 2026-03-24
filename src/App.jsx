@@ -19,6 +19,7 @@ import {
 } from './api/auth';
 import {
   createListingRequest,
+  deleteMyListingRequest,
   getListingsRequest,
   getMyListingsRequest,
   toggleListingFavoriteRequest,
@@ -1358,6 +1359,40 @@ export default function App() {
 
   const editService = (id) => openEditEntity({ type: "service", id, kind: "service" });
   const editAd = (id) => openEditEntity({ type: "ad", id, kind: "ad" });
+  const removeListing = (id) => {
+    const isAd = String(id).startsWith("ad-");
+    const allItems = isAd ? customAds : customServices;
+    const target = allItems.find((item) => item.id === id);
+    const listingTitle = String(target?.title || (isAd ? "Объявление" : "Услуга")).trim();
+    setModal({
+      type: "confirmListingDelete",
+      payload: { listingId: id, listingTitle },
+    });
+  };
+  const confirmRemoveListing = async () => {
+    if (modal?.type !== "confirmListingDelete") return;
+    const rawId = modal?.payload?.listingId;
+    if (!rawId) { closeModal(); return; }
+    try {
+      const accountId = toAccountId(authSession?.accountId);
+      const isAd = String(rawId).startsWith("ad-");
+      const listingId = Number(String(rawId).split("-")[1]);
+      if (accountId !== null && listingId) {
+        await deleteMyListingRequest({ accountId, listingId, kind: isAd ? 1 : 2 });
+        await refreshMyData();
+        await refreshCatalog();
+        setFavorites((prev) => {
+          if (!prev.has(rawId)) return prev;
+          const next = new Set(prev);
+          next.delete(rawId);
+          return next;
+        });
+      }
+      setModal(null);
+    } catch (error) {
+      showActionError(error, "Не удалось удалить объявление");
+    }
+  };
   const editDish = (id) => openEditEntity({ type: "dish", id, kind: "dish" });
   const removeDish = (id) => {
     const targetDish = userRestaurantDishes.find((dish) => dish.id === id);
@@ -1901,6 +1936,7 @@ export default function App() {
             onDeleteDish={canManageDishesFromDetail ? removeDish : null}
             onToggleDishAvailability={canManageDishesFromDetail ? toggleDishAvailability : null}
             onDeleteTaxi={isOwnedTaxiDetail ? removeTaxiOffer : null}
+            onDeleteListing={(isOwnedAdDetail || isOwnedServiceDetail) ? removeListing : null}
             isOwnerView={isDetailOwnerView}
           />
         )}
@@ -1926,6 +1962,19 @@ export default function App() {
             </p>
             <div className="actions" style={{ marginTop: 8 }}>
               <button className="danger-btn" type="button" onClick={confirmRemoveTaxiOffer}>Удалить</button>
+              <button className="ghost-btn" type="button" onClick={closeModal}>Отмена</button>
+            </div>
+          </>
+        )}
+
+        {modal?.type === "confirmListingDelete" && (
+          <>
+            <h3>Удалить объявление?</h3>
+            <p className="small">
+              «{modal?.payload?.listingTitle || "Без названия"}» будет удалено без возможности восстановления.
+            </p>
+            <div className="actions" style={{ marginTop: 8 }}>
+              <button className="danger-btn" type="button" onClick={confirmRemoveListing}>Удалить</button>
               <button className="ghost-btn" type="button" onClick={closeModal}>Отмена</button>
             </div>
           </>
