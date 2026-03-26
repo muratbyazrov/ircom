@@ -2644,6 +2644,53 @@ button {
   position: relative;
 }
 
+.input[type="file"] {
+  min-height: 58px;
+  padding: 8px 12px;
+  border-style: dashed;
+  border-color: #f0c7cc;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, #fffdfd 0%, #fff7f8 100%);
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.input[type="file"]:hover {
+  border-color: #e8b2b9;
+  background:
+    linear-gradient(180deg, #fffafb 0%, #fff4f6 100%);
+}
+
+.input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 10px 14px;
+  border: 1px solid #f3c3c8;
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #fff1f3 100%);
+  color: #9f1239;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 6px 14px rgba(227, 38, 46, 0.08);
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.input[type="file"]::file-selector-button:hover {
+  border-color: #eb9ea7;
+  background:
+    linear-gradient(180deg, #fff7f8 0%, #ffecef 100%);
+}
+
+.input[type="file"]::file-selector-button:active {
+  transform: translateY(1px);
+}
+
 .input-has-clear {
   padding-right: 40px;
 }

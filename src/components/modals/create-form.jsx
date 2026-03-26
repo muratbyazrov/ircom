@@ -949,6 +949,68 @@ export function CreateForm({
             <input type="hidden" name="isAvailable" value={dishIsAvailable ? "true" : "false"} />
           </Field>
         ) : null}
+        <Field label={`Фото (до ${maxPhotos})`}>
+          <div className="input-with-clear">
+            <input
+              type="file"
+              name="images"
+              className={`input ${selectedPhotoCount > 0 ? "input-has-clear" : ""}`}
+              multiple={maxPhotos > 1}
+              accept="image/*"
+              ref={imagesInputRef}
+              onChange={handleImagesChange}
+              onClick={(e) => {
+                e.currentTarget.value = "";
+              }}
+            />
+            {selectedPhotoCount > 0 ? (
+              <button className="clear-photos-btn clear-photos-inside" type="button" onClick={clearSelectedImages} aria-label="Убрать выбранные фото">
+                ×
+              </button>
+            ) : null}
+          </div>
+          {isPreparingPhotos && selectedPhotoCount > 0 ? (
+            <div className="upload-status" aria-live="polite">
+              <span className="loader-spinner" aria-hidden="true" />
+              Подготавливаем {selectedPhotoCount} фото...
+            </div>
+          ) : null}
+          {existingPhotos.length > 0 ? (
+            <div className="upload-preview-grid" aria-live="polite">
+              {existingPhotos.map((photoUrl, index) => (
+                <div key={`existing-generic-preview-${photoUrl}-${index}`} className="upload-preview-item">
+                  <img className="upload-preview-thumb" src={photoUrl} alt={`Текущее фото ${index + 1}`} onError={(e) => applyImageFallback(e, type === "ad" ? "ads" : type === "service" ? "services" : "food")} />
+                  <button
+                    type="button"
+                    className="upload-preview-remove-btn"
+                    onClick={() => removeExistingImage(index)}
+                    aria-label={`Убрать текущее фото ${index + 1}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {selectedPhotoPreviews.length > 0 && !isPreparingPhotos ? (
+            <div className="upload-preview-grid" aria-live="polite">
+              {selectedPhotoPreviews.map((photoUrl, index) => (
+                <div key={photoUrl} className="upload-preview-item">
+                  <img className="upload-preview-thumb" src={photoUrl} alt={`Предпросмотр фото ${index + 1}`} />
+                  <button
+                    type="button"
+                    className="upload-preview-remove-btn"
+                    onClick={() => removeSelectedImage(index)}
+                    aria-label={`Удалить фото ${index + 1}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </Field>
+        {photosLimitError ? <p className="small" style={{ color: "var(--danger)" }}>{photosLimitError}</p> : null}
         {(type === "ad" || type === "service") ? (
           <>
             <div className={`listing-contact-panel${listingContactError ? " is-invalid" : ""}`}>
@@ -1016,68 +1078,6 @@ export function CreateForm({
             {listingContactError ? <p className="small listing-contact-error">{listingContactError}</p> : null}
           </>
         ) : null}
-        <Field label={`Фото (до ${maxPhotos})`}>
-          <div className="input-with-clear">
-            <input
-              type="file"
-              name="images"
-              className={`input ${selectedPhotoCount > 0 ? "input-has-clear" : ""}`}
-              multiple={maxPhotos > 1}
-              accept="image/*"
-              ref={imagesInputRef}
-              onChange={handleImagesChange}
-              onClick={(e) => {
-                e.currentTarget.value = "";
-              }}
-            />
-            {selectedPhotoCount > 0 ? (
-              <button className="clear-photos-btn clear-photos-inside" type="button" onClick={clearSelectedImages} aria-label="Убрать выбранные фото">
-                ×
-              </button>
-            ) : null}
-          </div>
-          {isPreparingPhotos && selectedPhotoCount > 0 ? (
-            <div className="upload-status" aria-live="polite">
-              <span className="loader-spinner" aria-hidden="true" />
-              Подготавливаем {selectedPhotoCount} фото...
-            </div>
-          ) : null}
-          {existingPhotos.length > 0 ? (
-            <div className="upload-preview-grid" aria-live="polite">
-              {existingPhotos.map((photoUrl, index) => (
-                <div key={`existing-generic-preview-${photoUrl}-${index}`} className="upload-preview-item">
-                  <img className="upload-preview-thumb" src={photoUrl} alt={`Текущее фото ${index + 1}`} onError={(e) => applyImageFallback(e, type === "ad" ? "ads" : type === "service" ? "services" : "food")} />
-                  <button
-                    type="button"
-                    className="upload-preview-remove-btn"
-                    onClick={() => removeExistingImage(index)}
-                    aria-label={`Убрать текущее фото ${index + 1}`}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : null}
-          {selectedPhotoPreviews.length > 0 && !isPreparingPhotos ? (
-            <div className="upload-preview-grid" aria-live="polite">
-              {selectedPhotoPreviews.map((photoUrl, index) => (
-                <div key={photoUrl} className="upload-preview-item">
-                  <img className="upload-preview-thumb" src={photoUrl} alt={`Предпросмотр фото ${index + 1}`} />
-                  <button
-                    type="button"
-                    className="upload-preview-remove-btn"
-                    onClick={() => removeSelectedImage(index)}
-                    aria-label={`Удалить фото ${index + 1}`}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </Field>
-        {photosLimitError ? <p className="small" style={{ color: "var(--danger)" }}>{photosLimitError}</p> : null}
         <FormActions
           onClose={onClose}
           submitting={submitPending}
