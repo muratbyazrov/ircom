@@ -2458,10 +2458,137 @@ button {
   resize: vertical;
 }
 
+.create-form-hero {
+  margin-bottom: 10px;
+}
+
+.create-form-hero-media-wrap {
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--primary-soft);
+}
+
+.create-form-hero-media {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+}
+
 .label {
   font-size: 12px;
   color: var(--muted);
   margin-bottom: 6px;
+}
+
+.listing-contact-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid #f0d0d4;
+  background:
+    radial-gradient(circle at top left, rgba(227, 38, 46, 0.07), transparent 42%),
+    linear-gradient(180deg, #fffdfd 0%, #fff8f9 100%);
+}
+
+.listing-contact-panel.is-invalid {
+  border-color: rgba(220, 38, 38, 0.42);
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.12);
+}
+
+.listing-contact-panel-head {
+  display: grid;
+  gap: 4px;
+}
+
+.listing-contact-panel-head h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.listing-contact-panel-head .small {
+  margin: 0;
+  max-width: 360px;
+}
+
+.listing-contact-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.listing-contact-card {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid #eadde0;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.04);
+}
+
+.listing-contact-card-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.listing-contact-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid #f1d5d8;
+  background: #fff6f7;
+  color: #e57f86;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.listing-contact-card-icon .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.listing-contact-card-telegram .listing-contact-card-icon {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+  color: #0284c7;
+}
+
+.listing-contact-card-whatsapp .listing-contact-card-icon {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #16a34a;
+}
+
+.listing-contact-card-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.listing-contact-card-copy strong {
+  font-size: 13px;
+  color: #111827;
+}
+
+.listing-contact-card-copy span {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.listing-contact-card .input {
+  background: rgba(255, 255, 255, 0.96);
+  min-width: 0;
+}
+
+.listing-contact-error {
+  margin: -2px 0 0;
+  color: var(--danger);
 }
 
 .upload-status {

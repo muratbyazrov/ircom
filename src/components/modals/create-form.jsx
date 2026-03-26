@@ -20,7 +20,8 @@ import {
   TAXI_VEHICLE_MAX,
   TELEGRAM_MAX,
 } from "../../utils/validation";
-import { FormActions, Field } from "../ui";
+import { FormActions, Field, Icon } from "../ui";
+import adsHero from "../../assets/ads-hero.svg";
 import restaurantHero from "../../assets/restaurant-hero.svg";
 import taxiHero from "../../assets/taxi-hero.svg";
 import serviceHero from "../../assets/service-hero.svg";
@@ -49,6 +50,54 @@ const limitTextInput = (event, maxLength) => {
     event.currentTarget.value = event.currentTarget.value.slice(0, maxLength);
   }
 };
+
+const GENERIC_FORM_HERO = {
+  ad: {
+    image: adsHero,
+    alt: "Иллюстрация объявления",
+    fallback: "ads",
+  },
+  service: {
+    image: serviceHero,
+    alt: "Иллюстрация услуги",
+    fallback: "services",
+  },
+};
+
+function GenericListingHero({ type }) {
+  const config = GENERIC_FORM_HERO[type];
+  if (!config) return null;
+
+  return (
+    <div className={`create-form-hero create-form-hero-${type}`}>
+      <div className="create-form-hero-media-wrap">
+        <img
+          src={config.image}
+          alt={config.alt}
+          className="create-form-hero-media"
+          onError={(event) => applyImageFallback(event, config.fallback)}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ListingContactCard({ icon, title, hint, accentClassName = "", children }) {
+  return (
+    <div className={`listing-contact-card ${accentClassName}`.trim()}>
+      <div className="listing-contact-card-head">
+        <span className="listing-contact-card-icon" aria-hidden="true">
+          <Icon name={icon} />
+        </span>
+        <div className="listing-contact-card-copy">
+          <strong>{title}</strong>
+          <span>{hint}</span>
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export function CreateForm({
   type,
@@ -265,6 +314,7 @@ export function CreateForm({
   useEffect(() => {
     syncWhatsappFromPhone(restaurantPhoneRef.current, restaurantWhatsappRef.current);
     syncWhatsappFromPhone(taxiPhoneRef.current, taxiWhatsappRef.current);
+    syncWhatsappFromPhone(listingPhoneRef.current, listingWhatsappRef.current);
   }, []);
 
   const handleTaxiSubmit = (e) => {
@@ -324,45 +374,6 @@ export function CreateForm({
           <Field label="Название"><input required name="title" defaultValue={clampTextLength(initialValues?.title, RESTAURANT_NAME_MAX)} className="input" minLength={RESTAURANT_NAME_MIN} maxLength={RESTAURANT_NAME_MAX} onInput={(e) => limitTextInput(e, RESTAURANT_NAME_MAX)} /></Field>
           <Field label="Описание"><textarea required name="desc" defaultValue={clampTextLength(initialValues?.desc, DESCRIPTION_MAX)} className="textarea" maxLength={DESCRIPTION_MAX} onInput={(e) => limitTextInput(e, DESCRIPTION_MAX)} /></Field>
           <Field label="Адрес"><input required name="address" defaultValue={clampTextLength(initialValues?.address, ADDRESS_MAX)} className="input" minLength={ADDRESS_MIN} maxLength={ADDRESS_MAX} onInput={(e) => limitTextInput(e, ADDRESS_MAX)} /></Field>
-          <div className="grid-2">
-            <Field label="Телефон">
-              <input
-                required
-                name="phone"
-                type="tel"
-                inputMode="tel"
-                defaultValue={formatPhoneValue(initialValues?.phone, { allowEmpty: true })}
-                className="input"
-                placeholder={PHONE_PLACEHOLDER}
-                maxLength={PHONE_INPUT_MAX}
-                pattern={PHONE_PATTERN}
-                title="Введите номер в формате +7 (999) 999-99-99"
-                ref={restaurantPhoneRef}
-                onInput={(e) => {
-                  handlePhoneInput(e, { allowEmpty: true });
-                  syncWhatsappFromPhone(e.currentTarget, restaurantWhatsappRef.current);
-                }}
-                onFocus={syncPhonePrev}
-              />
-            </Field>
-            <Field label="Telegram"><input name="telegram" defaultValue={clampTextLength(initialValues?.telegram, TELEGRAM_MAX)} className="input" placeholder="@username" maxLength={TELEGRAM_MAX} onInput={(e) => limitTextInput(e, TELEGRAM_MAX)} /></Field>
-          </div>
-          <Field label="WhatsApp">
-            <input
-              name="whatsapp"
-              type="tel"
-              inputMode="tel"
-              defaultValue={formatPhoneValue(initialValues?.whatsapp, { allowEmpty: true })}
-              className="input"
-              placeholder={PHONE_PLACEHOLDER}
-              maxLength={PHONE_INPUT_MAX}
-              pattern={PHONE_PATTERN}
-              title="Введите номер в формате +7 (999) 999-99-99"
-              ref={restaurantWhatsappRef}
-              onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
-              onFocus={syncPhonePrev}
-            />
-          </Field>
           <Field label="Доставка">
             <div className="multi-select-buttons">
               <button
@@ -482,6 +493,62 @@ export function CreateForm({
             ) : null}
             {photosLimitError ? <p className="small" style={{ color: "var(--danger)" }}>{photosLimitError}</p> : null}
           </Field>
+          <div className="listing-contact-panel">
+            <div className="listing-contact-panel-head">
+              <div>
+                <h4>Контакты</h4>
+                <p className="small">Оставьте контакты заведения</p>
+              </div>
+            </div>
+            <div className="listing-contact-grid">
+              <ListingContactCard icon="phone" title="Телефон" hint="Для звонков и брони">
+                <input
+                  required
+                  name="phone"
+                  type="tel"
+                  inputMode="tel"
+                  defaultValue={formatPhoneValue(initialValues?.phone, { allowEmpty: true })}
+                  className="input"
+                  placeholder={PHONE_PLACEHOLDER}
+                  maxLength={PHONE_INPUT_MAX}
+                  pattern={PHONE_PATTERN}
+                  title="Введите номер в формате +7 (999) 999-99-99"
+                  ref={restaurantPhoneRef}
+                  onInput={(e) => {
+                    handlePhoneInput(e, { allowEmpty: true });
+                    syncWhatsappFromPhone(e.currentTarget, restaurantWhatsappRef.current);
+                  }}
+                  onFocus={syncPhonePrev}
+                />
+              </ListingContactCard>
+              <ListingContactCard icon="telegram" title="Telegram" hint="Удобно для переписки" accentClassName="listing-contact-card-telegram">
+                <input
+                  name="telegram"
+                  defaultValue={clampTextLength(initialValues?.telegram, TELEGRAM_MAX)}
+                  className="input"
+                  placeholder="@username"
+                  maxLength={TELEGRAM_MAX}
+                  onInput={(e) => limitTextInput(e, TELEGRAM_MAX)}
+                />
+              </ListingContactCard>
+              <ListingContactCard icon="whatsapp" title="WhatsApp" hint="Удобно для переписки" accentClassName="listing-contact-card-whatsapp">
+                <input
+                  name="whatsapp"
+                  type="tel"
+                  inputMode="tel"
+                  defaultValue={formatPhoneValue(initialValues?.whatsapp, { allowEmpty: true })}
+                  className="input"
+                  placeholder={PHONE_PLACEHOLDER}
+                  maxLength={PHONE_INPUT_MAX}
+                  pattern={PHONE_PATTERN}
+                  title="Введите номер в формате +7 (999) 999-99-99"
+                  ref={restaurantWhatsappRef}
+                  onInput={(e) => handlePhoneInput(e, { allowEmpty: true })}
+                  onFocus={syncPhonePrev}
+                />
+              </ListingContactCard>
+            </div>
+          </div>
           <FormActions
             onClose={onClose}
             submitting={submitPending}
@@ -656,50 +723,6 @@ export function CreateForm({
               </Field>
             </>
           ) : null}
-          <Field label="Телефон">
-            <input
-              required
-              name="phone"
-              type="tel"
-              inputMode="tel"
-              defaultValue={formatPhoneValue(initialValues?.contacts?.phone, { allowEmpty: true })}
-              className={`input ${taxiFieldErrors.phone ? "is-invalid" : ""}`}
-              placeholder={PHONE_PLACEHOLDER}
-              maxLength={PHONE_INPUT_MAX}
-              pattern={PHONE_PATTERN}
-              title="Введите номер в формате +7 (999) 999-99-99"
-              ref={taxiPhoneRef}
-              onInput={(e) => {
-                handlePhoneInput(e, { allowEmpty: true });
-                syncWhatsappFromPhone(e.currentTarget, taxiWhatsappRef.current);
-                setTaxiFieldErrors((prev) => ({ ...prev, phone: "" }));
-              }}
-              onFocus={syncPhonePrev}
-            />
-            {taxiFieldErrors.phone ? <p className="small field-invalid-note">{taxiFieldErrors.phone}</p> : null}
-          </Field>
-          <Field label="WhatsApp">
-            <input
-              required={isIntercityCreate}
-              name="wa"
-              type="tel"
-              inputMode="tel"
-              defaultValue={formatPhoneValue(initialValues?.contacts?.wa, { allowEmpty: true })}
-              className={`input ${taxiFieldErrors.wa ? "is-invalid" : ""}`}
-              placeholder={PHONE_PLACEHOLDER}
-              maxLength={PHONE_INPUT_MAX}
-              pattern={PHONE_PATTERN}
-              title="Введите номер в формате +7 (999) 999-99-99"
-              ref={taxiWhatsappRef}
-              onInput={(e) => {
-                handlePhoneInput(e, { allowEmpty: true });
-                setTaxiFieldErrors((prev) => ({ ...prev, wa: "" }));
-              }}
-              onFocus={syncPhonePrev}
-            />
-            {taxiFieldErrors.wa ? <p className="small field-invalid-note">{taxiFieldErrors.wa}</p> : null}
-          </Field>
-          <Field label="Telegram"><input name="tg" defaultValue={clampTextLength(initialValues?.contacts?.tg, TELEGRAM_MAX)} className="input" maxLength={TELEGRAM_MAX} onInput={(e) => limitTextInput(e, TELEGRAM_MAX)} /></Field>
           <Field label="Описание">
             <textarea
               name="desc"
@@ -776,6 +799,69 @@ export function CreateForm({
             {photosLimitError ? <p className="small" style={{ color: "var(--danger)" }}>{photosLimitError}</p> : null}
             {taxiFieldErrors.images ? <p className="small field-invalid-note">{taxiFieldErrors.images}</p> : null}
           </Field>
+          <div className={`listing-contact-panel${taxiFieldErrors.phone || taxiFieldErrors.wa ? " is-invalid" : ""}`}>
+            <div className="listing-contact-panel-head">
+              <div>
+                <h4>Контакты</h4>
+                <p className="small">Оставьте контакты водителя</p>
+              </div>
+            </div>
+            <div className="listing-contact-grid">
+              <ListingContactCard icon="phone" title="Телефон" hint="Для звонков пассажирам">
+                <input
+                  required
+                  name="phone"
+                  type="tel"
+                  inputMode="tel"
+                  defaultValue={formatPhoneValue(initialValues?.contacts?.phone, { allowEmpty: true })}
+                  className={`input ${taxiFieldErrors.phone ? "is-invalid" : ""}`}
+                  placeholder={PHONE_PLACEHOLDER}
+                  maxLength={PHONE_INPUT_MAX}
+                  pattern={PHONE_PATTERN}
+                  title="Введите номер в формате +7 (999) 999-99-99"
+                  ref={taxiPhoneRef}
+                  onInput={(e) => {
+                    handlePhoneInput(e, { allowEmpty: true });
+                    syncWhatsappFromPhone(e.currentTarget, taxiWhatsappRef.current);
+                    setTaxiFieldErrors((prev) => ({ ...prev, phone: "" }));
+                  }}
+                  onFocus={syncPhonePrev}
+                />
+                {taxiFieldErrors.phone ? <p className="small field-invalid-note">{taxiFieldErrors.phone}</p> : null}
+              </ListingContactCard>
+              <ListingContactCard icon="whatsapp" title="WhatsApp" hint="Удобно для переписки" accentClassName="listing-contact-card-whatsapp">
+                <input
+                  required={isIntercityCreate}
+                  name="wa"
+                  type="tel"
+                  inputMode="tel"
+                  defaultValue={formatPhoneValue(initialValues?.contacts?.wa, { allowEmpty: true })}
+                  className={`input ${taxiFieldErrors.wa ? "is-invalid" : ""}`}
+                  placeholder={PHONE_PLACEHOLDER}
+                  maxLength={PHONE_INPUT_MAX}
+                  pattern={PHONE_PATTERN}
+                  title="Введите номер в формате +7 (999) 999-99-99"
+                  ref={taxiWhatsappRef}
+                  onInput={(e) => {
+                    handlePhoneInput(e, { allowEmpty: true });
+                    setTaxiFieldErrors((prev) => ({ ...prev, wa: "" }));
+                  }}
+                  onFocus={syncPhonePrev}
+                />
+                {taxiFieldErrors.wa ? <p className="small field-invalid-note">{taxiFieldErrors.wa}</p> : null}
+              </ListingContactCard>
+              <ListingContactCard icon="telegram" title="Telegram" hint="Удобно для переписки" accentClassName="listing-contact-card-telegram">
+                <input
+                  name="tg"
+                  defaultValue={clampTextLength(initialValues?.contacts?.tg, TELEGRAM_MAX)}
+                  className="input"
+                  placeholder="@username"
+                  maxLength={TELEGRAM_MAX}
+                  onInput={(e) => limitTextInput(e, TELEGRAM_MAX)}
+                />
+              </ListingContactCard>
+            </div>
+          </div>
           <FormActions
             onClose={onClose}
             submitting={submitPending}
@@ -800,32 +886,7 @@ export function CreateForm({
 
   return (
     <>
-      {type === "service" ? (
-        <div
-          style={{
-            display: "grid",
-            gap: 8,
-            marginBottom: 10,
-            padding: 10,
-            borderRadius: 14,
-            background: "var(--primary-soft)",
-            border: "1px solid var(--line)",
-          }}
-        >
-          <img
-            src={serviceHero}
-            alt="Иллюстрация услуги"
-            onError={(e) => applyImageFallback(e, "services")}
-            style={{
-              width: "100%",
-              height: 150,
-              objectFit: "cover",
-              borderRadius: 12,
-            }}
-          />
-          <p className="small" style={{ margin: 0, color: "var(--text)" }}>Опишите услугу, стоимость и приложите примеры работ</p>
-        </div>
-      ) : null}
+      {(type === "ad" || type === "service") ? <GenericListingHero type={type} /> : null}
       <h3 style={{ marginBottom: 8 }}>
         {type === "ad"
           ? (isEdit ? "Редактирование объявления" : "Создание объявления")
@@ -890,61 +951,69 @@ export function CreateForm({
         ) : null}
         {(type === "ad" || type === "service") ? (
           <>
-            <div className="grid-2">
-              <Field label="Телефон">
-                <input
-                  name="phone"
-                  type="tel"
-                  inputMode="tel"
-                  defaultValue={formatPhoneValue(initialValues?.contacts?.phone, { allowEmpty: true })}
-                  className="input"
-                  placeholder={PHONE_PLACEHOLDER}
-                  maxLength={PHONE_INPUT_MAX}
-                  pattern={PHONE_PATTERN}
-                  title="Введите номер в формате +7 (999) 999-99-99"
-                  ref={listingPhoneRef}
-                  onInput={(e) => {
-                    handlePhoneInput(e, { allowEmpty: true });
-                    syncWhatsappFromPhone(e.currentTarget, listingWhatsappRef.current);
-                    setListingContactError("");
-                  }}
-                  onFocus={syncPhonePrev}
-                />
-              </Field>
-              <Field label="Telegram">
-                <input
-                  name="telegram"
-                  defaultValue={clampTextLength(initialValues?.contacts?.tg, TELEGRAM_MAX)}
-                  className="input"
-                  placeholder="@username"
-                  maxLength={TELEGRAM_MAX}
-                  onInput={(e) => {
-                    limitTextInput(e, TELEGRAM_MAX);
-                    setListingContactError("");
-                  }}
-                />
-              </Field>
+            <div className={`listing-contact-panel${listingContactError ? " is-invalid" : ""}`}>
+              <div className="listing-contact-panel-head">
+                <div>
+                  <h4>Контакты для связи</h4>
+                  <p className="small">Оставьте хотя бы один контакт</p>
+                </div>
+              </div>
+              <div className="listing-contact-grid">
+                <ListingContactCard icon="phone" title="Телефон" hint="Для звонков и быстрых вопросов">
+                  <input
+                    name="phone"
+                    type="tel"
+                    inputMode="tel"
+                    defaultValue={formatPhoneValue(initialValues?.contacts?.phone, { allowEmpty: true })}
+                    className="input"
+                    placeholder={PHONE_PLACEHOLDER}
+                    maxLength={PHONE_INPUT_MAX}
+                    pattern={PHONE_PATTERN}
+                    title="Введите номер в формате +7 (999) 999-99-99"
+                    ref={listingPhoneRef}
+                    onInput={(e) => {
+                      handlePhoneInput(e, { allowEmpty: true });
+                      syncWhatsappFromPhone(e.currentTarget, listingWhatsappRef.current);
+                      setListingContactError("");
+                    }}
+                    onFocus={syncPhonePrev}
+                  />
+                </ListingContactCard>
+                <ListingContactCard icon="telegram" title="Telegram" hint="Удобно для переписки" accentClassName="listing-contact-card-telegram">
+                  <input
+                    name="telegram"
+                    defaultValue={clampTextLength(initialValues?.contacts?.tg, TELEGRAM_MAX)}
+                    className="input"
+                    placeholder="@username"
+                    maxLength={TELEGRAM_MAX}
+                    onInput={(e) => {
+                      limitTextInput(e, TELEGRAM_MAX);
+                      setListingContactError("");
+                    }}
+                  />
+                </ListingContactCard>
+                <ListingContactCard icon="whatsapp" title="WhatsApp" hint="Удобно для переписки" accentClassName="listing-contact-card-whatsapp">
+                  <input
+                    name="whatsapp"
+                    type="tel"
+                    inputMode="tel"
+                    defaultValue={formatPhoneValue(initialValues?.contacts?.wa, { allowEmpty: true })}
+                    className="input"
+                    placeholder={PHONE_PLACEHOLDER}
+                    maxLength={PHONE_INPUT_MAX}
+                    pattern={PHONE_PATTERN}
+                    title="Введите номер в формате +7 (999) 999-99-99"
+                    ref={listingWhatsappRef}
+                    onInput={(e) => {
+                      handlePhoneInput(e, { allowEmpty: true });
+                      setListingContactError("");
+                    }}
+                    onFocus={syncPhonePrev}
+                  />
+                </ListingContactCard>
+              </div>
             </div>
-            <Field label="WhatsApp">
-              <input
-                name="whatsapp"
-                type="tel"
-                inputMode="tel"
-                defaultValue={formatPhoneValue(initialValues?.contacts?.wa, { allowEmpty: true })}
-                className="input"
-                placeholder={PHONE_PLACEHOLDER}
-                maxLength={PHONE_INPUT_MAX}
-                pattern={PHONE_PATTERN}
-                title="Введите номер в формате +7 (999) 999-99-99"
-                ref={listingWhatsappRef}
-                onInput={(e) => {
-                  handlePhoneInput(e, { allowEmpty: true });
-                  setListingContactError("");
-                }}
-                onFocus={syncPhonePrev}
-              />
-            </Field>
-            {listingContactError ? <p className="small" style={{ color: "var(--danger)" }}>{listingContactError}</p> : null}
+            {listingContactError ? <p className="small listing-contact-error">{listingContactError}</p> : null}
           </>
         ) : null}
         <Field label={`Фото (до ${maxPhotos})`}>
