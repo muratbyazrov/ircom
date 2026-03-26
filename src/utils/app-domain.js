@@ -1,3 +1,5 @@
+import { normalizeOptionalPrice } from "./helpers";
+
 export const FEEDBACK_SEED = {
   t1: [
     { id: "r-t1-1", author: "Ацамаз", rating: 5, text: "Доехали быстро, водитель вежливый.", createdAt: "2026-02-01T10:20:00.000Z" },
@@ -343,7 +345,7 @@ export const mapListingToUi = (item) => ({
   listingId: item.listingId,
   category: item.category,
   title: item.title,
-  price: Number(item.price) || 0,
+  price: normalizeOptionalPrice(item.price),
   desc: item.description || "",
   owner: item.accountId ? `account-${item.accountId}` : null,
   contacts: getContacts(item),
@@ -362,7 +364,7 @@ export const mapTaxiToUi = (item) => ({
   routeText: pickFirstText(item.routeText, item.route_text, item.route, item.taxiRoute, item.taxi_route),
   vehicle: pickFirstText(item.vehicle, item.carModel, item.car_model),
   name: pickFirstText(item.driverName, item.name, item.nickname, item.accountName, item.ownerName, item.routeText, item.route_text) || "",
-  price: Number(item.price ?? item.cityPrice) || 0,
+  price: normalizeOptionalPrice(item.price ?? item.cityPrice),
   rating: Number(item.rating ?? item.avgRating) || 0,
   date: getDaysAgo(item.createdAt || item.created_at),
   dateAgeMs: getAgeMs(item.createdAt || item.created_at),
@@ -405,7 +407,7 @@ export const mapMenuItemToUi = (item) => ({
   address: pickFirstText(item.restaurantAddress, item.address, item.restaurant_address),
   restaurantLogo: normalizePhotoReference(item.restaurantLogo || item.restaurantLogoUrl),
   title: item.name,
-  price: Number(item.price) || 0,
+  price: normalizeOptionalPrice(item.price),
   unavailable: !item.isAvailable,
   desc: item.description || "",
   contacts: getContacts(item),

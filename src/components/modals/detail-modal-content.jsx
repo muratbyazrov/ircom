@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { clamp, fmtRub, getTouchDistance, formatListingPostedAt } from "../../utils/helpers";
+import { clamp, getTouchDistance, formatListingPostedAt, formatRubWithFallback, normalizeOptionalPrice } from "../../utils/helpers";
 import { applyImageFallback, replaceImageWithEmpty } from "../../utils/images";
 import {
   formatTaxiDateForDisplay,
@@ -78,6 +78,7 @@ export function DetailModalContent({
   const taxiDirectionBadgeText = isTaxiIntercity ? getTaxiDirectionBadgeText(item.category) : "";
   const isServicesDetail = type === "services";
   const isAdsDetail = type === "ads";
+  const hasPrice = normalizeOptionalPrice(item.price) !== null;
   const listingPostedAtText = (isAdsDetail || isServicesDetail)
     ? formatListingPostedAt(item.createdAt, item.date, item.importMeta?.date)
     : "";
@@ -383,7 +384,7 @@ export function DetailModalContent({
       {type === "food" ? (
         <section className="detail-food-meta">
           <div className="detail-food-head">
-            <div className="detail-food-price">{fmtRub.format(item.price)}</div>
+            <div className={`detail-food-price${hasPrice ? "" : " price-missing"}`}>{formatRubWithFallback(item.price)}</div>
             <span className={`detail-food-status-chip ${item.unavailable ? "is-off" : "is-on"}`}>{foodAvailabilityText}</span>
           </div>
           <div className="detail-food-info-list">
@@ -408,7 +409,7 @@ export function DetailModalContent({
         <section className="detail-basic-meta">
           <div className="detail-basic-meta-price">
             <span>Стоимость</span>
-            <b>{fmtRub.format(item.price)}</b>
+            <b className={hasPrice ? "" : "price-missing"}>{formatRubWithFallback(item.price)}</b>
           </div>
           <div className="detail-basic-meta-list">
             {item.category ? (
@@ -440,7 +441,7 @@ export function DetailModalContent({
           </div>
           <div className="detail-hero-caption">
             <h3 className="detail-hero-title">{item.title || item.name}</h3>
-            <div className="detail-hero-price">{fmtRub.format(item.price)}</div>
+            <div className={`detail-hero-price${hasPrice ? "" : " price-missing"}`}>{formatRubWithFallback(item.price)}</div>
           </div>
           <div className="detail-basic-meta">
             <div className="detail-basic-meta-list">
@@ -495,7 +496,7 @@ export function DetailModalContent({
           </div>
           <div className="detail-hero-caption">
             <h3 className="detail-hero-title">{item.title || item.name}</h3>
-            <div className="detail-hero-price">{fmtRub.format(item.price)}</div>
+            <div className={`detail-hero-price${hasPrice ? "" : " price-missing"}`}>{formatRubWithFallback(item.price)}</div>
           </div>
           <div className="detail-basic-meta">
             <div className="detail-basic-meta-list">
@@ -560,7 +561,7 @@ export function DetailModalContent({
             ) : null}
             <div className="detail-taxi-price-pill">
               <span>Стоимость поездки</span>
-              <b>{fmtRub.format(item.price)}</b>
+              <b className={hasPrice ? "" : "price-missing"}>{formatRubWithFallback(item.price)}</b>
             </div>
             {(taxiVehicleText || (isTaxiIntercity && (taxiDateText || taxiTimeText || taxiSeatsText || item.isFilled))) ? (
               <div className="detail-taxi-tag-row">
@@ -778,7 +779,7 @@ export function DetailModalContent({
                         <div className="detail-restaurant-dish-photo-empty">Нет фото</div>
                       )}
                     </div>
-                    <div className="detail-restaurant-dish-price">{fmtRub.format(Number(dish.price) || 0)}</div>
+                    <div className={`detail-restaurant-dish-price${normalizeOptionalPrice(dish.price) !== null ? "" : " price-missing"}`}>{formatRubWithFallback(dish.price)}</div>
                     <div className="detail-restaurant-dish-title">{dish.title || "Блюдо"}</div>
                     <div className="detail-restaurant-dish-address">{dishAddress || "Адрес не указан"}</div>
                     <div className="detail-restaurant-dish-submeta">

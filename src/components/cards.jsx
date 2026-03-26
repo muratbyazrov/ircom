@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { clamp, fmtRub, formatCompactRub, short, formatListingPostedAt } from "../utils/helpers";
+import { clamp, formatRubWithFallback, formatCompactRub, normalizeOptionalPrice, short, formatListingPostedAt } from "../utils/helpers";
 import {
   formatTaxiDateForDisplay,
   getTaxiExactTimeForDisplay,
@@ -241,6 +241,7 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
     ? formatListingPostedAt(item.createdAt, item.date, item.importMeta?.date)
     : `${item.date} дн. назад`;
   const cardSectionClass = section === "ads" ? "card-ad" : section === "services" ? "card-service" : "";
+  const hasPrice = normalizeOptionalPrice(item.price) !== null;
   return (
     <InteractiveCard className={`card card-clickable ${cardSectionClass}`} onOpen={onOpen}>
       <div className="card-body">
@@ -262,7 +263,7 @@ export function ItemCard({ item, onOpen, onFav, activeFav, showRating = false, s
             </div>
             <div className="meta">{item.category} · {postedAtText}</div>
           </div>
-          <div className="price">{fmtRub.format(item.price)}</div>
+          <div className={`price${hasPrice ? "" : " price-missing"}`}>{formatRubWithFallback(item.price)}</div>
         </div>
         {showRating ? (
           <div className="rating-line">
@@ -282,8 +283,8 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
   const hasRating = typeof item.ratingValue === "number" && Number(item.reviewsCount) > 0;
   const isIntercity = isIntercityTaxiCategory(item.category);
   const numericPrice = Number(item.price);
-  const hasValidPrice = Number.isFinite(numericPrice) && numericPrice > 0;
-  const fullPriceText = hasValidPrice ? fmtRub.format(numericPrice) : "По договору";
+  const hasPrice = normalizeOptionalPrice(numericPrice) !== null;
+  const fullPriceText = formatRubWithFallback(numericPrice);
   const priceText = formatCompactRub(numericPrice);
   const whenText = formatTaxiWhenForDisplay(item.when);
   const whenDateText = formatTaxiDateForDisplay(item.when);
@@ -344,7 +345,7 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
                   {nameLabel ? <div className="taxi-route-title taxi-route-title-city">{nameLabel}</div> : null}
                 </div>
                 <div className="taxi-card-head-actions">
-                  <div className="price taxi-card-price" title={fullPriceText}>{priceText}</div>
+                  <div className={`price taxi-card-price${hasPrice ? "" : " price-missing"}`} title={fullPriceText}>{priceText}</div>
                 </div>
               </div>
               {vehicleText ? (
@@ -396,7 +397,7 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
                 </div>
               ) : null}
               <div className="taxi-card-head-actions">
-                <div className="price taxi-card-price" title={fullPriceText}>{priceText}</div>
+                <div className={`price taxi-card-price${hasPrice ? "" : " price-missing"}`} title={fullPriceText}>{priceText}</div>
                 {showInlineFavorite ? favoriteButton : null}
               </div>
             </div>
@@ -429,6 +430,7 @@ export function TaxiCard({ item, onOpen, onFav, activeFav, isOwn = false, canFav
 
 export function FoodCard({ item, onOpen, onFav, activeFav }) {
   const foodAddressText = String(item.restaurantAddress || item.address || "").trim();
+  const hasPrice = normalizeOptionalPrice(item.price) !== null;
 
   return (
     <InteractiveCard className="card card-clickable food-card" onOpen={onOpen}>
@@ -451,7 +453,7 @@ export function FoodCard({ item, onOpen, onFav, activeFav }) {
             </div>
             <div className="card-title">{item.title}</div>
           </div>
-          <div className="price">{fmtRub.format(item.price)}</div>
+          <div className={`price${hasPrice ? "" : " price-missing"}`}>{formatRubWithFallback(item.price)}</div>
         </div>
         <div className="food-info-list">
           <div className="food-info-item">

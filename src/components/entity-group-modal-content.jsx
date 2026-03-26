@@ -1,5 +1,6 @@
 import { Icon } from "./ui";
 import { applyImageFallback, replaceImageWithEmpty } from "../utils/images";
+import { formatRubWithFallback, normalizeOptionalPrice } from "../utils/helpers";
 import { formatTaxiWhenForDisplay } from "../utils/taxi";
 
 export function EntityGroupModalContent({
@@ -121,7 +122,7 @@ export function EntityGroupModalContent({
                 <div className="card-title">{item.title}</div>
                 <div className="entity-group-meta-row">
                   <p className="small">{item.category}</p>
-                  <span className="entity-group-price">{item.price} ₽</span>
+                  <span className={`entity-group-price${normalizeOptionalPrice(item.price) !== null ? "" : " price-missing"}`}>{formatRubWithFallback(item.price)}</span>
                 </div>
               </div>
             </article>
@@ -155,7 +156,7 @@ export function EntityGroupModalContent({
                 <div className="card-title">{item.title}</div>
                 <div className="entity-group-meta-row">
                   <p className="small">{item.category}</p>
-                  <span className="entity-group-price">{item.price} ₽</span>
+                  <span className={`entity-group-price${normalizeOptionalPrice(item.price) !== null ? "" : " price-missing"}`}>{formatRubWithFallback(item.price)}</span>
                 </div>
               </div>
             </article>
@@ -180,7 +181,7 @@ export function EntityGroupModalContent({
                     >
                     <div className="card-body">
                       <div className="card-title">{item.category}</div>
-                      <p className="small">{item.price} ₽</p>
+                      <p className={`small${normalizeOptionalPrice(item.price) !== null ? "" : " price-missing"}`}>{formatRubWithFallback(item.price)}</p>
                       <div className="actions">
                         <button
                           className={item.isFilled ? "primary-btn" : "ghost-btn"}
@@ -219,7 +220,7 @@ export function EntityGroupModalContent({
                   >
                     <div className="card-body">
                       <div className="card-title">{item.category}</div>
-                      <p className="small">{formatTaxiWhenForDisplay(item.when) || "Дата не указана"} · {item.price} ₽</p>
+                      <p className={`small${normalizeOptionalPrice(item.price) !== null ? "" : " price-missing"}`}>{formatTaxiWhenForDisplay(item.when) || "Дата не указана"} · {formatRubWithFallback(item.price)}</p>
                       <div className="actions">
                         <button
                           className={item.isFilled ? "primary-btn" : "ghost-btn"}

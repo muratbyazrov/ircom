@@ -1061,6 +1061,13 @@ body {
   white-space: nowrap;
 }
 
+.taxi-card-price.price-missing {
+  white-space: normal;
+  text-align: right;
+  max-width: 120px;
+  font-size: 12px;
+}
+
 .card-taxi.card-taxi-city .taxi-route-badge.route-city {
   color: #0f5c4b;
   background: linear-gradient(135deg, #e7f8f2, #f7fffc);
@@ -1720,6 +1727,17 @@ body {
   font-size: 16px;
 }
 
+.price-missing {
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.price.price-missing {
+  font-size: 13px;
+  line-height: 1.25;
+  text-align: right;
+}
+
 .actions {
   display: flex;
   gap: 8px;
@@ -2256,6 +2274,12 @@ button {
   font-weight: 800;
   line-height: 1;
   white-space: nowrap;
+}
+
+.entity-group-price.price-missing {
+  font-size: 11px;
+  background: #f8fafc;
+  border-color: #e2e8f0;
 }
 
 .entity-group-card .small {
@@ -2962,6 +2986,11 @@ button {
   color: #9f1239;
 }
 
+.detail-food-price.price-missing {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
 .detail-food-status-chip {
   display: inline-flex;
   align-items: center;
@@ -3226,6 +3255,10 @@ button {
   font-weight: 800;
 }
 
+.detail-hero-price.price-missing {
+  font-size: clamp(14px, 3vw, 18px);
+}
+
 .detail-service-unified-block .detail-basic-meta,
 .detail-service-unified-block .listing-import-meta-detail,
 .detail-service-unified-block .detail-basic-desc-card,
@@ -3276,6 +3309,10 @@ button {
   font-size: 24px;
   color: #9f1239;
   line-height: 1.1;
+}
+
+.detail-basic-meta-price b.price-missing {
+  font-size: 16px;
 }
 
 .detail-basic-meta-list {
@@ -3712,6 +3749,10 @@ button {
   line-height: 1.1;
 }
 
+.detail-taxi-price-pill b.price-missing {
+  font-size: 15px;
+}
+
 .detail-taxi-tag-row {
   display: flex;
   flex-wrap: wrap;
@@ -3930,6 +3971,11 @@ button {
   font-size: 17px;
   line-height: 1.1;
   margin-top: 1px;
+}
+
+.detail-restaurant-dish-price.price-missing {
+  font-size: 13px;
+  line-height: 1.25;
 }
 
 .detail-restaurant-dish-title {

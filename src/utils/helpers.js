@@ -10,9 +10,21 @@ const fmtRubCompact = new Intl.NumberFormat("ru-RU", {
   maximumFractionDigits: 1,
 });
 
-export function formatCompactRub(value, { fallback = "По договору", compactThreshold = 1000000 } = {}) {
+export function normalizeOptionalPrice(value) {
   const amount = Number(value);
-  if (!Number.isFinite(amount) || amount <= 0) return fallback;
+  return Number.isFinite(amount) && amount > 0 ? amount : null;
+}
+
+export function formatRubWithFallback(value, { fallback = "Цена не указана" } = {}) {
+  const amount = normalizeOptionalPrice(value);
+  if (amount === null) return fallback;
+
+  return fmtRub.format(amount);
+}
+
+export function formatCompactRub(value, { fallback = "По договору", compactThreshold = 1000000 } = {}) {
+  const amount = normalizeOptionalPrice(value);
+  if (amount === null) return fallback;
 
   const fullText = fmtRub.format(amount);
   if (amount < compactThreshold) return fullText;
