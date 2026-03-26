@@ -1190,6 +1190,9 @@ export default function App() {
             title: payload.title || currentItem?.title || (type === "ad" ? "Объявление" : "Услуга"),
             description: payload.desc || currentItem?.desc || "",
             price: Number(payload.price) || Number(currentItem?.price) || 1,
+            phone: payload.phone || null,
+            telegram: payload.telegram || null,
+            whatsapp: payload.whatsapp || null,
             photos: [...keptExistingPhotos, ...uploadedListingPhotos].slice(0, 8),
           });
           await removePhotosFromS3(payload.removedPhotos);
@@ -1201,6 +1204,9 @@ export default function App() {
             title: payload.title || (type === "ad" ? "Объявление" : "Услуга"),
             description: payload.desc || "",
             price: Number(payload.price) || 1,
+            phone: payload.phone || null,
+            telegram: payload.telegram || null,
+            whatsapp: payload.whatsapp || null,
             photos: uploadedListingPhotos,
           });
         }
@@ -1594,6 +1600,20 @@ export default function App() {
         phone: profileValue(profile.phone),
         telegram: profileValue(profile.telegram),
         whatsapp: profileValue(profile.whatsapp),
+      },
+      ad: {
+        contacts: {
+          phone: profileValue(profile.phone),
+          tg: profileValue(profile.telegram),
+          wa: profileValue(profile.whatsapp),
+        },
+      },
+      service: {
+        contacts: {
+          phone: profileValue(profile.phone),
+          tg: profileValue(profile.telegram),
+          wa: profileValue(profile.whatsapp),
+        },
       },
     }),
     [profile]

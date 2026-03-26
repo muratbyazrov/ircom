@@ -108,6 +108,9 @@ export function CreateForm({
   const restaurantWhatsappRef = useRef(null);
   const taxiPhoneRef = useRef(null);
   const taxiWhatsappRef = useRef(null);
+  const listingPhoneRef = useRef(null);
+  const listingWhatsappRef = useRef(null);
+  const [listingContactError, setListingContactError] = useState("");
   const maxPhotos = type === "ad" || type === "service" ? 8 : 1;
   const genericTitleMin = type === "dish" ? DISH_TITLE_MIN : LISTING_TITLE_MIN;
   const genericTitleMax = type === "dish" ? DISH_TITLE_MAX : LISTING_TITLE_MAX;
@@ -830,7 +833,20 @@ export function CreateForm({
             ? (isEdit ? "Редактирование услуги" : "Создание услуги")
             : (isEdit ? "Редактирование блюда" : "Добавление блюда")}
       </h3>
-      <form className="list" onSubmit={(e) => onSubmit(e, type)}>
+      <form className="list" onSubmit={(e) => {
+        if (type === "ad" || type === "service") {
+          const phone = String(e.currentTarget.elements.phone?.value || "").trim();
+          const telegram = String(e.currentTarget.elements.telegram?.value || "").trim();
+          const whatsapp = String(e.currentTarget.elements.whatsapp?.value || "").trim();
+          if (!phone && !telegram && !whatsapp) {
+            e.preventDefault();
+            setListingContactError("Укажите хотя бы один контакт: телефон, Telegram или WhatsApp");
+            return;
+          }
+          setListingContactError("");
+        }
+        onSubmit(e, type);
+      }}>
         {isEdit && editMeta?.id ? <input type="hidden" name="editEntityId" value={editMeta.id} /> : null}
         {isEdit && editMeta?.kind ? <input type="hidden" name="editEntityKind" value={editMeta.kind} /> : null}
         {existingPhotos.map((photo, index) => <input key={`existing-${type}-${photo}-${index}`} type="hidden" name="existingPhotos" value={photo} />)}
@@ -871,6 +887,65 @@ export function CreateForm({
             </div>
             <input type="hidden" name="isAvailable" value={dishIsAvailable ? "true" : "false"} />
           </Field>
+        ) : null}
+        {(type === "ad" || type === "service") ? (
+          <>
+            <div className="grid-2">
+              <Field label="Телефон">
+                <input
+                  name="phone"
+                  type="tel"
+                  inputMode="tel"
+                  defaultValue={formatPhoneValue(initialValues?.contacts?.phone, { allowEmpty: true })}
+                  className="input"
+                  placeholder={PHONE_PLACEHOLDER}
+                  maxLength={PHONE_INPUT_MAX}
+                  pattern={PHONE_PATTERN}
+                  title="Введите номер в формате +7 (999) 999-99-99"
+                  ref={listingPhoneRef}
+                  onInput={(e) => {
+                    handlePhoneInput(e, { allowEmpty: true });
+                    syncWhatsappFromPhone(e.currentTarget, listingWhatsappRef.current);
+                    setListingContactError("");
+                  }}
+                  onFocus={syncPhonePrev}
+                />
+              </Field>
+              <Field label="Telegram">
+                <input
+                  name="telegram"
+                  defaultValue={clampTextLength(initialValues?.contacts?.tg, TELEGRAM_MAX)}
+                  className="input"
+                  placeholder="@username"
+                  maxLength={TELEGRAM_MAX}
+                  onInput={(e) => {
+                    limitTextInput(e, TELEGRAM_MAX);
+                    setListingContactError("");
+                  }}
+                />
+              </Field>
+            </div>
+            <Field label="WhatsApp">
+              <input
+                name="whatsapp"
+                type="tel"
+                inputMode="tel"
+                defaultValue={formatPhoneValue(initialValues?.contacts?.wa, { allowEmpty: true })}
+                className="input"
+                placeholder={PHONE_PLACEHOLDER}
+                maxLength={PHONE_INPUT_MAX}
+                pattern={PHONE_PATTERN}
+                title="Введите номер в формате +7 (999) 999-99-99"
+                ref={listingWhatsappRef}
+                onInput={(e) => {
+                  handlePhoneInput(e, { allowEmpty: true });
+                  setListingContactError("");
+                }}
+                onFocus={syncPhonePrev}
+              />
+            </Field>
+            {listingContactError ? <p className="small" style={{ color: "var(--danger)" }}>{listingContactError}</p> : null}
+          </>
         ) : null}
         <Field label={`Фото (до ${maxPhotos})`}>
           <div className="input-with-clear">
