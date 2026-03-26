@@ -50,6 +50,7 @@ import {sortItems} from './utils/helpers';
 import {toTaxiDepartureAtApiValue} from './utils/taxi';
 import {formatPhoneValueCompact} from './utils/phone';
 import {LOGIN_MAX, LOGIN_MIN} from './utils/validation';
+import {trackPageView} from './utils/metrika';
 
 import {
   ADS_CATEGORIES,
@@ -1069,6 +1070,10 @@ export default function App() {
     const nextVisible = (screenRef.current?.scrollTop || 0) > SCROLL_TOP_VISIBILITY_OFFSET;
     scrollTopButtonVisibleRef.current = nextVisible;
     setShowScrollTopButton(nextVisible);
+  }, [tab]);
+
+  useEffect(() => {
+    trackPageView(`/${tab}`);
   }, [tab]);
 
   const submitMock = async (event, type) => {
