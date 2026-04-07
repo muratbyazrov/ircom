@@ -13,6 +13,7 @@
 VITE_IRCOM_API_URL=http://127.0.0.1:3002/ircom-api/v1
 VITE_S3_PUBLIC_BASE_URL=https://cdn.example.com # optional
 VITE_S3_MAX_UPLOAD_BYTES=10485760 # optional
+VITE_FEATURE_FOOD_ENABLED=true # optional, false/0/off/no скрывает раздел "Еда"
 ```
 
 ## Запуск

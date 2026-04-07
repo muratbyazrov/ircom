@@ -343,6 +343,7 @@ export function ProfileTab({
   profile,
   myAds,
   hasRestaurant,
+  showFoodSection = true,
   isTaxiDriver,
   oneTimeIntercityOffers,
   myServices,
@@ -365,11 +366,15 @@ export function ProfileTab({
   ].filter((entry) => isPresentContactValue(entry.value));
 
   const entityGroups = [
-    { key: "restaurant", label: "Заведения", count: hasRestaurant ? 1 : 0, icon: "food" },
+    ...(showFoodSection ? [{ key: "restaurant", label: "Заведения", count: hasRestaurant ? 1 : 0, icon: "food" }] : []),
     { key: "ads", label: "Объявления", count: myAds.length, icon: "ads" },
     { key: "services", label: "Услуги", count: myServices.length, icon: "services" },
     { key: "taxi", label: "Моё такси", count: oneTimeIntercityOffers.length, icon: "taxi" },
   ].filter((entry) => entry.count > 0);
+  const hasBusinessItems = (showFoodSection && hasRestaurant)
+    || myAds.length > 0
+    || myServices.length > 0
+    || oneTimeIntercityOffers.length > 0;
 
   return (
     <Section className="profile-root">
@@ -410,8 +415,12 @@ export function ProfileTab({
                   </div>
                 </InteractiveListCard>
               ))}
-              {!hasRestaurant && !myAds.length && !myServices.length && !oneTimeIntercityOffers.length ? (
-                <p className="small">Создайте заведение, объявление, услугу или поездку, чтобы управлять ими из профиля.</p>
+              {!hasBusinessItems ? (
+                <p className="small">
+                  {showFoodSection
+                    ? "Создайте заведение, объявление, услугу или поездку, чтобы управлять ими из профиля."
+                    : "Создайте объявление, услугу или поездку, чтобы управлять ими из профиля."}
+                </p>
               ) : null}
             </div>
           </Section>
@@ -424,14 +433,16 @@ export function ProfileTab({
               <span className="quick-action-icon"><Icon name="open" /></span>
               <span>Сообщить о проблеме</span>
             </button>
-            <button
-              className="ghost-btn quick-action-btn"
-              type="button"
-              onClick={() => openCreate("restaurant")}
-            >
-              <span className="quick-action-icon"><Icon name="food" /></span>
-              <span>Добавить заведение</span>
-            </button>
+            {showFoodSection ? (
+              <button
+                className="ghost-btn quick-action-btn"
+                type="button"
+                onClick={() => openCreate("restaurant")}
+              >
+                <span className="quick-action-icon"><Icon name="food" /></span>
+                <span>Добавить заведение</span>
+              </button>
+            ) : null}
             <button className="ghost-btn quick-action-btn" type="button" onClick={() => openCreate("taxi")}>
               <span className="quick-action-icon"><Icon name="taxi" /></span>
               <span>{isTaxiDriver ? "Добавить поездку" : "Стать водителем такси"}</span>

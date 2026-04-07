@@ -45,7 +45,7 @@ import {
 } from './api/food';
 import {getDictionariesRequest} from './api/dictionary';
 import {deleteImagesFromS3, uploadImagesToS3} from './utils/s3-upload';
-import {tabConfig} from './utils/constants';
+import {FOOD_SECTION_ENABLED, tabConfig} from './utils/constants';
 import {sortItems} from './utils/helpers';
 import {toTaxiDepartureAtApiValue} from './utils/taxi';
 import {formatPhoneValueCompact} from './utils/phone';
@@ -97,7 +97,7 @@ const TELEGRAM_AUTO_AUTH_DISABLED_KEY = "__ircomTelegramAutoAuthDisabled";
 const SCROLL_TOP_VISIBILITY_OFFSET = 420;
 const TAB_AUTO_REFRESH_STALE_MS = 30000;
 const FULL_SCREEN_CREATE_TYPES = new Set(["ad", "service", "taxi", "restaurant"]);
-const LIST_TABS = new Set(["ads", "services", "taxi", "food"]);
+const LIST_TABS = new Set(tabConfig.map(([key]) => key).filter((key) => key !== "profile"));
 const buildModalSnapshot = (currentModal) => (
   currentModal ? { type: currentModal.type, payload: currentModal.payload } : null
 );
@@ -321,13 +321,17 @@ export default function App() {
       setIsCatalogLoading(true);
     }
     try {
-      const [adsRaw, servicesRaw, taxiCityRaw, taxiIntercityRaw, restaurantsRaw, menuRaw] = await Promise.all([
+      const [adsRaw, servicesRaw, taxiCityRaw, taxiIntercityRaw, restaurantsRaw = [], menuRaw = []] = await Promise.all([
         getListingsRequest({ kind: 1, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
         getListingsRequest({ kind: 2, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
         getTaxiOffersRequest({ direction: 1, limit: 200, ...(accountId !== null ? { accountId } : {}) }),
         getTaxiOffersRequest({ direction: 2, limit: 400, ...(accountId !== null ? { accountId } : {}) }),
-        getRestaurantsRequest({ limit: 300 }),
-        getMenuItemsRequest({ limit: 300, ...(accountId !== null ? { accountId } : {}) }),
+        ...(FOOD_SECTION_ENABLED
+          ? [
+            getRestaurantsRequest({ limit: 300 }),
+            getMenuItemsRequest({ limit: 300, ...(accountId !== null ? { accountId } : {}) }),
+          ]
+          : []),
       ]);
 
       const restaurantDeliveryById = new Map(
@@ -345,7 +349,7 @@ export default function App() {
       const nextTaxi = [...toArray(taxiCityRaw), ...toArray(taxiIntercityRaw)]
         .map(mapTaxiToUi)
         .filter((item) => item.category);
-      const nextFood = toArray(menuRaw).map((item) => {
+      const nextFood = (FOOD_SECTION_ENABLED ? toArray(menuRaw) : []).map((item) => {
         const mapped = mapMenuItemToUi(item);
         const restaurantId = toAccountId(mapped.restaurantId);
         const restaurantDelivery = restaurantId !== null ? restaurantDeliveryById.get(restaurantId) : null;
@@ -365,7 +369,7 @@ export default function App() {
         ...nextAds.filter((x) => x.isFavorite).map((x) => x.id),
         ...nextServices.filter((x) => x.isFavorite).map((x) => x.id),
         ...nextTaxi.filter((x) => x.isFavorite).map((x) => x.id),
-        ...nextFood.filter((x) => x.isFavorite).map((x) => x.id),
+        ...(FOOD_SECTION_ENABLED ? nextFood.filter((x) => x.isFavorite).map((x) => x.id) : []),
       ]);
       setFavorites(nextFavorites);
       lastCatalogRefreshAtRef.current = Date.now();
@@ -387,7 +391,7 @@ export default function App() {
 
       if (listingCategories.length > 1) setAdsCategories(listingCategories);
       if (nextServiceCategories.length > 1) setServiceCategories(nextServiceCategories);
-      if (nextFoodCategories.length > 1) setFoodCategories(nextFoodCategories);
+      if (FOOD_SECTION_ENABLED && nextFoodCategories.length > 1) setFoodCategories(nextFoodCategories);
     } catch {
       // keep local fallback categories
     }
@@ -406,11 +410,11 @@ export default function App() {
       return;
     }
 
-    const [myAdsRaw, myServicesRaw, myTaxiRaw, myRestaurantRaw] = await Promise.all([
+    const [myAdsRaw, myServicesRaw, myTaxiRaw, myRestaurantRaw = null] = await Promise.all([
       getMyListingsRequest({ accountId, kind: 1, limit: 200 }),
       getMyListingsRequest({ accountId, kind: 2, limit: 200 }),
       getMyTaxiOffersRequest({ accountId, limit: 200 }),
-      getMyRestaurantRequest({ accountId }),
+      ...(FOOD_SECTION_ENABLED ? [getMyRestaurantRequest({ accountId })] : []),
     ]);
 
     const myAds = toArray(myAdsRaw).map((item) => mapListingToUi({ ...item, kind: 1, accountId }));
@@ -421,6 +425,13 @@ export default function App() {
     setCustomAds(myAds);
     setCustomServices(myServices);
     setCustomTaxiItems(myActiveTaxi);
+
+    if (!FOOD_SECTION_ENABLED) {
+      setHasRestaurant(false);
+      setRestaurantEntity(null);
+      setUserRestaurantDishes([]);
+      return;
+    }
 
     const myRestaurantId = toAccountId(myRestaurantRaw?.restaurantId);
     if (myRestaurantId !== null) {
@@ -528,6 +539,27 @@ export default function App() {
     onBackAttempt: handleBackAttempt,
   });
   useGestureGuard();
+
+  useEffect(() => {
+    if (FOOD_SECTION_ENABLED || !modal) return;
+    const modalType = modal.type;
+    const modalPayloadType = modal?.payload?.type;
+    const modalGroup = modal?.payload?.group;
+    const shouldCloseModal = (
+      (modalType === "create" || modalType === "editEntity")
+      && (modalPayloadType === "restaurant" || modalPayloadType === "dish")
+    ) || (
+      modalType === "detail"
+      && (modalPayloadType === "restaurant" || modalPayloadType === "food")
+    ) || (
+      modalType === "entityGroup"
+      && modalGroup === "restaurant"
+    ) || modalType === "confirmDishDelete";
+    if (shouldCloseModal) {
+      setModal(null);
+    }
+  }, [modal]);
+
   const toggleAuthModal = async () => {
     if (isAuth) {
       try {
@@ -736,6 +768,7 @@ export default function App() {
             return next;
           });
         } else if (id.startsWith("food-")) {
+          if (!FOOD_SECTION_ENABLED) return;
           const menuItemId = Number(id.split("-")[1]);
           if (!menuItemId) return;
           const result = await toggleMenuItemFavoriteRequest({ accountId, menuItemId });
@@ -801,15 +834,18 @@ export default function App() {
     [serviceCategories, serviceCategory, servicesSort, favorites, servicesCatalog]
   );
   const normalizedUserRestaurantDishes = useMemo(
-    () => (Array.isArray(userRestaurantDishes) ? userRestaurantDishes : []).map((dish) => normalizeDish(dish)),
+    () => (FOOD_SECTION_ENABLED
+      ? (Array.isArray(userRestaurantDishes) ? userRestaurantDishes : []).map((dish) => normalizeDish(dish))
+      : []),
     [userRestaurantDishes]
   );
   const foodCatalog = useMemo(
-    () => foodData.map((dish) => normalizeDish(dish)),
+    () => (FOOD_SECTION_ENABLED ? foodData.map((dish) => normalizeDish(dish)) : []),
     [foodData]
   );
 
   const foodRestaurants = useMemo(() => {
+    if (!FOOD_SECTION_ENABLED) return [];
     const buckets = new Map();
     foodCatalog.forEach((dish) => {
       const restaurantKey = String(dish.restaurantId || dish.restaurant || "").trim() || "restaurant-unknown";
@@ -890,6 +926,7 @@ export default function App() {
 
   const visibleFoodRestaurants = useMemo(
     () => {
+      if (!FOOD_SECTION_ENABLED) return [];
       const category = foodCategories.includes(foodCategory) ? foodCategory : "Все";
       return foodRestaurants
         .map((restaurant) => ({
@@ -945,6 +982,7 @@ export default function App() {
   });
 
   const openDetail = (type, id) => {
+    if (!FOOD_SECTION_ENABLED && (type === "restaurant" || type === "food")) return;
     if (type === "restaurant") {
       if (!id) return;
       const restaurant = foodRestaurants.find((entry) => entry.id === id);
@@ -965,6 +1003,7 @@ export default function App() {
   };
 
   const openBusinessDetail = (type, id, group) => {
+    if (!FOOD_SECTION_ENABLED && (type === "restaurant" || type === "food" || group === "restaurant")) return;
     if (!id) return;
     if (type === "restaurant") {
       const restaurant = foodRestaurants.find((entry) => entry.id === id);
@@ -994,6 +1033,7 @@ export default function App() {
   };
 
   const openCreate = (type, options = {}) => ensureAuth(() => {
+    if (!FOOD_SECTION_ENABLED && (type === "restaurant" || type === "dish")) return;
     const fallbackReturnTo = buildModalSnapshot(modal);
     setModal({
       type: "create",
@@ -1004,6 +1044,7 @@ export default function App() {
     });
   });
   const openEditEntity = (payload) => ensureAuth(() => {
+    if (!FOOD_SECTION_ENABLED && (payload?.type === "restaurant" || payload?.type === "dish")) return;
     const fallbackReturnTo = buildModalSnapshot(modal);
     setModal({
       type: "editEntity",
@@ -1013,7 +1054,10 @@ export default function App() {
       },
     });
   });
-  const openEntityGroup = (group) => ensureAuth(() => setModal({ type: "entityGroup", payload: { group } }));
+  const openEntityGroup = (group) => ensureAuth(() => {
+    if (!FOOD_SECTION_ENABLED && group === "restaurant") return;
+    setModal({ type: "entityGroup", payload: { group } });
+  });
   const openEditProfile = () => ensureAuth(() => {
     const fallbackReturnTo = buildModalSnapshot(modal);
     setModal({
@@ -1047,6 +1091,7 @@ export default function App() {
   }, []);
 
   const handleTabChange = useCallback((nextTab) => {
+    if (!tabConfig.some(([key]) => key === nextTab)) return;
     setTab((currentTab) => (currentTab === nextTab ? currentTab : nextTab));
   }, []);
 
@@ -1067,6 +1112,12 @@ export default function App() {
   }, [tab, isListTab, isCatalogLoading, runListRefresh]);
 
   useEffect(() => {
+    if (!FOOD_SECTION_ENABLED && tab === "food") {
+      setTab("ads");
+    }
+  }, [tab]);
+
+  useEffect(() => {
     const nextVisible = (screenRef.current?.scrollTop || 0) > SCROLL_TOP_VISIBILITY_OFFSET;
     scrollTopButtonVisibleRef.current = nextVisible;
     setShowScrollTopButton(nextVisible);
@@ -1079,6 +1130,10 @@ export default function App() {
   const submitMock = async (event, type) => {
     event.preventDefault();
     if (submitPending) return;
+    if (!FOOD_SECTION_ENABLED && (type === "restaurant" || type === "dish")) {
+      setModal(null);
+      return;
+    }
     const fd = new FormData(event.currentTarget);
     const payload = {};
 
@@ -1404,7 +1459,10 @@ export default function App() {
       showActionError(error, "Не удалось удалить объявление");
     }
   };
-  const editDish = (id) => openEditEntity({ type: "dish", id, kind: "dish" });
+  const editDish = (id) => {
+    if (!FOOD_SECTION_ENABLED) return;
+    openEditEntity({ type: "dish", id, kind: "dish" });
+  };
   const removeDish = (id) => {
     const targetDish = userRestaurantDishes.find((dish) => dish.id === id);
     if (!targetDish) return;
@@ -1514,8 +1572,12 @@ export default function App() {
     }
   };
 
-  const editRestaurant = () => openEditEntity({ type: "restaurant", kind: "restaurant" });
+  const editRestaurant = () => {
+    if (!FOOD_SECTION_ENABLED) return;
+    openEditEntity({ type: "restaurant", kind: "restaurant" });
+  };
   const viewRestaurant = () => {
+    if (!FOOD_SECTION_ENABLED) return;
     if (!restaurantEntity?.id) return;
     openBusinessDetail("restaurant", restaurantEntity.id, "restaurant");
   };
@@ -1643,6 +1705,10 @@ export default function App() {
     const editId = modal.payload?.id;
     const editKind = modal.payload?.kind;
 
+    if (!FOOD_SECTION_ENABLED && (editType === "restaurant" || editType === "dish")) {
+      return null;
+    }
+
     if (editType === "restaurant") {
       return {
         type: "restaurant",
@@ -1673,6 +1739,7 @@ export default function App() {
     if (modal?.type !== "entityGroup") return null;
     const group = modal.payload?.group;
     if (group === "restaurant") {
+      if (!FOOD_SECTION_ENABLED) return null;
       return { title: "Мои заведения", items: hasRestaurant && restaurantEntity ? [restaurantEntity] : [] };
     }
     if (group === "ads") {
@@ -1803,7 +1870,7 @@ export default function App() {
         />
       )}
 
-      {tab === "food" && (
+      {FOOD_SECTION_ENABLED && tab === "food" && (
         <FoodTab
           foodCategory={foodCategory}
           setFoodCategory={setFoodCategory}
@@ -1826,6 +1893,7 @@ export default function App() {
           profile={profile}
           myAds={myAds}
           hasRestaurant={hasRestaurant}
+          showFoodSection={FOOD_SECTION_ENABLED}
           isTaxiDriver={isTaxiDriver}
           oneTimeIntercityOffers={oneTimeTaxiOffers}
           myServices={customServices}
@@ -1880,7 +1948,10 @@ export default function App() {
         <Icon name="up" />
       </button>
 
-      <nav className="bottom-nav">
+      <nav
+        className="bottom-nav"
+        style={{ gridTemplateColumns: `repeat(${Math.max(tabConfig.length, 1)}, minmax(0, 1fr))` }}
+      >
         {tabConfig.map(([key, icon, label]) => (
           <button
             className={`tab-btn ${tab === key ? "active" : ""}`}
@@ -1934,6 +2005,7 @@ export default function App() {
             closeViewerSignal={detailViewerCloseSignal}
             onViewerOpenChange={setIsDetailViewerOpen}
             onOpenDish={(dishId, restaurantId) => {
+              if (!FOOD_SECTION_ENABLED) return;
               if (!dishId) return;
               setModal({
                 type: "detail",
@@ -1956,10 +2028,10 @@ export default function App() {
               });
             }}
             onEdit={isDetailOwnerView ? handleDetailEdit : null}
-            onAddDish={isOwnedRestaurantDetail ? () => openCreate("dish") : null}
-            onEditDish={canManageDishesFromDetail ? editDish : null}
-            onDeleteDish={canManageDishesFromDetail ? removeDish : null}
-            onToggleDishAvailability={canManageDishesFromDetail ? toggleDishAvailability : null}
+            onAddDish={FOOD_SECTION_ENABLED && isOwnedRestaurantDetail ? () => openCreate("dish") : null}
+            onEditDish={FOOD_SECTION_ENABLED && canManageDishesFromDetail ? editDish : null}
+            onDeleteDish={FOOD_SECTION_ENABLED && canManageDishesFromDetail ? removeDish : null}
+            onToggleDishAvailability={FOOD_SECTION_ENABLED && canManageDishesFromDetail ? toggleDishAvailability : null}
             onDeleteTaxi={isOwnedTaxiDetail ? removeTaxiOffer : null}
             onDeleteListing={(isOwnedAdDetail || isOwnedServiceDetail) ? removeListing : null}
             isOwnerView={isDetailOwnerView}
