@@ -4268,3 +4268,724 @@ button {
     transform: translateX(-50%);
   }
 }
+
+/* ==========================================================================
+   DARK MODE
+   Activated via html[data-theme="dark"] — applied automatically
+   from Telegram.WebApp.colorScheme or prefers-color-scheme.
+   Brand style preserved: red/pink accents on dark surfaces.
+   ========================================================================== */
+
+html[data-theme="dark"] {
+  --bg: #111113;
+  --surface: #1c1c1e;
+  --surface-alt: #2b1a1d;
+  --text: #f0f0f0;
+  --muted: #9ca3af;
+  --line: #2c2c2e;
+  --primary: #f03040;
+  --primary-soft: #3a1820;
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] body {
+  background: radial-gradient(circle at top left, #2b1a1d 0%, var(--bg) 55%, #1a0e10 100%);
+}
+
+/* --- Smooth theme transition --- */
+html[data-theme="dark"] *,
+html[data-theme="dark"] *::before,
+html[data-theme="dark"] *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 180ms;
+  transition-timing-function: ease;
+}
+
+html[data-theme="dark"] img,
+html[data-theme="dark"] video,
+html[data-theme="dark"] [class*="animation"],
+html[data-theme="dark"] [class*="shimmer"] {
+  transition: none;
+}
+
+/* --- Topbar --- */
+html[data-theme="dark"] .topbar {
+  background: linear-gradient(180deg, rgba(17, 17, 19, 0.96) 60%, rgba(17, 17, 19, 0.6) 100%);
+}
+
+html[data-theme="dark"] .topbar-status {
+  border-color: #2c2c2e;
+  background: rgba(28, 28, 30, 0.82);
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .topbar-close-btn {
+  background: linear-gradient(180deg, #2a1e20 0%, #321c1e 100%);
+  border-color: rgba(240, 48, 64, 0.2);
+  color: #fca5a5;
+  box-shadow: 0 10px 24px rgba(240, 48, 64, 0.14);
+}
+
+html[data-theme="dark"] .topbar-close-icon {
+  background: rgba(240, 48, 64, 0.14);
+}
+
+/* --- Inputs & Forms --- */
+html[data-theme="dark"] .input,
+html[data-theme="dark"] .select,
+html[data-theme="dark"] .textarea {
+  background: #252528;
+  border-color: #3c3c3e;
+  color: var(--text);
+}
+
+html[data-theme="dark"] .input:focus,
+html[data-theme="dark"] .select:focus,
+html[data-theme="dark"] .textarea:focus {
+  border-color: rgba(240, 48, 64, 0.55);
+  outline: none;
+}
+
+html[data-theme="dark"] .input[type="file"] {
+  border-color: #5a2a35;
+  background: linear-gradient(180deg, #1e1a1c 0%, #1c1820 100%);
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .input[type="file"]:hover {
+  border-color: #6e3040;
+  background: linear-gradient(180deg, #221e20 0%, #1e1a1e 100%);
+}
+
+html[data-theme="dark"] .input[type="file"]::file-selector-button {
+  border-color: #5a2a35;
+  background: linear-gradient(180deg, #1e1a1c 0%, #261820 100%);
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .input[type="file"]::file-selector-button:hover {
+  border-color: #6e3040;
+  background: linear-gradient(180deg, #281e20 0%, #2a1820 100%);
+}
+
+/* --- Buttons --- */
+html[data-theme="dark"] .ghost-btn {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .soft-btn {
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .danger-btn {
+  background: #3a1010;
+  color: #f87171;
+}
+
+html[data-theme="dark"] .danger-ghost-btn {
+  color: #f87171;
+  background: var(--surface);
+  border-color: #5a2020;
+}
+
+/* --- Chips, tabs, multi-select --- */
+html[data-theme="dark"] .chip,
+html[data-theme="dark"] .category-tab,
+html[data-theme="dark"] .multi-select-btn {
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .chip.active,
+html[data-theme="dark"] .category-tab.active,
+html[data-theme="dark"] .multi-select-btn.active {
+  border-color: #6a3040;
+  color: #fca5a5;
+}
+
+/* --- View switchers (food, auth) --- */
+html[data-theme="dark"] .food-view-switch,
+html[data-theme="dark"] .auth-method-switch {
+  border-color: #5a2a35;
+  background: linear-gradient(180deg, #2b1a1d, #1c1c1e);
+}
+
+html[data-theme="dark"] .food-view-switch-btn,
+html[data-theme="dark"] .auth-method-switch-btn {
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .food-view-switch-btn.active,
+html[data-theme="dark"] .auth-method-switch-btn.active {
+  background: #252528;
+  color: #fca5a5;
+}
+
+/* --- Section header busy --- */
+html[data-theme="dark"] .section-header-icon-btn.is-busy {
+  color: #fca5a5;
+  border-color: #5a2a35;
+  background: #2b1a1d;
+}
+
+/* --- Skeleton / shimmer --- */
+html[data-theme="dark"] .skeleton-block {
+  background: linear-gradient(180deg, #28282c, #222226);
+}
+
+html[data-theme="dark"] .card-skeleton::after {
+  background: linear-gradient(110deg, rgba(28, 28, 30, 0) 20%, rgba(50, 50, 56, 0.45) 50%, rgba(28, 28, 30, 0) 80%);
+}
+
+html[data-theme="dark"] .card-skeleton-pill {
+  border-color: rgba(50, 50, 56, 0.9);
+  background: rgba(28, 28, 30, 0.88);
+}
+
+html[data-theme="dark"] .card-skeleton-media,
+html[data-theme="dark"] .card-skeleton-gallery-primary,
+html[data-theme="dark"] .card-skeleton-gallery-secondary,
+html[data-theme="dark"] .card-skeleton-square-art {
+  background: linear-gradient(180deg, #2e2222 0%, #221a1a 100%);
+}
+
+/* --- Media placeholder --- */
+html[data-theme="dark"] .media {
+  background: linear-gradient(145deg, #1c1c2a, #1a1e2a);
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .media-state,
+html[data-theme="dark"] .media-state-empty,
+html[data-theme="dark"] .media-state-loading,
+html[data-theme="dark"] .media-state-error {
+  background: radial-gradient(circle at top right, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(180deg, #1e2028, #1c1c26);
+}
+
+html[data-theme="dark"] .media-state-art {
+  background: rgba(28, 28, 40, 0.92);
+}
+
+html[data-theme="dark"] .media-state-frame {
+  background: radial-gradient(circle at left top, rgba(80, 70, 60, 0.6), rgba(60, 50, 40, 0) 34%),
+    linear-gradient(180deg, #3a3028 0%, #2e2620 100%);
+}
+
+html[data-theme="dark"] .media-state-frame::before,
+html[data-theme="dark"] .media-state-frame::after {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme="dark"] .media-state-line,
+html[data-theme="dark"] .media-state-frame + .media-state-line,
+html[data-theme="dark"] .media-state-line-lg,
+html[data-theme="dark"] .media-state-line-sm {
+  background: #3a3228;
+}
+
+html[data-theme="dark"] .media-state-title {
+  color: #d0d8e8;
+}
+
+html[data-theme="dark"] .media-state-note {
+  color: #9ca3af;
+}
+
+/* --- Fav button --- */
+html[data-theme="dark"] .fav-corner-btn {
+  background: rgba(28, 28, 30, 0.94);
+  color: #9ca3af;
+  border-color: #2c2c2e;
+}
+
+html[data-theme="dark"] .fav-corner-btn.active {
+  border-color: #6a3040;
+  background: #2b1a1d;
+  color: var(--primary);
+}
+
+html[data-theme="dark"] .fav-corner-btn.owner-corner-tag {
+  color: #fca5a5;
+  border-color: #5a2a35;
+  background: #2b1a1d;
+}
+
+/* --- Bottom nav --- */
+html[data-theme="dark"] .bottom-nav {
+  background: var(--surface);
+  border-top-color: var(--line);
+  box-shadow: 0 var(--bottom-nav-lift) 0 0 var(--surface);
+}
+
+html[data-theme="dark"] .tab-btn {
+  background: #252528;
+  border-color: var(--line);
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .tab-btn.active {
+  background: var(--primary-soft);
+  border-color: #6a3040;
+  color: #fca5a5;
+}
+
+/* --- Scroll-to-top button --- */
+html[data-theme="dark"] .scroll-top-btn {
+  border-color: rgba(240, 240, 245, 0.1);
+  background: rgba(28, 28, 30, 0.88);
+  color: #9ca3af;
+}
+
+/* --- Badge --- */
+html[data-theme="dark"] .badge-muted {
+  background: #1a1a1c;
+}
+
+/* --- Loader spinner --- */
+html[data-theme="dark"] .loader-spinner {
+  border-color: #5a2a35;
+  border-top-color: var(--primary);
+}
+
+/* --- Modals --- */
+html[data-theme="dark"] .modal-card {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .modal-close-inline {
+  border-color: #3c3c3e;
+  background: linear-gradient(180deg, #252528, #1c1c1e);
+  color: #d0d8e8;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+
+html[data-theme="dark"] .modal-close-inline:hover {
+  border-color: #4c4c50;
+}
+
+html[data-theme="dark"] .modal-close-inline-full {
+  border-color: rgba(90, 42, 53, 0.9);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(227, 38, 46, 0.12), transparent 42%),
+    linear-gradient(180deg, #1e1a1c, #1c1820);
+  color: var(--text);
+  box-shadow: 0 8px 20px rgba(190, 24, 93, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme="dark"] .modal-close-inline-full:hover {
+  border-color: #7a3040;
+}
+
+/* --- Taxi route badges --- */
+html[data-theme="dark"] .taxi-route-badge.route-outbound,
+html[data-theme="dark"] .detail-route-badge.route-outbound {
+  color: #7ab4e8;
+  background: linear-gradient(135deg, #0e1e30, #111828);
+  border-color: #1a3a5a;
+}
+
+html[data-theme="dark"] .taxi-route-badge.route-inbound,
+html[data-theme="dark"] .detail-route-badge.route-inbound {
+  color: #e8a070;
+  background: linear-gradient(135deg, #2a1808, #1e1408);
+  border-color: #6a3010;
+}
+
+html[data-theme="dark"] .taxi-route-badge.route-city,
+html[data-theme="dark"] .card-taxi.card-taxi-city .taxi-route-badge.route-city,
+html[data-theme="dark"] .detail-route-badge.route-city {
+  color: #70c8a0;
+  background: linear-gradient(135deg, #0a2018, #101a14);
+  border-color: #185030;
+}
+
+/* --- Taxi cards --- */
+html[data-theme="dark"] .card-taxi.card-taxi-city {
+  background: linear-gradient(180deg, #1c1c1e 0%, #1a1820 100%);
+}
+
+html[data-theme="dark"] .card-taxi .taxi-media-full.taxi-media-city .media-state {
+  background:
+    radial-gradient(circle at top right, rgba(28, 28, 30, 0.86), rgba(28, 28, 30, 0) 46%),
+    linear-gradient(180deg, #1e2420 0%, #182018 100%);
+}
+
+html[data-theme="dark"] .card-taxi .taxi-media-full.taxi-media-city .media-state-title {
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .taxi-card-summary {
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .taxi-owner-badge {
+  border-color: #5a2a35;
+  background: #2b1a1d;
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .taxi-inline-chip {
+  background: #2b2010;
+  border-color: #5a3800;
+  color: #d4a050;
+}
+
+html[data-theme="dark"] .taxi-vehicle-chip {
+  background: #252528;
+  border-color: #3c3c3e;
+  color: #c0c8d8;
+}
+
+html[data-theme="dark"] .taxi-time-chip {
+  background: #0e1e30;
+  border-color: #1a3a5a;
+  color: #7ab4e8;
+}
+
+html[data-theme="dark"] .taxi-when-line {
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .taxi-when-highlight {
+  border-color: #5a4200;
+  background: linear-gradient(180deg, #1e1800 0%, #181400 100%);
+  box-shadow: 0 10px 24px rgba(90, 66, 0, 0.22);
+}
+
+html[data-theme="dark"] .taxi-when-highlight-head,
+html[data-theme="dark"] .taxi-when-highlight-caption {
+  color: #c8a040;
+}
+
+html[data-theme="dark"] .taxi-when-highlight-item {
+  background: rgba(28, 28, 30, 0.82);
+  border-color: rgba(154, 103, 0, 0.2);
+}
+
+html[data-theme="dark"] .taxi-when-highlight-item.is-placeholder {
+  background: rgba(28, 28, 30, 0.6);
+}
+
+html[data-theme="dark"] .card-taxi.card-taxi-city .fav-corner-btn.taxi-fav-btn.active {
+  background: linear-gradient(180deg, #2b1a1e 0%, #2a1520 100%);
+  color: #fca5a5;
+  border-color: #6a3040;
+}
+
+/* --- Food & Restaurant --- */
+html[data-theme="dark"] .food-card,
+html[data-theme="dark"] .restaurant-list-card {
+  background: linear-gradient(180deg, #1c1c1e 0%, #1a181a 100%);
+}
+
+html[data-theme="dark"] .food-meta-chip {
+  border-color: #3a2428;
+  background: var(--surface);
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .food-meta-chip .icon,
+html[data-theme="dark"] .food-info-item .icon {
+  color: #e57f86;
+}
+
+html[data-theme="dark"] .food-info-item {
+  color: #b0b8c8;
+}
+
+html[data-theme="dark"] .restaurant-list-photo-wrap {
+  background: linear-gradient(145deg, #1c1c2a, #1a1e2a);
+}
+
+html[data-theme="dark"] .detail-restaurant-meta {
+  background: linear-gradient(180deg, #1c1c1e 0%, #1a181c 100%);
+}
+
+html[data-theme="dark"] .detail-restaurant-contacts .detail-contact-btn {
+  background: var(--surface);
+}
+
+/* --- Entity groups --- */
+html[data-theme="dark"] .entity-compact-card {
+  background: linear-gradient(180deg, #1c1c1e, #1a1820);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
+}
+
+html[data-theme="dark"] .entity-compact-count-badge {
+  background: #4a2030;
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .entity-compact-icon-wrap,
+html[data-theme="dark"] .quick-action-icon {
+  border-color: #5a2a35;
+  background: #2b1a1d;
+}
+
+html[data-theme="dark"] .quick-action-btn .icon {
+  color: #e57f86;
+}
+
+html[data-theme="dark"] .entity-group-hero {
+  border-color: #5a2a35;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(227, 38, 46, 0.14), transparent 48%),
+    linear-gradient(180deg, #1e1a1c, #1c1c1e);
+}
+
+html[data-theme="dark"] .entity-group-hero-icon {
+  border-color: #5a2a35;
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .entity-group-preview-wrap {
+  background: #1a1e26;
+  box-shadow: inset 0 0 0 1px #2c2c2e;
+}
+
+html[data-theme="dark"] .entity-group-preview-empty {
+  color: #9ca3af;
+}
+
+/* --- Detail views --- */
+html[data-theme="dark"] .detail-basic-meta,
+html[data-theme="dark"] .detail-food-meta {
+  border-color: #5a2a35;
+  background:
+    radial-gradient(circle at top right, rgba(190, 24, 93, 0.08), transparent 45%),
+    linear-gradient(180deg, #1e1a1c, #1c1c1e);
+}
+
+html[data-theme="dark"] .detail-service-unified-block,
+html[data-theme="dark"] .detail-ad-unified-block {
+  border-color: #5a2a35;
+  background:
+    radial-gradient(120% 160% at 50% -20%, rgba(190, 24, 93, 0.1), transparent 42%),
+    linear-gradient(180deg, #1c1c1e, #1a181c);
+}
+
+html[data-theme="dark"] .detail-service-unified-block .detail-basic-meta,
+html[data-theme="dark"] .detail-ad-unified-block .detail-basic-meta,
+html[data-theme="dark"] .detail-service-unified-block .detail-basic-desc-card,
+html[data-theme="dark"] .detail-ad-unified-block .detail-basic-desc-card,
+html[data-theme="dark"] .detail-service-unified-block .detail-contacts-block-basic,
+html[data-theme="dark"] .detail-ad-unified-block .detail-contacts-block-basic {
+  border-color: #5a2a35;
+  background: rgba(28, 28, 30, 0.94);
+}
+
+html[data-theme="dark"] .detail-hero-title {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .detail-hero-price,
+html[data-theme="dark"] .detail-food-price,
+html[data-theme="dark"] .detail-restaurant-dish-price,
+html[data-theme="dark"] .detail-basic-meta-price b {
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .detail-basic-meta-item {
+  background: var(--surface);
+  border-color: #5a2a35;
+  color: #b0b8c8;
+}
+
+html[data-theme="dark"] .detail-basic-meta-item .icon {
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .detail-food-status-chip.is-on {
+  color: #4ade80;
+  background: #0a2016;
+  border-color: #1a4428;
+}
+
+html[data-theme="dark"] .detail-food-status-chip.is-off {
+  color: #f87171;
+  background: #2a1010;
+  border-color: #4a1818;
+}
+
+html[data-theme="dark"] .detail-photo-tiles {
+  border-color: #5a2a35;
+  background:
+    radial-gradient(circle at top right, rgba(190, 24, 93, 0.1), transparent 52%),
+    linear-gradient(180deg, #1e1a1c, #1c1820);
+}
+
+html[data-theme="dark"] .detail-photo-tile {
+  background: #2b1a1d;
+}
+
+html[data-theme="dark"] .detail-photo-empty {
+  color: #fca5a5;
+  border-color: #5a2a35;
+  background:
+    radial-gradient(circle at top right, rgba(190, 24, 93, 0.1), transparent 50%),
+    linear-gradient(180deg, #1e1a1c, #1c1820);
+}
+
+html[data-theme="dark"] .detail-taxi-info-item {
+  border-color: #5a2a35;
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .detail-taxi-info-item span {
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .detail-taxi-info-item b {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .detail-taxi-desc {
+  color: #b0b8c8;
+}
+
+html[data-theme="dark"] .detail-taxi-contacts-title {
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .detail-taxi-info-block .detail-contact-btn {
+  background: var(--surface);
+  border-color: #5a2a35;
+}
+
+html[data-theme="dark"] .detail-contacts-block {
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .detail-contacts-block-food,
+html[data-theme="dark"] .detail-contacts-block-basic {
+  border-color: #5a2a35;
+  background: linear-gradient(180deg, #1c1c1e, #1a181c);
+}
+
+html[data-theme="dark"] .detail-contacts-title {
+  color: #d0d8e8;
+}
+
+html[data-theme="dark"] .detail-contact-btn {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .detail-contact-icon {
+  border-color: #5a2a35;
+  background: #2b1a1d;
+}
+
+html[data-theme="dark"] .detail-contact-text b {
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .detail-contact-text span {
+  color: var(--text);
+}
+
+/* --- Listing contact panel --- */
+html[data-theme="dark"] .listing-contact-panel {
+  border-color: #5a2a35;
+  background:
+    radial-gradient(circle at top left, rgba(227, 38, 46, 0.07), transparent 42%),
+    linear-gradient(180deg, #1e1a1c 0%, #1c1820 100%);
+}
+
+html[data-theme="dark"] .listing-contact-card {
+  border-color: #3c2830;
+  background: rgba(28, 28, 30, 0.9);
+}
+
+html[data-theme="dark"] .listing-contact-card-icon {
+  border-color: #5a2a35;
+  background: #2b1a1d;
+}
+
+/* --- Profile --- */
+html[data-theme="dark"] .profile-contact-row {
+  border-bottom-color: var(--line);
+}
+
+html[data-theme="dark"] .profile-contact-label-wrap,
+html[data-theme="dark"] .profile-contact-label-wrap .icon {
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .profile-contact-value {
+  color: var(--text);
+}
+
+/* --- Reviews --- */
+html[data-theme="dark"] .reviews-block,
+html[data-theme="dark"] .reviews-block-standalone {
+  background: var(--surface);
+}
+
+/* --- Rating stars --- */
+html[data-theme="dark"] .rating-stars-shell {
+  border-color: #5a4200;
+  background:
+    radial-gradient(140px 60px at 10% 0%, rgba(251, 191, 36, 0.16), transparent 70%),
+    linear-gradient(135deg, #1a1600, #141200);
+}
+
+html[data-theme="dark"] .rating-score-chip {
+  border-color: #5a3a00;
+  background: var(--surface);
+  color: #d4a050;
+}
+
+html[data-theme="dark"] .rating-star {
+  color: #3c3c3e;
+}
+
+/* --- Dishes block --- */
+html[data-theme="dark"] .detail-restaurant-dishes-block {
+  background: #1a1a1c;
+}
+
+html[data-theme="dark"] .detail-restaurant-dish-item {
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .detail-restaurant-dish-photo-wrap {
+  background: var(--surface);
+}
+
+/* --- Upload --- */
+html[data-theme="dark"] .upload-preview-thumb {
+  background: #1a1a1c;
+}
+
+html[data-theme="dark"] .upload-preview-remove-btn {
+  border-color: #3c3c3e;
+  background: var(--surface);
+  color: #c0c8d8;
+}
+
+html[data-theme="dark"] .clear-photos-btn {
+  background: var(--surface);
+  color: #9ca3af;
+}
+
+/* --- Misc white/light backgrounds --- */
+html[data-theme="dark"] .chip,
+html[data-theme="dark"] .modal-card {
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .detail-restaurant-dish-item,
+html[data-theme="dark"] .reviews-block {
+  background: var(--surface);
+}
+
+/* Password toggle */
+html[data-theme="dark"] .password-toggle-btn {
+  color: #9ca3af;
+}
+

@@ -35,6 +35,47 @@ export function useTelegramSetup() {
   const isTelegramMiniApp = Boolean(telegramWebApp && telegramInitData);
 
   useEffect(() => {
+    const root = document.documentElement;
+    const applyColorScheme = (scheme) => {
+      const resolved = scheme === "dark" ? "dark" : "light";
+      if (resolved === "dark") {
+        root.setAttribute("data-theme", "dark");
+      } else {
+        root.removeAttribute("data-theme");
+      }
+    };
+
+    const tg = window.Telegram?.WebApp;
+    if (tg && tg.colorScheme) {
+      applyColorScheme(tg.colorScheme);
+    } else {
+      const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+      applyColorScheme(mq?.matches ? "dark" : "light");
+    }
+
+    const handleThemeChanged = () => {
+      const scheme = window.Telegram?.WebApp?.colorScheme;
+      if (scheme) {
+        applyColorScheme(scheme);
+      }
+    };
+    const handleMqChange = (e) => {
+      if (!window.Telegram?.WebApp?.colorScheme) {
+        applyColorScheme(e.matches ? "dark" : "light");
+      }
+    };
+
+    tg?.onEvent?.("themeChanged", handleThemeChanged);
+    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+    mq?.addEventListener?.("change", handleMqChange);
+
+    return () => {
+      tg?.offEvent?.("themeChanged", handleThemeChanged);
+      mq?.removeEventListener?.("change", handleMqChange);
+    };
+  }, [telegramWebApp, isTelegramMiniApp]);
+
+  useEffect(() => {
     const tg = isTelegramMiniApp ? telegramWebApp : null;
     const root = document.documentElement;
     let fullscreenRetryTimer = null;
