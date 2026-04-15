@@ -4989,3 +4989,55 @@ html[data-theme="dark"] .password-toggle-btn {
   color: #9ca3af;
 }
 
+
+/* --- Listing import (источник) --- */
+html[data-theme="dark"] .listing-import-meta-card {
+  background: linear-gradient(180deg, #2b1a1d, #241520);
+  border-color: #5a2a35;
+}
+
+html[data-theme="dark"] .listing-import-meta-card:hover {
+  border-color: #6e3040;
+  background: linear-gradient(180deg, #321e22, #2a1a1e);
+}
+
+html[data-theme="dark"] .listing-import-meta-detail {
+  background:
+    radial-gradient(circle at right top, rgba(190, 24, 93, 0.08), transparent 42%),
+    linear-gradient(180deg, #1e1a1c, #1c1820);
+  border-color: #5a2a35;
+}
+
+html[data-theme="dark"] .listing-import-meta-icon {
+  color: #fca5a5;
+  background: linear-gradient(180deg, #2e1820, #3a1c24);
+  border-color: #5a2a35;
+}
+
+html[data-theme="dark"] .listing-import-meta-kicker,
+html[data-theme="dark"] .listing-import-meta-link {
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .listing-import-meta-title {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .listing-import-meta-date {
+  color: #9ca3af;
+}
+
+/* --- Description cards (Описание) --- */
+html[data-theme="dark"] .detail-basic-desc-card {
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .detail-food-desc-card {
+  border-color: #5a2a35;
+  background: linear-gradient(180deg, #1c1c1e, #1a181c);
+}
+
+html[data-theme="dark"] .detail-food-desc-card p,
+html[data-theme="dark"] .detail-basic-desc-card p {
+  color: #c8cdd8;
+}
