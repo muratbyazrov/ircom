@@ -4856,6 +4856,60 @@ html[data-theme="dark"] .detail-taxi-info-block .detail-contact-btn {
   border-color: #5a2a35;
 }
 
+html[data-theme="dark"] .detail-taxi-info-block {
+  border-color: #5a2a35;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(227, 38, 46, 0.08), transparent 48%),
+    linear-gradient(180deg, #1e1a1e, #1a1720);
+}
+
+html[data-theme="dark"] .detail-taxi-highlight {
+  border-color: #5a2a35;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(190, 24, 93, 0.1), transparent 48%),
+    linear-gradient(135deg, #1e1a1e, #1a1720);
+}
+
+html[data-theme="dark"] .detail-taxi-fav-btn {
+  color: #e2e8f0;
+  border-color: #5a2a35;
+}
+
+html[data-theme="dark"] .detail-taxi-direction-pill.route-outbound {
+  color: #93c5fd;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(14, 165, 233, 0.05));
+  border-color: rgba(147, 197, 253, 0.3);
+}
+
+html[data-theme="dark"] .detail-taxi-direction-pill.route-inbound {
+  color: #fdba74;
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.15), rgba(234, 88, 12, 0.05));
+  border-color: rgba(253, 186, 116, 0.3);
+}
+
+html[data-theme="dark"] .detail-taxi-direction-pill.route-city {
+  color: #86efac;
+  background: linear-gradient(135deg, rgba(22, 163, 74, 0.15), rgba(22, 163, 74, 0.05));
+  border-color: rgba(134, 239, 172, 0.3);
+}
+
+html[data-theme="dark"] .detail-taxi-date-chip {
+  background: #1e2330;
+  border-color: #374151;
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .detail-taxi-status-chip {
+  background: rgba(159, 18, 57, 0.2);
+  border-color: #7f1d40;
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .detail-taxi-media {
+  border-color: #5a2a35;
+  background: var(--surface);
+}
+
 html[data-theme="dark"] .detail-contacts-block {
   background: var(--surface);
 }
